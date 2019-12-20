@@ -1,0 +1,9 @@
+grep: /proc/sys/fs/binfmt_misc/register: Argumento inválido
+grep: /proc/sys/net/ipv4/route/flush: Permissão negada
+grep: /proc/sys/net/ipv6/conf/all/stable_secret: Erro de entrada/saída
+grep: /proc/sys/net/ipv6/conf/default/stable_secret: Erro de entrada/saída
+grep: /proc/sys/net/ipv6/conf/enp4s6/stable_secret: Erro de entrada/saída
+grep: /proc/sys/net/ipv6/conf/lo/stable_secret: Erro de entrada/saída
+grep: /proc/sys/net/ipv6/conf/wlp3s0/stable_secret: Erro de entrada/saída
+grep: /proc/sys/net/ipv6/route/flush: Permissão negada
+grep: /proc/sys/vm/compact_memory: Permissão negada
