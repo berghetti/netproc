@@ -163,7 +163,7 @@ int main(void)
         temp_buff[len_link] = '\0';
 
         if (!strncmp(socket, temp_buff, len_link))
-          printf("%s\n%s\n\n", socket, temp_buff);
+          printf("process pid - \t%d\ninode - \t%d\n\n", process_pids[i], inodes[j]);
       }
 
        // printf("%s\n", path_fd);
