@@ -1,7 +1,13 @@
-1 - ler o arquivo /proc/net/tcp e guardar todos os inodes
+1 - ler os arquivos /proc/net/tcp e /proc/net/udp, guardar todos os inodes
 2 - ler todos os diretorios em /proc, e salvar os numericos, que sao os PID dos programas
 3 - comapar o inode pego no item 1 e comparar com o link simbolico /proc/$ID/fd/$fd,
     se for igual o inode (socket) pertence a esse processo (PID).
 
  doc sobre /proc/net/tcp
  https://www.kernel.org/doc/Documentation/networking/proc_net_tcp.txt
+
+ 4 - associar o processo com a conexao
+ 5 - rastrear a conexao
+ 6 - calcular bandwith da conexao especifica
+ 7 - associar os dados com o processo
+ 8 - exibir
