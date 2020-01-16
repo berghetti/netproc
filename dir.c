@@ -24,6 +24,7 @@ typedef struct
 {
   char name[MAX_NAME]; // nome do processo
   unsigned int pid;             // pid do processo
+  unsigned int tot_fd;          // total de fd no processo
   unsigned int fds[MAX_FD];     // todos os file descriptos - /proc/pid/fd
 }process_t;
 
@@ -161,24 +162,27 @@ int get_name_process(const int pid, char *buffer)
 
 }
 
-// int get_fd_process(const int pid, unsigned int *buffer)
-// {
-//   char path[100];
-//   snprintf(path, 100, "/proc/%d/fd/", pid);
-//
-//   unsigned int tot_fd_process;
-//   tot_fd_process = get_numeric_directory(path, buffer, MAX_PROCESS);
-//   buffer[tot_fd_process] = 0;
-//
-//   return tot_fd_process;
-// }
+int get_fd_process(const int pid, unsigned int *buffer)
+{
+  char path[100];
+  snprintf(path, 100, "/proc/%d/fd/", pid);
+
+  unsigned int tot_fd_process;
+  tot_fd_process = get_numeric_directory(path, buffer, MAX_FD);
+  buffer[tot_fd_process] = 0;
+
+  return tot_fd_process;
+}
 
 void get_info_pid(const int pid, process_t *processo)
 {
+  unsigned int tot_fd = 0;
 
   processo->pid = pid;
   get_name_process(pid, processo->name);
-  // get_fd_process(pid, processo->fds);
+  tot_fd = get_fd_process(pid, processo->fds);
+
+  processo->tot_fd = tot_fd;
 
 }
 
@@ -195,12 +199,16 @@ int main(void)
   process_t *processos =  malloc(tot_process * 2);
   memset(processos, 0, tot_process * 2);
 
-  get_info_pid(process_pids[0], &processos[0]);
-  printf("aqui");
+  get_info_pid(process_pids[150], &processos[0]);
 
-  // printf("process id: %s\n", processos[0].pid);
-  // printf("process name: %s\n", processos[0].name);
-  // printf("process fds: %d\n", processos[0].fds);
+  printf("process id: %d\n", processos[0].pid);
+  printf("process name: %s\n", processos[0].name);
+  printf("process fds: ");
+  while (processos[0].tot_fd){
+    printf("%d ", processos[0].fds[processos[0].tot_fd--]);
+  }
+  putchar('\n');
+
 
   int tot_inodes;
   unsigned int inodes[MAX_INODES] = {0};
@@ -214,7 +222,11 @@ int main(void)
   char socket[100];
 
   char temp_buff[1000];
-  ssize_t len_link;
+  int len_link = 0;
+
+  bool cagada = false;
+
+
 
   /*
    percorre todos os processos encontrados no diretório '/proc/',
@@ -225,35 +237,35 @@ int main(void)
   */
   for (int i = 0; i < tot_process; i++)
     {
+
       // pega todos os file descriptors dos processos encontrados em '/proc/$id/fd'
       snprintf(process, 100, "/proc/%d/fd/", process_pids[i]);
       tot_fd_in_process = get_numeric_directory(process, fds_process_buff, 1000);
+
       while (tot_fd_in_process)
         {
-          // isola um link simbolico por vez do processo
-          snprintf(path_fd, 100, "/proc/%d/fd/%d", process_pids[i], fds_process_buff[tot_fd_in_process - 1]);
+          // isola um fd por vez do processo
+          snprintf(path_fd, 100, "/proc/%d/fd/%d", process_pids[i], fds_process_buff[--tot_fd_in_process]);
 
-          // para cada inode compara o conteudo do link simbolico isolado
-          // anteriormente
+          // se der erro para ler, troca de processo
+          if ((len_link = readlink(path_fd, temp_buff, 1000)) == -1)
+            break;
+
+          temp_buff[len_link] = '\0';
+
+          // compara o fd do processo com todos os inodes disponiveis
           for (int j = 0; j < tot_inodes; j++)
             {
               snprintf(socket, 100, "socket:[%d]", inodes[j]);
-              // printf("%s\n", socket);
-              len_link = readlink(path_fd, temp_buff, 99);
-              temp_buff[len_link] = '\0';
 
               // se o conteudo de socket - socket:[$inode] - for igual
-              // ao valor lido do link simbolico do processo,
+              // ao valor lido do fd do processo,
               // encontrado de qual processo o inode corresponde
               if (!strncmp(socket, temp_buff, len_link)){
-                printf("process pid - \t%d\ninode - \t%d\n\n",
-                        process_pids[i], inodes[j]);
-                //get_info_pid(process_pids[i]);
+                // printf("process pid - \t%d\ninode - \t%d\n\n",
+                //         process_pids[i], inodes[j]);
               }
             }
-
-          // printf("%s\n", path_fd);
-          tot_fd_in_process--;
         }
 
     }
