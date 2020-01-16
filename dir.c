@@ -16,16 +16,18 @@
 #define MAX_INODES 1024
 #define PATH_INODE "/proc/net/tcp"
 
-#define MAX_FD 50000
+#define MAX_FD 1024
 
 #define MAX_NAME 1024
 
+bool debug = true;
+
 typedef struct
 {
-  char name[MAX_NAME]; // nome do processo
+  char name[MAX_NAME];          // nome do processo
   unsigned int pid;             // pid do processo
   unsigned int tot_fd;          // total de fd no processo
-  unsigned int fds[MAX_FD];     // todos os file descriptos - /proc/pid/fd
+  unsigned int *fds;            // todos os file descriptos - /proc/pid/fd
 }process_t;
 
 typedef struct
@@ -37,7 +39,6 @@ typedef struct
   uint16_t remote_port;
   uint8_t  con_state;
   uint32_t inode;
-
 }conection_t;
 
 
@@ -143,6 +144,7 @@ int get_name_process(const int pid, char *buffer)
   char path_cmdline[MAX_NAME];
   snprintf(path_cmdline, MAX_NAME, "/proc/%d/cmdline", pid);
 
+
   FILE *arq = fopen(path_cmdline, "r");
   if (arq == NULL){
     puts("erro abrir cmdline");
@@ -157,32 +159,49 @@ int get_name_process(const int pid, char *buffer)
 
   size_t len = strlen(buffer);
 
-  printf("len - %d\n", len);
+  if (debug)
+    printf("get_name_process: len - %d\n", len);
+
   return len;
 
 }
 
-int get_fd_process(const int pid, unsigned int *buffer)
+int get_fd_process(const int pid, unsigned int **buffer)
 {
-  char path[100];
-  snprintf(path, 100, "/proc/%d/fd/", pid);
+  char path[MAX_NAME];
+  snprintf(path, MAX_NAME, "/proc/%d/fd/", pid);
+
+  if (debug)
+    printf("get_fd_process %s\n", path);
 
   unsigned int tot_fd_process;
-  tot_fd_process = get_numeric_directory(path, buffer, MAX_FD);
-  buffer[tot_fd_process] = 0;
+  unsigned int temp_buff[MAX_FD] = {0};
+
+  tot_fd_process = get_numeric_directory(path, temp_buff, MAX_FD);
+  temp_buff[tot_fd_process] = 0;
+
+  if (debug)
+    printf("tot_fd_process: %d\n", tot_fd_process);
+
+  *buffer = malloc(tot_fd_process);
+  *buffer = temp_buff;
 
   return tot_fd_process;
 }
 
+
 void get_info_pid(const int pid, process_t *processo)
 {
-  unsigned int tot_fd = 0;
+  char test_process[MAX_NAME];
+  snprintf(test_process, MAX_NAME, "/proc/%d/fd/", pid);
+
+  // return case not access
+  if ((access(test_process, R_OK)) == -1)
+    return;
 
   processo->pid = pid;
   get_name_process(pid, processo->name);
-  tot_fd = get_fd_process(pid, processo->fds);
-
-  processo->tot_fd = tot_fd;
+  processo->tot_fd = get_fd_process(pid, &processo->fds);
 
 }
 
@@ -196,18 +215,24 @@ int main(void)
   // pega todos os pid - process id -  abertos
   tot_process = get_numeric_directory(PROCESS_DIR, process_pids, MAX_PROCESS);
 
-  process_t *processos =  malloc(tot_process * 2);
-  memset(processos, 0, tot_process * 2);
+  if (debug)
+    printf("tam struct process %d\n", sizeof (process_t));
 
-  get_info_pid(process_pids[150], &processos[0]);
+  process_t *processos =  malloc(sizeof(process_t) * tot_process * 2);
+  memset(processos, 0, sizeof(process_t) * tot_process * 2);
 
-  printf("process id: %d\n", processos[0].pid);
-  printf("process name: %s\n", processos[0].name);
-  printf("process fds: ");
-  while (processos[0].tot_fd){
-    printf("%d ", processos[0].fds[processos[0].tot_fd--]);
+  get_info_pid(process_pids[140], &processos[0]);
+
+  if (debug){
+    printf("process id:     %d\n", processos[0].pid);
+    printf("process name:   %s\n", processos[0].name);
+    printf("tot fd process: %d\n", processos[0].tot_fd);
+    printf("process fds: ");
+    while (processos[0].tot_fd){
+      printf("%d ", processos[0].fds[processos[0].tot_fd--]);
+    }
+    putchar('\n');
   }
-  putchar('\n');
 
 
   int tot_inodes;
@@ -223,9 +248,6 @@ int main(void)
 
   char temp_buff[1000];
   int len_link = 0;
-
-  bool cagada = false;
-
 
 
   /*
@@ -262,8 +284,8 @@ int main(void)
               // ao valor lido do fd do processo,
               // encontrado de qual processo o inode corresponde
               if (!strncmp(socket, temp_buff, len_link)){
-                // printf("process pid - \t%d\ninode - \t%d\n\n",
-                //         process_pids[i], inodes[j]);
+                printf("process pid - \t%d\ninode - \t%d\n\n",
+                        process_pids[i], inodes[j]);
               }
             }
         }
