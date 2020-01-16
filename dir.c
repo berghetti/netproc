@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
+#include <stdint.h>
 
 #include <dirent.h>
 #include <ctype.h>
@@ -19,12 +20,24 @@
 
 #define MAX_NAME 1024
 
-struct process
+typedef struct
 {
   char name[MAX_NAME]; // nome do processo
-  int pid;             // pid do processo
-  int fds[MAX_FD];     // todos os file descriptos - link simbolico - do processo
-};
+  unsigned int pid;             // pid do processo
+  unsigned int fds[MAX_FD];     // todos os file descriptos - /proc/pid/fd
+}process_t;
+
+typedef struct
+{
+  uint32_t id;
+  uint32_t local_address;
+  uint16_t local_port;
+  uint32_t remote_address;
+  uint16_t remote_port;
+  uint8_t  con_state;
+  uint32_t inode;
+
+}conection_t;
 
 
 static bool is_number(const char *caracter)
@@ -41,7 +54,6 @@ static bool is_number(const char *caracter)
 }
 
 
-
 // recebe o nome do diretorio dos processos, um buffer para armazenar
 // os nomes dos diretorios e um tamanho maximo para o buffer.
 // retorna o total de diretorios encontrados, -1 em caso de falha.
@@ -52,7 +64,7 @@ int get_numeric_directory(const char *process_dir, int *buffer, const int lenght
   int count = 0;
 
   if ((dir = opendir(process_dir)) == NULL)
-    return 0;
+    return -1;
 
   while ((directory = readdir(dir)) != NULL && count < lenght)
     {
@@ -63,6 +75,8 @@ int get_numeric_directory(const char *process_dir, int *buffer, const int lenght
         }
 
     }
+
+  closedir(dir);
 
   return count;
 }
@@ -82,28 +96,29 @@ int get_inodes(const char *inode_file, unsigned int *buffer, const int lenght)
 
   int count = 0;
 
-  unsigned int id,
-           local_address,
-           local_port,
-           remote_address,
-           remote_port,
-           con_state,
-           tx_queue,
-           rx_queue,
-           timer_active,
-           tm_when,
-           retrnsmt,
-           uid,
-           timeout,
-           inode;
+  uint32_t id;
+  uint32_t local_address;
+  uint16_t local_port;
+  uint32_t remote_address;
+  uint16_t remote_port;
+  uint8_t  con_state;
+  uint32_t tx_queue;
+  uint32_t rx_queue;
+  uint8_t  timer_active;
+  uint32_t tm_when;
+  uint32_t retrnsmt;
+  uint16_t uid;
+  uint8_t  timeout;
+  uint32_t inode;
 
 
   if ((arq = fopen(inode_file, "r")) == NULL)
     return 0;
 
-  // ignore first line
+  // ignore header in first line
   if ((getline(&line, &len, arq)) == -1)
     return 0;
+
 
   while ((nread = getline(&line, &len, arq)) != -1 && count < lenght)
     {
@@ -122,21 +137,73 @@ int get_inodes(const char *inode_file, unsigned int *buffer, const int lenght)
 }
 
 
+int get_name_process(const int pid, char *buffer)
+{
+  char path_cmdline[MAX_NAME];
+  snprintf(path_cmdline, MAX_NAME, "/proc/%d/cmdline", pid);
+
+  FILE *arq = fopen(path_cmdline, "r");
+  if (arq == NULL){
+    puts("erro abrir cmdline");
+    return -1;
+  }
+
+  char line[MAX_NAME];
+  if ((fgets(line, MAX_NAME, arq)) == NULL)
+    return -1;
+
+  strcpy(buffer, line);
+
+  size_t len = strlen(buffer);
+
+  printf("len - %d\n", len);
+  return len;
+
+}
+
+// int get_fd_process(const int pid, unsigned int *buffer)
+// {
+//   char path[100];
+//   snprintf(path, 100, "/proc/%d/fd/", pid);
+//
+//   unsigned int tot_fd_process;
+//   tot_fd_process = get_numeric_directory(path, buffer, MAX_PROCESS);
+//   buffer[tot_fd_process] = 0;
+//
+//   return tot_fd_process;
+// }
+
+void get_info_pid(const int pid, process_t *processo)
+{
+
+  processo->pid = pid;
+  get_name_process(pid, processo->name);
+  // get_fd_process(pid, processo->fds);
+
+}
+
 
 int main(void)
 {
-
-  struct process processos[MAX_PROCESS];
-
   int tot_process;
   int process_pids[MAX_PROCESS] = {0};
 
+
+  // pega todos os pid - process id -  abertos
   tot_process = get_numeric_directory(PROCESS_DIR, process_pids, MAX_PROCESS);
 
+  process_t *processos =  malloc(tot_process * 2);
+  memset(processos, 0, tot_process * 2);
+
+  get_info_pid(process_pids[0], &processos[0]);
+  printf("aqui");
+
+  // printf("process id: %s\n", processos[0].pid);
+  // printf("process name: %s\n", processos[0].name);
+  // printf("process fds: %d\n", processos[0].fds);
 
   int tot_inodes;
   unsigned int inodes[MAX_INODES] = {0};
-
   tot_inodes =  get_inodes(PATH_INODE, inodes, MAX_INODES);
 
 
@@ -161,7 +228,6 @@ int main(void)
       // pega todos os file descriptors dos processos encontrados em '/proc/$id/fd'
       snprintf(process, 100, "/proc/%d/fd/", process_pids[i]);
       tot_fd_in_process = get_numeric_directory(process, fds_process_buff, 1000);
-
       while (tot_fd_in_process)
         {
           // isola um link simbolico por vez do processo
@@ -179,8 +245,11 @@ int main(void)
               // se o conteudo de socket - socket:[$inode] - for igual
               // ao valor lido do link simbolico do processo,
               // encontrado de qual processo o inode corresponde
-              if (!strncmp(socket, temp_buff, len_link))
-                printf("process pid - \t%d\ninode - \t%d\n\n", process_pids[i], inodes[j]);
+              if (!strncmp(socket, temp_buff, len_link)){
+                printf("process pid - \t%d\ninode - \t%d\n\n",
+                        process_pids[i], inodes[j]);
+                //get_info_pid(process_pids[i]);
+              }
             }
 
           // printf("%s\n", path_fd);
@@ -188,6 +257,5 @@ int main(void)
         }
 
     }
-
 
 }
