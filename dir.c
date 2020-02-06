@@ -26,18 +26,18 @@ bool debug = false;
 
 typedef struct
 {
-  uint32_t id;
+  // uint32_t id;
   uint32_t local_address;
   uint16_t local_port;
   uint32_t remote_address;
   uint16_t remote_port;
-  uint8_t  con_state;
+  // uint8_t  con_state;
   uint32_t inode;
 }conection_t;
 
 typedef struct
 {
-  conection_t conections[MAX_CONECTIONS]; // conexoes do processo
+  conection_t *conection;     // conexoes do processo
   char *name;                  // nome processo
   uint32_t *fds;               // todos os file descriptos - /proc/pid/fd
   uint32_t pid;                // pid do processo
@@ -151,7 +151,7 @@ get_info_conections
 
       if (matches != 5) {
         fprintf(stderr, "Unexpected buffer: '%s'\n", line);
-        exit(0);
+        exit(1);
       }
 
 
@@ -162,8 +162,6 @@ get_info_conections
       // conection[count].con_state = con_state;
       conection[count].inode = inode;
       // conection[count].id = id;
-
-
 
       count++;
     }
@@ -267,12 +265,6 @@ int main(void)
   conection_t conections[MAX_CONECTIONS] = {0};
   total_conections =  get_info_conections(PATH_INODE, conections, MAX_CONECTIONS);
 
-  // unsigned int total_proc_con_act = 0;
-
-  // while(total_conections){
-  //   printf("inode %d\n", conections[total_conections--].inode);
-  // }
-
 
   if (debug){
     printf("total de process %d\n", total_process);
@@ -284,120 +276,102 @@ int main(void)
   memset(processos, 0, sizeof(process_t) * total_process);
 
 
-  //get_info_pid(process_pids[140], &processos[0]);
-
-  // if (debug){
-  //   printf("process pid:    %d\n", processos[0].pid);
-  //   printf("process name:   %s\n", processos[0].name);
-  //   printf("total fd process: %d\n", processos[0].total_fd);
-  //   printf("process fds: ");
-  //   while (processos[0].total_fd){
-  //     printf("%d ", processos[0].fds[processos[0].total_fd--]);
-  //   }
-  //   putchar('\n');
-  // }
-
   /*
    percorre todos os processos encontrados no diretório '/proc/',
-   em cada processo encontrado armazena todos os file descriptors do processo em fds_process_buff,
-   depois compara o link simbolico apontado pelo FD com 'socket:[inode]', sendo inode coletado
-   do arquivo '/proc/net/tcp', caso a comparação seja igual, encontramos o processo que corresponde
-   ao inode (conexão).
+   em cada processo encontrado armazena todos os file descriptors
+   do processo - /proc/$id/fd - em process_t->fds,
+   depois compara o link simbolico apontado pelo FD com 'socket:[inode]',
+   sendo inode coletado do arquivo '/proc/net/tcp', caso a comparação seja igual,
+   encontramos o processo que corresponde ao inode (conexão).
   */
   char path_fd[100] = {0};
   char socket[100] = {0};
   char temp_buff[1000] = {0};
   int len_link = 0;
 
-  for (int i = 0; i < total_process; i++)
+  for (int p = 0; p < total_process; p++)
     {
 
-      // pega todos os file descriptors dos processos encontrados em '/proc/$id/fd'
-      // snprintf(process, 100, "/proc/%d/fd/", process_pids[i]);
-      // total_fd_in_process = get_numeric_directory(process, fds_process_buff, 1000);
+      int index = 0;
+      int index_history_con[total_conections];
+      memset(index_history_con, 0, total_conections);
 
       // get information process
-      // putchar('\n');
-      get_info_pid(process_pids[i], &processos[i]);
 
-      // printf("processos[%d].total_fd: %d\n", i, processos[i].total_fd);
-      while (processos[i].total_fd)
+      get_info_pid(process_pids[p], &processos[p]);
+      int tot_fd = processos[p].total_fd;
+
+      while (tot_fd)
         {
-          // processos[i].total_fd--;
           // isola um fd por vez do processo
-          snprintf(path_fd, 100, "/proc/%d/fd/%d", processos[i].pid, processos[i].fds[processos[i].total_fd--]);
-          // printf("path_fd %s\n", path_fd);
+          snprintf(path_fd, 100, "/proc/%d/fd/%d", processos[p].pid, processos[p].fds[tot_fd--]);
+
           // se der erro para ler, provavel acesso negado
-          // vai pro proximo processo
+          // vai pro proximo fd do processo
           if ((len_link = readlink(path_fd, temp_buff, 1000)) == -1)
             continue;
 
           temp_buff[len_link] = '\0';
+
           // caso o link nao tenha a palavra socket
+          // vai para proximo fd do processo
           if (!strstr(temp_buff, "socket"))
             continue;
 
-          // printf("len_link %d\n", len_link);
-          // printf("total_conections %d\n", total_conections)  ;
-          //
-          // printf("tempo_buff %s\n", temp_buff);
           // compara o fd do processo com todos os inodes disponiveis
-          for (int j = 0; j < total_conections; j++)
+          for (int c = 0; c < total_conections; c++)
             {
-              snprintf(socket, 100, "socket:[%d]", conections[j].inode);
-              // printf("[%d] - socket %s\n", j, socket);
+              // connection is in TIME_WAIT state, test next conection
+              if (conections[c].inode == 0)
+                continue;
 
-
+              snprintf(socket, 100, "socket:[%d]", conections[c].inode);
 
               // se o conteudo de socket - socket:[$inode] - for igual
               // ao valor lido do fd do processo,
-              // encontrado de qual processo o inode corresponde
+              // encontrado de qual processo a conexão pertence
               if ((strncmp(socket, temp_buff, len_link)) == 0)
-              {
-
-                // adiciona ao processo dados de sua conexao e incrementa a quantidade de conexoes
-                // processos[i].conections[processos[i].total_conections++] = conections[j];
-
-                // process_con_act[total_proc_con_act].pid = processos[i].pid;
-                // strcpy(process_con_act[total_proc_con_act].name, processos[i].name);
-                // process_con_act[total_proc_con_act].total_conections++;
-                // process_con_act[total_proc_con_act].conections[process_con_act[total_proc_con_act].total_conections] = conections[j];
-
-                printf("process pid   - \t%d\n"
-                       "process name  - \t%s\n"
-                       "inode         - \t%d\n"
-                       "tot fds       - \t%d\n",
-                        processos[i].pid, processos[i].name, conections[j].inode,
-                        processos[i].total_fd);
-
-                        // while (processos[i].total_fd){
-                        //   printf("%d ", processos[i].fds[processos[i].total_fd--]);
-                        // }
-
-
-                // printf("total de conections - %d\n", processos[i].total_conections);
-                putchar('\n');
-              }
-
+                  // salva o indice do array conections que tem a conexao
+                  // do processo para depois pegar os dados desses indices
+                  index_history_con[index++] = c;
             }
-        }
-        // incrementa quando troca de processo,
-        // se teve processo com conexao ativa
-        // if (check_con) total_proc_con_act++;
+        } // while fd
 
+        processos[p].total_conections = index;
+
+        // pega as conexões ativas no array conections referentes ao processo
+        // e adiciona a ele
+        processos[p].conection = malloc(sizeof (conection_t) * processos[p].total_conections);
+        for(int c = 0; c < index; c++)
+          {
+            if(debug)
+              printf("index_histopry[%d] - %d\n",index - c - 1, index_history_con[c]);
+            processos[p].conection[c] = conections[index_history_con[c]];
+          }
+
+
+    } //for process
+
+
+    for(int i = 0; i < total_process; i++)
+    {
+      //  process not have active conetion
+      if (processos[i].total_conections <= 0)
+        continue;
+    //
+    int f = 0;
+    printf("process pid      - %d\n"
+           "process name     - %s\n"
+           "tot fds          - %d\n"
+           "total conections - %d\n",
+            processos[i].pid, processos[i].name, processos[i].total_fd,
+            processos[i].total_conections);
+    printf("inodes           - ");
+    while(processos[i].total_conections--){
+      printf("%d ", processos[i].conection[f++].inode);
     }
-
-    printf("\n\n\n");
-
-    // for(int i = 0; i < total_proc_con_act; i++)
-    // {
     //
-    //   printf("total_proc_con_act %d\n", total_proc_con_act);
-    //
-    //   printf("id: \t%d\n", process_con_act[i].pid);
-    //   printf("name: \t%s\n", process_con_act[i].name);
-    //   printf("tot_con: \t%d\n", process_con_act[i].total_conections);
-    //
-    // }
+    printf("\n\n");
+    }
 
 }
