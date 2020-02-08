@@ -10,14 +10,11 @@
 #include <dirent.h>
 #include <ctype.h>
 
-#define MAX_PROCESS 1024
+#define MAX_PROCESS 13504 // ulimit -a
 #define PROCESS_DIR "/proc/"
 
-#define MAX_INODES 1024
 #define MAX_CONECTIONS 1024
 #define PATH_INODE "/proc/net/tcp"
-
-#define MAX_FD 1024
 
 #define MAX_NAME 100
 
@@ -63,7 +60,8 @@ static bool is_number(const char *caracter)
 // recebe o nome do diretorio dos processos, um buffer para armazenar
 // os nomes dos diretorios e um tamanho maximo para o buffer.
 // retorna o total de diretorios encontrados, -1 em caso de falha.
-int get_numeric_directory(const char *process_dir, unsigned int *buffer, const int lenght)
+int
+get_numeric_directory(const char *process_dir, unsigned int *buffer, const int lenght)
 {
   DIR *dir;
   if ((dir = opendir(process_dir)) == NULL)
@@ -196,7 +194,9 @@ int get_name_process(const int pid, char **buffer)
   return len;
 }
 
-int get_fd_process(const int pid, unsigned int **buffer)
+// pega todos os fds do processo em /proc/$id/fd
+// e armazena no buffer passado
+int get_all_fd_process(const int pid, unsigned int **buffer)
 {
   char path[MAX_NAME];
   snprintf(path, MAX_NAME, "/proc/%d/fd/", pid);
@@ -205,9 +205,9 @@ int get_fd_process(const int pid, unsigned int **buffer)
     printf("path process: %s\n", path);
 
   unsigned int total_fd_process;
-  unsigned int temp_buff[MAX_FD] = {0};
+  unsigned int temp_buff[MAX_CONECTIONS] = {0};
 
-  total_fd_process = get_numeric_directory(path, temp_buff, MAX_FD);
+  total_fd_process = get_numeric_directory(path, temp_buff, MAX_CONECTIONS);
 
   if (total_fd_process < 0)
     return -1;
@@ -222,6 +222,10 @@ int get_fd_process(const int pid, unsigned int **buffer)
   return total_fd_process;
 }
 
+// int get_pid_all_process(unsigned int *buffer)
+//   {
+//      VERR
+//   }
 
 void get_info_pid(const int pid, process_t *processo)
 {
@@ -234,22 +238,7 @@ void get_info_pid(const int pid, process_t *processo)
 
   processo->pid = pid;
   get_name_process(pid, &processo->name);
-  processo->total_fd = get_fd_process(pid, &processo->fds);
-
-  // if (processo->pid == 3451)
-  // {
-  //   printf("process pid: %d\n", processo->pid);
-  //   printf("process name: %s\n", processo->name);
-  //   printf("total fd: %d\n", processo->total_fd);
-  //   printf("fds: ");
-  //   // printf("%u", *processo->fds);
-  //   while (processo->total_fd){
-  //     printf("%u ", *processo->fds++);
-  //     processo->total_fd--;
-  //   }
-  //   printf("\n\n");
-  // }
-
+  processo->total_fd = get_all_fd_process(pid, &processo->fds);
 
 }
 
@@ -284,9 +273,9 @@ int main(void)
    sendo inode coletado do arquivo '/proc/net/tcp', caso a comparação seja igual,
    encontramos o processo que corresponde ao inode (conexão).
   */
-  char path_fd[100] = {0};
-  char socket[100] = {0};
-  char temp_buff[1000] = {0};
+  char path_fd[MAX_NAME] = {0};
+  char socket[MAX_NAME] = {0};
+  char data_fd[1000] = {0};
   int len_link = 0;
 
   for (int p = 0; p < total_process; p++)
@@ -308,14 +297,14 @@ int main(void)
 
           // se der erro para ler, provavel acesso negado
           // vai pro proximo fd do processo
-          if ((len_link = readlink(path_fd, temp_buff, 1000)) == -1)
+          if ((len_link = readlink(path_fd, data_fd, 1000)) == -1)
             continue;
 
-          temp_buff[len_link] = '\0';
+          data_fd[len_link] = '\0';
 
           // caso o link nao tenha a palavra socket
           // vai para proximo fd do processo
-          if (!strstr(temp_buff, "socket"))
+          if (!strstr(data_fd, "socket"))
             continue;
 
           // compara o fd do processo com todos os inodes disponiveis
@@ -330,7 +319,7 @@ int main(void)
               // se o conteudo de socket - socket:[$inode] - for igual
               // ao valor lido do fd do processo,
               // encontrado de qual processo a conexão pertence
-              if ((strncmp(socket, temp_buff, len_link)) == 0)
+              if ((strncmp(socket, data_fd, len_link)) == 0)
                   // salva o indice do array conections que tem a conexao
                   // do processo para depois pegar os dados desses indices
                   index_history_con[index++] = c;
@@ -358,19 +347,19 @@ int main(void)
       //  process not have active conetion
       if (processos[i].total_conections <= 0)
         continue;
-    //
-    int f = 0;
-    printf("process pid      - %d\n"
-           "process name     - %s\n"
-           "tot fds          - %d\n"
-           "total conections - %d\n",
-            processos[i].pid, processos[i].name, processos[i].total_fd,
-            processos[i].total_conections);
-    printf("inodes           - ");
-    while(processos[i].total_conections--){
-      printf("%d ", processos[i].conection[f++].inode);
-    }
-    //
+
+      int f = 0;
+      printf("process pid      - %d\n"
+             "process name     - %s\n"
+             "tot fds          - %d\n"
+             "total conections - %d\n",
+              processos[i].pid, processos[i].name, processos[i].total_fd,
+              processos[i].total_conections);
+      printf("inodes           - ");
+      while(processos[i].total_conections--)
+        printf("%d ", processos[i].conection[f++].inode);
+
+
     printf("\n\n");
     }
 
