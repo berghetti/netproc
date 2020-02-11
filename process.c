@@ -66,7 +66,7 @@ get_numeric_directory(const char *process_dir, unsigned int *buffer, const int l
 // ou zero em caso de erro
 static int
 get_info_conections
-(const char *inode_file, conection_t *conection, const int lenght)
+(const char *conection_file, conection_t *conection, const int lenght)
 {
 
   // uint32_t id;
@@ -85,26 +85,30 @@ get_info_conections
   // unsigned long inode;
   //
 
-  FILE *arq;
+  FILE *arq = NULL;
 
-  if ((arq = fopen(inode_file, "r")) == NULL)
+  if ((arq = fopen(conection_file, "r")) == NULL)
     return 0;
 
-  char *line;
+
+  char *line = NULL;
   size_t len = 0;
 
   // ignore header in first line
   if ((getline(&line, &len, arq)) == -1)
-    return 0;
+    {
+      free(line);
+      return 0;
+    }
 
-  ssize_t nread;
+
   int count = 0;
-  char local_addr[64], rem_addr[64];
+  char local_addr[64], rem_addr[64] = {0};
 
   unsigned int matches, local_port, rem_port; // local_addr, rem_addr;
   unsigned long int inode;
 
-  while ((nread = getline(&line, &len, arq)) != -1 && count < lenght)
+  while ((getline(&line, &len, arq)) != -1 && (count < lenght))
     {
 
       // sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
@@ -127,7 +131,8 @@ get_info_conections
       if (matches != 5)
         {
           fprintf(stderr, "Unexpected buffer: '%s'\n", line);
-          exit(1);
+          fclose(arq);
+          return 0;
         }
 
 
@@ -142,10 +147,14 @@ get_info_conections
       count++;
     }
 
+  free(line);
+  fclose(arq);
+
   return count;
 }
 
 // armazena o nome do processo no buffer e retorna o tamanho do nome do processo
+// até o primeiro espaço, não incluindo caracter \0.
 static int
 get_name_process(const int pid, char **buffer)
 {
@@ -162,23 +171,33 @@ get_name_process(const int pid, char **buffer)
     }
 
   char line[MAX_NAME];
-
   if ((fgets(line, MAX_NAME, arq)) == NULL)
-    return -1;
+    {
+      fclose(arq);
+      return -1;
+    }
+
 
   size_t len = strlen(line);
 
   line[len] = '\0';
-
   *buffer = malloc(len);
-  strncpy(*buffer, line, len);
 
-  return len;
+  // pega o nome somente até o primeiro espaço, se nao fica muito comprido
+  size_t i;
+  size_t j;
+  for (i = 0, j = 0; i < len && line[i] != ' '; i++, j++)
+    (*buffer)[i] = line[i];
+  for (; i < len; i++)
+    (*buffer)[i] = '\0';
+
+  fclose(arq);
+  return j;
 }
 
 // pega todos os fds do processo em /proc/$id/fd
 // e armazena no buffer passado, retorna a quantidade de fd encontrado
-static int get_all_fd_process(const int pid, unsigned int **buffer)
+static int get_all_fd_process(const int pid, unsigned int *buffer)
 {
   char path[MAX_NAME];
   snprintf(path, MAX_NAME, "/proc/%d/fd/", pid);
@@ -200,23 +219,64 @@ static int get_all_fd_process(const int pid, unsigned int **buffer)
   if (total_fd_process == -1)
     return -1;
 
-  temp_buff[total_fd_process] = 0;
+  for (size_t i = 0; i < total_fd_process; i++)
+    buffer[i] = temp_buff[i];
 
-  *buffer = malloc(total_fd_process);
-  *buffer = temp_buff;
 
   return total_fd_process;
 }
 
 
+void print_process(process_t *process, const int lenght)
+{
+  int tot_con;
+  int j;
+  for (int i = 0; i < lenght; i++)
+    {
+
+      // printf("pid %d\n", process[i].pid);
+      // printf("name %s\n", process[i].name);
+
+      printf("process pid      - %d\n"
+             "process name     - %s\n"
+             "tot fds          - %d\n"
+             "total conections - %d\n",
+              process[i].pid, process[i].name, process[i].total_fd,
+              process[i].total_conections);
+      printf("inodes           - ");
+
+      j = 0;
+      tot_con = process[i].total_conections;
+
+      while(tot_con--)
+        printf("%d ", process[i].conection[j++].inode);
+
+      printf("\n\n");
+    }
+}
+
+
+void free_process(process_t *process, const int lenght)
+{
+  for (size_t i = 0; i < lenght; i++) {
+    free(process[i].name);
+    process[i].name = NULL;
+    free(process[i].conection);
+    process[i].conection = NULL;
+  }
+  free(process);
+  process = NULL;
+
+}
+
 int get_process_active_con(process_t **procs)
 {
-  int total_process;
+  int total_process = 0;
   unsigned int process_pids[MAX_PROCESS] = {0};
   // process_t process_con_act[100] = {0}; // processos com conexões ativas
   total_process = get_numeric_directory(PROCESS_DIR, process_pids, MAX_PROCESS);
 
-  int total_conections;
+  int total_conections = 0;
   conection_t conections[MAX_CONECTIONS] = {0};
   total_conections =  get_info_conections(PATH_INODE, conections, MAX_CONECTIONS);
 
@@ -230,9 +290,6 @@ int get_process_active_con(process_t **procs)
   process_t processos[total_process];
   memset(processos, 0, total_process);
 
-  // process_t *processos =  malloc(sizeof(process_t) * total_process);
-  // memset(processos, 0, sizeof(process_t) * total_process);
-
 
   /*
    percorre todos os processos encontrados no diretório '/proc/',
@@ -245,14 +302,15 @@ int get_process_active_con(process_t **procs)
   char path_fd[MAX_NAME] = {0};         // proc/pid/fd/
   char socket[MAX_NAME_SOCKET] = {0};
   char data_fd[MAX_NAME_SOCKET] = {0};
+  uint32_t fds_p[MAX_CONECTIONS] = {0};
   int len_link = 0;
 
   int total_fd_process = 0;
-  uint32_t *fds_p = NULL;
+
 
   bool process_have_conection_active;
   int process_active_conection = 0;
-  int tmp_tot_fd;
+  int tmp_tot_fd = 0;;
 
   int index_conection;
   int index_history_con[total_conections];
@@ -265,12 +323,7 @@ int get_process_active_con(process_t **procs)
       index_conection = 0;
       memset(index_history_con, 0, total_conections);
 
-      // get information process
-
-      // get_info_pid(process_pids[p], &processos[p]);
-      // int tot_fd = processos[p].total_fd;
-
-      total_fd_process = get_all_fd_process(process_pids[pd], &fds_p);
+      total_fd_process = get_all_fd_process(process_pids[pd], fds_p);
 
 
       if (debug)
@@ -331,6 +384,7 @@ int get_process_active_con(process_t **procs)
             }
         } // while fd
 
+
       if (process_have_conection_active)
         {
 
@@ -374,8 +428,6 @@ int get_process_active_con(process_t **procs)
 
   for (int i = 0; i < process_active_conection; i++)
        (*procs)[i] = processos[i];
-       // *(*(procs+i)) = processos[i];
-
 
   // retorna o numero de processos com conexão ativa
   return process_active_conection;

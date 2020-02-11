@@ -27,7 +27,7 @@ typedef struct
 {
   conection_t *conection;     // conexoes do processo
   char *name;                  // nome processo
-  uint32_t *fds;               // todos os file descriptos - /proc/pid/fd
+  // uint32_t *fds;               // todos os file descriptos - /proc/pid/fd
   uint32_t pid;                // pid do processo
   uint32_t total_fd;           // totalal de fd no processo
   uint32_t total_conections;   // total de conexoes do processo
@@ -37,6 +37,12 @@ typedef struct
 // inicializa a estrutura process_t para o endereço onde estão
 // armazenados os processos ativos e retorna a quantidade processos ativos
 int get_process_active_con(process_t **procs);
+
+
+void print_process(process_t *process, const int lenght);
+
+
+void free_process(process_t *process, const int lenght);
 
 
 
