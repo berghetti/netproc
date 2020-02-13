@@ -8,18 +8,13 @@ int main(int argc, char **argv){
 
   process_t *process = NULL;
   int tot_process_act = 0;
+  tot_process_act = get_process_active_con(&process);
 
-    tot_process_act = get_process_active_con(&process);
+  print_process(process, tot_process_act);
 
+  free_process(process, tot_process_act);
 
-    // printf("tot aqui %d\n", tot);
-
-
-    print_process(process, tot_process_act);
-
-    free_process(process, tot_process_act);
-
-
+  
 
 
   return 0;

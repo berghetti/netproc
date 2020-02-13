@@ -15,6 +15,7 @@
 typedef struct
 {
   // uint32_t id;
+  // struct in_addr
   uint32_t local_address;
   uint16_t local_port;
   uint32_t remote_address;

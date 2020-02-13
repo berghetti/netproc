@@ -11,3 +11,12 @@
  6 - calcular bandwith da conexao especifica
  7 - associar os dados com o processo
  8 - exibir
+ 
+ ///////////////////
+
+ cada processo tem n conexoes, farejar o pacote e comparar com a porta
+local da conexao, necessario comparar o pacote com cada conexao do processo,
+se o pacote pertencer a esse processo, guarda o tamanho do bytes do pacote
+no processo, se nao, testa outro processo.
+
+a cada 1 segundo exibir as estatisticas e resetar contadores

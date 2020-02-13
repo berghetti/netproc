@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
     }
 
     // pegar dados cabeçalho ethernet
-    //struct ethhdr *l2;
+    // struct ethhdr *l2;
     // l2 = (struct ethhdr *) buffer;
     //
     //

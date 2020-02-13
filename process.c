@@ -4,8 +4,11 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/types.h>
 #include <stdint.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
 
 #include <dirent.h>
 #include <ctype.h>
@@ -136,15 +139,23 @@ get_info_conections
         }
 
 
-      conection[count].local_address = local_addr;
-      conection[count].local_port = local_port;
-      conection[count].remote_address = rem_addr;
-      conection[count].remote_port = rem_port;
-      // conection[count].con_state = con_state;
-      conection[count].inode = inode;
-      // conection[count].id = id;
+      if (strlen(local_addr) == 8) // only ipv4
+        {
+          // converte char para tipo inteiro
+          if (1 != sscanf(local_addr, "%x", &conection[count].local_address))
+            perror("sscanf");
 
-      count++;
+          if (1 != sscanf(rem_addr, "%x", &conection[count].remote_address))
+            perror("sscanf");
+
+          conection[count].local_port = local_port;
+          conection[count].remote_port = rem_port;
+          // conection[count].con_state = con_state;
+          conection[count].inode = inode;
+          // conection[count].id = id;
+
+          count++;
+      }
     }
 
   free(line);
@@ -231,6 +242,7 @@ void print_process(process_t *process, const int lenght)
 {
   int tot_con;
   int j;
+  char buffer[INET_ADDRSTRLEN];
   for (int i = 0; i < lenght; i++)
     {
 
@@ -243,15 +255,45 @@ void print_process(process_t *process, const int lenght)
              "total conections - %d\n",
               process[i].pid, process[i].name, process[i].total_fd,
               process[i].total_conections);
-      printf("inodes           - ");
+      printf("conections       -\n");
 
       j = 0;
       tot_con = process[i].total_conections;
 
-      while(tot_con--)
-        printf("%d ", process[i].conection[j++].inode);
+      while(tot_con--){
+        if (inet_ntop(AF_INET, &process[i].conection[j].local_address, buffer, INET_ADDRSTRLEN) != NULL)
+        printf("%s:", buffer);
+        printf("%d <--> ", process[i].conection[j].local_port);
+        if (inet_ntop(AF_INET, &process[i].conection[j].remote_address, buffer, INET_ADDRSTRLEN) != NULL)
+        printf("%s:", buffer);
+        printf("%d ", process[i].conection[j].remote_port);
+        printf("\t%d", process[i].conection[j].inode);
+        j++;
+        putchar('\n');
+      }
 
       printf("\n\n");
+      // printf("\n");
+
+      // printf("local_address    - ");
+      // j = 0;
+      // if (inet_ntop(AF_INET, &process[i].conection[j].local_address, buffer, INET_ADDRSTRLEN) != NULL)
+      //   printf("%s ", buffer);
+      //
+      //
+      //
+      // printf("\n");
+      //
+      // printf("local_port       - ");
+      // j = 0;
+      // tot_con = process[i].total_conections;
+      // while(tot_con--)
+      //   printf("%d ", process[i].conection[j++].local_port);
+        // printf("%s ", inet_ntop(AF_INET, &process[i].conection[j++].local_port, buffer, INET_ADDRSTRLEN));
+
+
+
+
     }
 }
 
