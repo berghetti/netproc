@@ -165,7 +165,7 @@ get_info_conections
 }
 
 // armazena o nome do processo no buffer e retorna o tamanho do nome do processo
-// até o primeiro espaço, não incluindo caracter \0.
+// até o primeiro espaço ou '\0', incluindo caracter \0.
 static int
 get_name_process(const int pid, char **buffer)
 {
@@ -177,7 +177,7 @@ get_name_process(const int pid, char **buffer)
 
   if (arq == NULL)
     {
-      puts("erro abrir cmdline");
+      perror("fopen");
       return -1;
     }
 
@@ -185,6 +185,7 @@ get_name_process(const int pid, char **buffer)
   if ((fgets(line, MAX_NAME, arq)) == NULL)
     {
       fclose(arq);
+      perror("fgets");
       return -1;
     }
 
@@ -194,16 +195,16 @@ get_name_process(const int pid, char **buffer)
   line[len] = '\0';
   *buffer = malloc(len);
 
-  // pega o nome somente até o primeiro espaço, se nao fica muito comprido
+  // pega o nome somente até o primeiro espaço, se nao pode ficar muito comprido
   size_t i;
-  size_t j;
-  for (i = 0, j = 0; i < len && line[i] != ' '; i++, j++)
+  for (i = 0; i < len && (line[i] != '\0' && line[i] != ' '); i++)
     (*buffer)[i] = line[i];
-  for (; i < len; i++)
-    (*buffer)[i] = '\0';
+
+  (*buffer)[i] = '\0';
+
 
   fclose(arq);
-  return j;
+  return i;
 }
 
 // pega todos os fds do processo em /proc/$id/fd
@@ -242,12 +243,9 @@ void print_process(process_t *process, const int lenght)
 {
   int tot_con;
   int j;
-  char buffer[INET_ADDRSTRLEN];
+  char buffer_ip[INET_ADDRSTRLEN];
   for (int i = 0; i < lenght; i++)
     {
-
-      // printf("pid %d\n", process[i].pid);
-      // printf("name %s\n", process[i].name);
 
       printf("process pid      - %d\n"
              "process name     - %s\n"
@@ -261,11 +259,11 @@ void print_process(process_t *process, const int lenght)
       tot_con = process[i].total_conections;
 
       while(tot_con--){
-        if (inet_ntop(AF_INET, &process[i].conection[j].local_address, buffer, INET_ADDRSTRLEN) != NULL)
-        printf("%s:", buffer);
+        if (inet_ntop(AF_INET, &process[i].conection[j].local_address, buffer_ip, INET_ADDRSTRLEN) != NULL)
+        printf("%s:", buffer_ip);
         printf("%d <--> ", process[i].conection[j].local_port);
-        if (inet_ntop(AF_INET, &process[i].conection[j].remote_address, buffer, INET_ADDRSTRLEN) != NULL)
-        printf("%s:", buffer);
+        if (inet_ntop(AF_INET, &process[i].conection[j].remote_address, buffer_ip, INET_ADDRSTRLEN) != NULL)
+        printf("%s:", buffer_ip);
         printf("%d ", process[i].conection[j].remote_port);
         printf("\t%d", process[i].conection[j].inode);
         j++;
@@ -273,26 +271,6 @@ void print_process(process_t *process, const int lenght)
       }
 
       printf("\n\n");
-      // printf("\n");
-
-      // printf("local_address    - ");
-      // j = 0;
-      // if (inet_ntop(AF_INET, &process[i].conection[j].local_address, buffer, INET_ADDRSTRLEN) != NULL)
-      //   printf("%s ", buffer);
-      //
-      //
-      //
-      // printf("\n");
-      //
-      // printf("local_port       - ");
-      // j = 0;
-      // tot_con = process[i].total_conections;
-      // while(tot_con--)
-      //   printf("%d ", process[i].conection[j++].local_port);
-        // printf("%s ", inet_ntop(AF_INET, &process[i].conection[j++].local_port, buffer, INET_ADDRSTRLEN));
-
-
-
 
     }
 }
