@@ -42,7 +42,7 @@ int get_process_active_con(process_t **procs);
 
 void print_process(process_t *process, const int lenght);
 
-
+// percerre a array e os libera
 void free_process(process_t *process, const int lenght);
 
 

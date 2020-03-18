@@ -195,7 +195,7 @@ get_name_process(const int pid, char **buffer)
   line[len] = '\0';
   *buffer = malloc(len);
 
-  // pega o nome somente até o primeiro espaço, se nao pode ficar muito comprido
+  // pega o nome somente até o primeiro espaço, se nao pode ficar muito grande
   size_t i;
   for (i = 0; i < len && (line[i] != '\0' && line[i] != ' '); i++)
     (*buffer)[i] = line[i];
@@ -278,15 +278,16 @@ void print_process(process_t *process, const int lenght)
 
 void free_process(process_t *process, const int lenght)
 {
-  for (size_t i = 0; i < lenght; i++) {
-    free(process[i].name);
-    process[i].name = NULL;
-    free(process[i].conection);
-    process[i].conection = NULL;
-  }
+  for (size_t i = 0; i < lenght; i++)
+    {
+      free(process[i].name);
+      process[i].name = NULL;
+      free(process[i].conection);
+      process[i].conection = NULL;
+    }
+
   free(process);
   process = NULL;
-
 }
 
 int get_process_active_con(process_t **procs)
@@ -441,11 +442,13 @@ int get_process_active_con(process_t **procs)
   // sem processos com conexao ativa, retorna 0
   if (!process_active_conection){
     *procs = NULL;
-    return process_active_conection;
+    return -1;
   }
 
+  // alloca memoria para a struct passada por argumento
   *procs = malloc(sizeof(process_t) * process_active_conection);
 
+  // copia os processos com conexões ativos para a struct informada
   for (int i = 0; i < process_active_conection; i++)
        (*procs)[i] = processos[i];
 

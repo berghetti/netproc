@@ -168,11 +168,10 @@ int main(int argc, char **argv) {
       bytes_outgoing = 0;
     }
 
+    // pegar dados cabeçalho ethernet
     // struct ethhdr *l2;
     // l2 = (struct ethhdr *) buffer;
     //
-    // if(ntohs(l2->h_proto) != ETH_P_IP) // not is a packet internet protocol
-    //   continue;
     //
     // printf("MAC DST: %02x:%02x:%02x:%02x:%02x:%02x\n",
     //       l2->h_dest[0],
@@ -188,29 +187,7 @@ int main(int argc, char **argv) {
     //       l2->h_source[3],
     //       l2->h_source[4],
     //       l2->h_source[5]);
-    //
-    // // printf("tamanho l2 %d\n", sizeof(struct ethhdr)); //ETH_HLEN
-    // // layer 3
-    // struct iphdr *l3;
-    // l3 = (struct iphdr *) (buffer + ETH_HLEN);
-    //
-    //
-    //
-    // char buf_ip[INET_ADDRSTRLEN];
-    // printf("IP SRC -> %s\n", inet_ntop(AF_INET, &l3->saddr, buf_ip, INET_ADDRSTRLEN));
-    // printf("IP DST -> %s\n", inet_ntop(AF_INET, &l3->daddr, buf_ip, INET_ADDRSTRLEN));
-    //
-    // printf("tamanho ihl %d\n", l3->ihl);
-    // printf("tamanho l3 %d\n", l3->ihl * 4);
-    //
-    // // layer 4
-    //
-    // struct tcphdr *l4;
-    // l4 = (struct tcphdr *) (buffer + ETH_HLEN + (l3->ihl * 4));
-    // printf("PORT SRC -> %d\n", ntohs(l4->source));
-    // printf("PORT DST -> %d\n", ntohs(l4->dest));
-    //
-    // putchar('\n');
+
     //
     // printf("Protocol: 0x%04x\n\n", ntohs(l2->h_proto));
 

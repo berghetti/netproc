@@ -2,14 +2,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netinet/ip.h>
+
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <time.h>
 #include <unistd.h>
-#include <net/if.h>
+
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
+#include <linux/tcp.h>
+
+#include <netinet/ip.h>
+#include <net/if.h>
+// #include <netinet/tcp.h>
 
 
 #define NSTOS 1000000000.0  // convert nanoseconds for seconds
@@ -98,11 +103,18 @@ int main(int argc, char **argv) {
     perror("clock");
     exit(EXIT_FAILURE);
   }
-
+  printf("sizeof struct sockaddr_ll %d\n", size_sockaddr);
   while(1) {
 
     bytes_received = recvfrom(sock , buffer , IP_MAXPACKET , 0,
                               (struct sockaddr *) &pkt, &size_sockaddr);
+
+    // pegar dados cabeçalho ethernet
+    struct ethhdr *l2;
+    l2 = (struct ethhdr *) buffer;
+
+    if(ntohs(l2->h_proto) != ETH_P_IP) // not is a packet internet protocol
+      continue;
 
     if (bytes_received > 0 && bytes_received != -1){
       if(pkt.sll_pkttype == PACKET_OUTGOING){
@@ -134,102 +146,63 @@ int main(int argc, char **argv) {
     if (clock_gettime(CLOCK_MONOTONIC, &endTime) == -1 )
       printf("erro");
 
-    if(diff(&initTime, &endTime) >= 1.0){
-
-      cls();
-      printf("------------------------------------------------------------------------\n"
-             " T. bytes  | T. pkts   | bytes in  | pkts in   | bytes out | pkts out  |\n"
-             "------------------------------------------------------------------------\n"
-             "%-11d|%-11d|%-11d|%-11d|%-11d|%-11d\n",
-              total_bytes_aggregate, total_packets_aggregate,
-              total_bytes_ingoing, total_packets_ingoing,
-              total_bytes_outgoing, total_packets_outgoing);
-
-      printf("\n\n");
-      printf("------------------------------------------------------------------------\n"
-             "Download | %d Kibps\n"
-             "           %d pps\n"
-             "\n"
-             "Upload   | %d Kibps\n"
-             "           %d pps\n",
-             (bytes_ingoing * 8) / 1024,
-             packets_ingoing,
-             (bytes_outgoing * 8) / 1024,
-             packets_outgoing);
 
 
-      initTime = endTime;
 
-      packets_aggregate = 0;
-      bytes_aggregate = 0;
-      packets_ingoing = 0;
-      packets_outgoing = 0;
-      bytes_ingoing = 0;
-      bytes_outgoing = 0;
-    }
+    printf("MAC DST: %02x:%02x:%02x:%02x:%02x:%02x\n",
+          l2->h_dest[0],
+          l2->h_dest[1],
+          l2->h_dest[2],
+          l2->h_dest[3],
+          l2->h_dest[4],
+          l2->h_dest[5]);
+    printf("MAC SRC: %02x:%02x:%02x:%02x:%02x:%02x\n",
+          l2->h_source[0],
+          l2->h_source[1],
+          l2->h_source[2],
+          l2->h_source[3],
+          l2->h_source[4],
+          l2->h_source[5]);
 
-    // struct ethhdr *l2;
-    // l2 = (struct ethhdr *) buffer;
-    //
-    // if(ntohs(l2->h_proto) != ETH_P_IP) // not is a packet internet protocol
-    //   continue;
-    //
-    // printf("MAC DST: %02x:%02x:%02x:%02x:%02x:%02x\n",
-    //       l2->h_dest[0],
-    //       l2->h_dest[1],
-    //       l2->h_dest[2],
-    //       l2->h_dest[3],
-    //       l2->h_dest[4],
-    //       l2->h_dest[5]);
-    // printf("MAC SRC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-    //       l2->h_source[0],
-    //       l2->h_source[1],
-    //       l2->h_source[2],
-    //       l2->h_source[3],
-    //       l2->h_source[4],
-    //       l2->h_source[5]);
-    //
-    // // printf("tamanho l2 %d\n", sizeof(struct ethhdr)); //ETH_HLEN
-    // // layer 3
-    // struct iphdr *l3;
-    // l3 = (struct iphdr *) (buffer + ETH_HLEN);
-    //
-    //
-    //
-    // char buf_ip[INET_ADDRSTRLEN];
-    // printf("IP SRC -> %s\n", inet_ntop(AF_INET, &l3->saddr, buf_ip, INET_ADDRSTRLEN));
-    // printf("IP DST -> %s\n", inet_ntop(AF_INET, &l3->daddr, buf_ip, INET_ADDRSTRLEN));
-    //
+    // printf("tamanho l2 %d\n", sizeof(struct ethhdr)); //ETH_HLEN
+    // layer 3
+    struct iphdr *l3;
+    l3 = (struct iphdr *) (buffer + ETH_HLEN);
+
+    char buf_ip[INET_ADDRSTRLEN];
+    printf("IP SRC -> %s\n", inet_ntop(AF_INET, &l3->saddr, buf_ip, INET_ADDRSTRLEN));
+    printf("IP DST -> %s\n", inet_ntop(AF_INET, &l3->daddr, buf_ip, INET_ADDRSTRLEN));
+
     // printf("tamanho ihl %d\n", l3->ihl);
     // printf("tamanho l3 %d\n", l3->ihl * 4);
-    //
-    // // layer 4
-    //
-    // struct tcphdr *l4;
-    // l4 = (struct tcphdr *) (buffer + ETH_HLEN + (l3->ihl * 4));
-    // printf("PORT SRC -> %d\n", ntohs(l4->source));
-    // printf("PORT DST -> %d\n", ntohs(l4->dest));
-    //
-    // putchar('\n');
-    //
+
+    // layer 4
+
+    struct tcphdr *l4;
+    l4 = (struct tcphdr *) (buffer + ETH_HLEN + (l3->ihl * 4));
+    printf("PORT SRC -> %d\n", ntohs(l4->source));
+    printf("PORT DST -> %d\n", ntohs(l4->dest));
+
+    putchar('\n');
+
     // printf("Protocol: 0x%04x\n\n", ntohs(l2->h_proto));
-
+    //
     // printf("pai: total_packets: %d\n", total_packets);
-
+    //
     // if (clock_gettime(CLOCK_MONOTONIC, &initTime) == -1)
     //   printf("erro");
-
+    //
     // if (clock_gettime(CLOCK_MONOTONIC, &endTime) == -1)
     //   printf("erro");
-
+    //
     // time = endTime.tv_sec - initTime.tv_sec;
     // time += (endTime.tv_nsec - initTime.tv_nsec) / NSTOS;
     //
     // pps = total_packets / time;
-
+    //
     // printf("\rtime: %f", time);
-    //printf("\rpacket per second: %f", pps);
-
+    // printf("\rpacket per second: %f", pps);
+    //
     //
     //
     // struct iphdr *ip_packet = (struct iphdr *)buffer;
