@@ -47,8 +47,11 @@ void print_proc_net(process_t *processes, const int tot_process)
   cls();
   for (int i = 0; i < tot_process; i++)
     {
+      if (!processes[i].name)
+        puts("DEU RUIM!!!!!!!!!!!");
 
-      printf("* %-45s pps_rx - %d \t pps_tx - %d \t %d up-kbps \t %d down-kbps \n",
+      printf("%-5d\t %-45s pps_rx - %d\t pps_tx - %d\t %d up-kbps\t %d down-kbps \n",
+            processes[i].pid,
             processes[i].name,
             processes[i].pps_rx,
             processes[i].pps_tx,

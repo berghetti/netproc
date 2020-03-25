@@ -155,7 +155,7 @@ get_info_conections
 static size_t strlen_space(const char *string)
 {
   size_t n = 0;
-  while(*string != '\0' && *string != ' '){
+  while(*string && *string != ' '){
     string++;
     n++;
   }
@@ -315,6 +315,8 @@ int get_process_active_con(process_t **procs)
       printf("tam struct process %zu\n", sizeof(process_t));
     }
 
+  // process_t processos[MAX_PROCESS] = {0};
+
   process_t processos[total_process];
   memset(processos, 0, total_process);
 
@@ -337,8 +339,8 @@ int get_process_active_con(process_t **procs)
 
 
   bool process_have_conection_active;
-  int process_active_conection = 0;
-  int tmp_tot_fd = 0;;
+  int count_process_active_con = 0; // contador de processos com conexões ativas
+  int tmp_tot_fd = 0;
 
   int index_conection;
   int index_history_con[total_conections];
@@ -386,7 +388,7 @@ int get_process_active_con(process_t **procs)
           // compara o fd do processo com todos os inodes - conexões -  disponiveis
           for (int c = 0; c < total_conections; c++)
             {
-              // connection is in TIME_WAIT state, test next conection
+              // connection in TIME_WAIT state, test next conection
               if (conections[c].inode == 0)
                 continue;
 
@@ -414,55 +416,55 @@ int get_process_active_con(process_t **procs)
         {
 
           // obtem informações do processo
-          processos[process_active_conection].pid = process_pids[pd];
-          get_name_process(process_pids[pd], &processos[process_active_conection].name);
-          processos[process_active_conection].total_fd = total_fd_process;
-          processos[process_active_conection].total_conections = index_conection;
+          processos[count_process_active_con].pid = process_pids[pd];
+          get_name_process(process_pids[pd], &processos[count_process_active_con].name);
+          processos[count_process_active_con].total_fd = total_fd_process;
+          processos[count_process_active_con].total_conections = index_conection;
 
           //pega as conexões ativas no array conections referentes ao processo
           //e adiciona a ele
-          processos[process_active_conection].conection = malloc(
-            sizeof(conection_t) *
-            processos[process_active_conection].total_conections
+          processos[count_process_active_con].conection = calloc(
+            sizeof(conection_t),
+            processos[count_process_active_con].total_conections
           );
 
           for (int c = 0; c < index_conection; c++)
             {
               if (debug)
                 printf("associando ao processo pid %d o inode %d\n",
-                      processos[process_active_conection].pid, conections[index_history_con[c]].inode);
+                      processos[count_process_active_con].pid, conections[index_history_con[c]].inode);
                 // printf("index_histopry[%d] - %d\n", index_conection - c - 1, index_history_con[c])
 
-              processos[process_active_conection].conection[c] = conections[index_history_con[c]];
+              processos[count_process_active_con].conection[c] = conections[index_history_con[c]];
 
               if (debug)
               printf("associado ao processo pid %d o inode %d - index %d\n",
-                    processos[process_active_conection].pid, processos[process_active_conection].conection[c].inode, c);
+                    processos[count_process_active_con].pid, processos[count_process_active_con].conection[c].inode, c);
             }
 
           // contabiliza total de processos que possuem conexao ativa
-          process_active_conection++;
+          count_process_active_con++;
         }
 
     } //for process
 
   // sem processos com conexao ativa
-  if (!process_active_conection){
+  if (!count_process_active_con){
     *procs = NULL;
     return 0;
   }
 
   // alloca memoria para a struct passada por argumento
-  // *procs = malloc(sizeof(process_t) * process_active_conection);
-  *procs = calloc(sizeof(process_t), process_active_conection);
-  // memset(*procs, 0, sizeof(process_t) * process_active_conection);
+  // *procs = malloc(sizeof(process_t) * count_process_active_con);
+  *procs = calloc(sizeof(process_t), count_process_active_con);
+  // memset(*procs, 0, sizeof(process_t) * count_process_active_con);
 
   // copia os processos com conexões ativos para a struct informada
-  for (int i = 0; i < process_active_conection; i++)
+  for (int i = 0; i < count_process_active_con; i++)
        (*procs)[i] = processos[i];
 
 
   // retorna o numero de processos com conexão ativa
-  return process_active_conection;
+  return count_process_active_con;
 
 }
