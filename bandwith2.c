@@ -104,13 +104,16 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
   printf("sizeof struct sockaddr_ll %d\n", size_sockaddr);
+  struct ethhdr *l2;
+  struct iphdr *l3;
+    struct tcphdr *l4;
   while(1) {
 
     bytes_received = recvfrom(sock , buffer , IP_MAXPACKET , 0,
                               (struct sockaddr *) &pkt, &size_sockaddr);
 
     // pegar dados cabeçalho ethernet
-    struct ethhdr *l2;
+
     l2 = (struct ethhdr *) buffer;
 
     if(ntohs(l2->h_proto) != ETH_P_IP) // not is a packet internet protocol
@@ -147,8 +150,6 @@ int main(int argc, char **argv) {
       printf("erro");
 
 
-
-
     printf("MAC DST: %02x:%02x:%02x:%02x:%02x:%02x\n",
           l2->h_dest[0],
           l2->h_dest[1],
@@ -166,7 +167,7 @@ int main(int argc, char **argv) {
 
     // printf("tamanho l2 %d\n", sizeof(struct ethhdr)); //ETH_HLEN
     // layer 3
-    struct iphdr *l3;
+
     l3 = (struct iphdr *) (buffer + ETH_HLEN);
 
     char buf_ip[INET_ADDRSTRLEN];
@@ -178,7 +179,7 @@ int main(int argc, char **argv) {
 
     // layer 4
 
-    struct tcphdr *l4;
+
     l4 = (struct tcphdr *) (buffer + ETH_HLEN + (l3->ihl * 4));
     printf("PORT SRC -> %d\n", ntohs(l4->source));
     printf("PORT DST -> %d\n", ntohs(l4->dest));

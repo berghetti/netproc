@@ -1,11 +1,5 @@
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <linux/if_ether.h>
-#include <netinet/ip.h>
-#include <string.h>
-#include <errno.h>
-#include <arpa/inet.h>
+
+
 
 #include "network.h"
 
@@ -48,7 +42,8 @@ int create_socket()
 }
 
 
-int get_packets(struct sockaddr_ll *link_level, unsigned char *buffer, const int lenght)
+ssize_t
+get_packets(struct sockaddr_ll *link_level, unsigned char *buffer, const int lenght)
 {
   socklen_t link_level_size = sizeof(struct sockaddr_ll);
 
@@ -66,6 +61,39 @@ int get_packets(struct sockaddr_ll *link_level, unsigned char *buffer, const int
     perror("recvfrom");
 
   return -1;
+
+}
+
+int parse_packet(struct sockaddr_ll *ll, unsigned char *buf, struct packet *pkt)
+{
+  struct ethhdr *l2;
+  struct iphdr  *l3;
+  struct tcphdr *l4;
+
+  l2 = (struct ethhdr *) buf;
+  if(ntohs(l2->h_proto) != ETH_P_IP) // not is a packet internet protocol
+    return 0;
+
+  l3 = (struct iphdr *) (buf + ETH_HLEN);
+  l4 = (struct tcphdr *) (buf + ETH_HLEN + (l3->ihl * 4));
+
+  // criar packet
+  if(ll->sll_pkttype == PACKET_OUTGOING )
+    { // upload
+      // print_l2(l2, BOTH);
+      pkt->direction = PKT_UPL;
+      pkt->local_address = l3->saddr;
+      pkt->local_port = ntohs(l4->source);
+    }
+  else
+    { // download
+      pkt->direction = PKT_DOWN;
+      pkt->local_address = l3->daddr;
+      pkt->local_port = ntohs(l4->dest);
+    }
+
+
+  return 1;
 
 }
 
@@ -92,4 +120,16 @@ void print_l2(struct ethhdr *l2, const int flag)
             l2->h_dest[4],
             l2->h_dest[5]);
     }
+}
+
+void print_packet(struct packet *pkt)
+{
+
+  char buf_ip[INET_ADDRSTRLEN];
+  printf("IP local    -> %s\n", inet_ntop(AF_INET, &pkt->local_address, buf_ip, INET_ADDRSTRLEN));
+  // printf("IP remote -> %s\n", inet_ntop(AF_INET, pkt->daddr, buf_ip, INET_ADDRSTRLEN));
+
+  printf("PORT local  -> %d\n", ntohs(pkt->local_port));
+  // printf("PORT remote -> %d\n", ntohs(pkt->dest));
+
 }

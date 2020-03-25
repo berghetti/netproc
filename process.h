@@ -1,7 +1,21 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdint.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
+
+#include <dirent.h>
 #include <ctype.h>
+
 
 #define MAX_PROCESS 13504 // ulimit -a
 #define PROCESS_DIR "/proc/"
@@ -11,6 +25,17 @@
 
 #define MAX_NAME_SOCKET 9 + 8 + 3 // socket:[99999999] + 3 safe
 #define MAX_NAME 1000
+
+
+typedef struct
+{
+  uint32_t pps_rx;    // packets per second
+  uint32_t pps_tx;
+  uint32_t Bps_rx;    // bytes per second, not bits
+  uint32_t Bps_tx;
+  uint32_t bytes_rx;  //total bytes rx
+  uint32_t bytes_tx;  // total bytes tx
+} networking_stats;
 
 typedef struct
 {
@@ -22,16 +47,22 @@ typedef struct
   uint16_t remote_port;
   // uint8_t  con_state;
   uint32_t inode;
+
 }conection_t;
 
 typedef struct
 {
-  conection_t *conection;     // conexoes do processo
-  char *name;                  // nome processo
-  // uint32_t *fds;               // todos os file descriptos - /proc/pid/fd
-  uint32_t pid;                // pid do processo
-  uint32_t total_fd;           // totalal de fd no processo
-  uint32_t total_conections;   // total de conexoes do processo
+  // networking_stats *stats_net;  // estatisticas da conexão
+  conection_t *conection;       // conexoes do processo
+  char *name;                   // nome processo
+  // uint32_t *fds;             // todos os file descriptos - /proc/pid/fd
+  uint32_t pid;                 // pid do processo
+  uint32_t total_fd;            // totalal de fd no processo
+  uint32_t total_conections;    // total de conexoes do processo
+  uint32_t pps_rx;
+  uint32_t pps_tx;
+  uint32_t Bps_rx;
+  uint32_t Bps_tx;
 }process_t;
 
 

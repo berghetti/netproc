@@ -1,17 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdint.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
-
-#include <dirent.h>
-#include <ctype.h>
 
 #include "process.h"
 
@@ -164,6 +150,18 @@ get_info_conections
   return count;
 }
 
+// retorna o tamanho da string até null bytes ou espaço
+// oque ocorrer primeiro
+static size_t strlen_space(const char *string)
+{
+  size_t n = 0;
+  while(*string != '\0' && *string != ' '){
+    string++;
+    n++;
+  }
+  return n;
+}
+
 // armazena o nome do processo no buffer e retorna o tamanho do nome do processo
 // até o primeiro espaço ou '\0', incluindo caracter \0.
 static int
@@ -189,19 +187,28 @@ get_name_process(const int pid, char **buffer)
       return -1;
     }
 
-
-  size_t len = strlen(line);
+  size_t len = strlen_space(line); // tamanho até null byte ou primeiro espaço
 
   line[len] = '\0';
-  *buffer = malloc(len);
+  *buffer = malloc(len + 1);
 
-  // pega o nome somente até o primeiro espaço, se nao pode ficar muito grande
+  // printf("len - %d\n", len);
+  // copia a string junto com null byte
   size_t i;
-  for (i = 0; i < len && (line[i] != '\0' && line[i] != ' '); i++)
+  // printf("%s\n", line);
+  for (i = 0; i < len + 1; i++){
     (*buffer)[i] = line[i];
+    // printf("0x%x\n", line[i]);
+  }
+  // printf("\n\n\n\n");
 
-  (*buffer)[i] = '\0';
+  // for (i = 0; i < len && (line[i] != '\0' && line[i] != ' '); i++)
+  //   (*buffer)[i] = line[i];
 
+  // i++;
+  // (*buffer)[i] = '\0';
+  // printf("%s\n", line);
+  // printf("%d\n", i);
 
   fclose(arq);
   return i;
@@ -214,8 +221,6 @@ static int get_all_fd_process(const int pid, unsigned int *buffer)
   char path[MAX_NAME];
   snprintf(path, MAX_NAME, "/proc/%d/fd/", pid);
 
-  // if ((access(path, R_OK)) == -1)
-  //   return -1;
 
   if (debug)
     printf("path process: %s\n", path);
@@ -262,9 +267,11 @@ void print_process(process_t *process, const int lenght)
         if (inet_ntop(AF_INET, &process[i].conection[j].local_address, buffer_ip, INET_ADDRSTRLEN) != NULL)
         printf("%s:", buffer_ip);
         printf("%d <--> ", process[i].conection[j].local_port);
+
         if (inet_ntop(AF_INET, &process[i].conection[j].remote_address, buffer_ip, INET_ADDRSTRLEN) != NULL)
         printf("%s:", buffer_ip);
         printf("%d ", process[i].conection[j].remote_port);
+
         printf("\t%d", process[i].conection[j].inode);
         j++;
         putchar('\n');
@@ -364,22 +371,19 @@ int get_process_active_con(process_t **procs)
           if (debug)
             printf("path_fd %s\n", path_fd);
 
-          //
-          // // se der erro para ler, provavel acesso negado
-          // // vai pro proximo fd do processo
-          if ((len_link = readlink(path_fd, data_fd, 1000)) == -1)
+          // se der erro para ler, provavel acesso negado
+          // vai pro proximo fd do processo
+          if ((len_link = readlink(path_fd, data_fd, MAX_NAME_SOCKET)) == -1)
             continue;
 
-          //
           data_fd[len_link] = '\0';
 
-          //
-          // // caso o link nao tenha a palavra socket
-          // // vai para proximo fd do processo
+          // caso o link nao tenha a palavra socket
+          // vai para proximo fd do processo
           if (!strstr(data_fd, "socket"))
             continue;
 
-          // compara o fd do processo com todos os inodes disponiveis
+          // compara o fd do processo com todos os inodes - conexões -  disponiveis
           for (int c = 0; c < total_conections; c++)
             {
               // connection is in TIME_WAIT state, test next conection
@@ -417,7 +421,10 @@ int get_process_active_con(process_t **procs)
 
           //pega as conexões ativas no array conections referentes ao processo
           //e adiciona a ele
-          processos[process_active_conection].conection = malloc(sizeof(conection_t) * processos[process_active_conection].total_conections);
+          processos[process_active_conection].conection = malloc(
+            sizeof(conection_t) *
+            processos[process_active_conection].total_conections
+          );
 
           for (int c = 0; c < index_conection; c++)
             {
@@ -439,18 +446,21 @@ int get_process_active_con(process_t **procs)
 
     } //for process
 
-  // sem processos com conexao ativa, retorna 0
+  // sem processos com conexao ativa
   if (!process_active_conection){
     *procs = NULL;
-    return -1;
+    return 0;
   }
 
   // alloca memoria para a struct passada por argumento
-  *procs = malloc(sizeof(process_t) * process_active_conection);
+  // *procs = malloc(sizeof(process_t) * process_active_conection);
+  *procs = calloc(sizeof(process_t), process_active_conection);
+  // memset(*procs, 0, sizeof(process_t) * process_active_conection);
 
   // copia os processos com conexões ativos para a struct informada
   for (int i = 0; i < process_active_conection; i++)
        (*procs)[i] = processos[i];
+
 
   // retorna o numero de processos com conexão ativa
   return process_active_conection;
