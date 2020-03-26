@@ -45,12 +45,13 @@ void reset_counters_process(process_t *processes, const int total_process)
 void print_proc_net(process_t *processes, const int tot_process)
 {
   cls();
+
+  printf("%-5s\t %-45s %s\t %s\t %s\t %s \n",
+        "PID", "PROGRAM", "PPS RX", "PPS TX", "UP", "DOWN");
+
   for (int i = 0; i < tot_process; i++)
     {
-      if (!processes[i].name)
-        puts("DEU RUIM!!!!!!!!!!!");
-
-      printf("%-5d\t %-45s pps_rx - %d\t pps_tx - %d\t %d up-kbps\t %d down-kbps \n",
+      printf("%-5d\t %-45s %d\t %d\t %d kbps\t %d kbps \n",
             processes[i].pid,
             processes[i].name,
             processes[i].pps_rx,
@@ -108,7 +109,7 @@ int main(int argc, char **argv)
 
   process_t *processes = NULL;
   int tot_process_act = 0;
-  tot_process_act = get_process_active_con(&processes);
+  tot_process_act = get_process_active_con(&processes, tot_process_act);
 
 
   struct sockaddr_ll link_level;
@@ -151,12 +152,16 @@ int main(int argc, char **argv)
       // print_packet(&packet);
       if ( ! add_statistics_in_process(processes, tot_process_act, &packet) )
         {
+          puts("BUSCANDO PROCESSOS/CONEXOES...");
             // puts("buscando novos processos");
             // checar o free, perdendo estatisticas ao checar novos processos/conexoes
             // no tempo em que ja temos estatisticas e nao deu tempo de atualizar/printar
             // porem buscamos novas processos, perdemos essas estatisticas
-            free_process(processes, tot_process_act);
-            tot_process_act = get_process_active_con(&processes);
+
+            // free_process(processes, tot_process_act);
+            tot_process_act = get_process_active_con(&processes, tot_process_act);
+
+            // tot_process_act = refresh_process_active_con(&processes, tot_process_act);
             // continue;
         }
 

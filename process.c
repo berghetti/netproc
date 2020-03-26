@@ -297,7 +297,7 @@ void free_process(process_t *process, const int lenght)
   process = NULL;
 }
 
-int get_process_active_con(process_t **procs)
+int get_process_active_con(process_t **procs, const int tot_process_act_old)
 {
   int total_process = 0;
   unsigned int process_pids[MAX_PROCESS] = {0};
@@ -315,10 +315,10 @@ int get_process_active_con(process_t **procs)
       printf("tam struct process %zu\n", sizeof(process_t));
     }
 
-  // process_t processos[MAX_PROCESS] = {0};
+  process_t processos[MAX_PROCESS] = {0};
 
-  process_t processos[total_process];
-  memset(processos, 0, total_process);
+  // process_t processos[total_process];
+  // memset(processos, 0, total_process);
 
 
   /*
@@ -339,7 +339,7 @@ int get_process_active_con(process_t **procs)
 
 
   bool process_have_conection_active;
-  int count_process_active_con = 0; // contador de processos com conexões ativas
+  int tot_process_active_con = 0; // contador de processos com conexões ativas
   int tmp_tot_fd = 0;
 
   int index_conection;
@@ -416,55 +416,119 @@ int get_process_active_con(process_t **procs)
         {
 
           // obtem informações do processo
-          processos[count_process_active_con].pid = process_pids[pd];
-          get_name_process(process_pids[pd], &processos[count_process_active_con].name);
-          processos[count_process_active_con].total_fd = total_fd_process;
-          processos[count_process_active_con].total_conections = index_conection;
+          processos[tot_process_active_con].pid = process_pids[pd];
+          get_name_process(process_pids[pd], &processos[tot_process_active_con].name);
+          processos[tot_process_active_con].total_fd = total_fd_process;
+          processos[tot_process_active_con].total_conections = index_conection;
 
           //pega as conexões ativas no array conections referentes ao processo
           //e adiciona a ele
-          processos[count_process_active_con].conection = calloc(
+          processos[tot_process_active_con].conection = calloc(
             sizeof(conection_t),
-            processos[count_process_active_con].total_conections
+            processos[tot_process_active_con].total_conections
           );
 
           for (int c = 0; c < index_conection; c++)
             {
               if (debug)
                 printf("associando ao processo pid %d o inode %d\n",
-                      processos[count_process_active_con].pid, conections[index_history_con[c]].inode);
+                      processos[tot_process_active_con].pid, conections[index_history_con[c]].inode);
                 // printf("index_histopry[%d] - %d\n", index_conection - c - 1, index_history_con[c])
 
-              processos[count_process_active_con].conection[c] = conections[index_history_con[c]];
+              processos[tot_process_active_con].conection[c] = conections[index_history_con[c]];
 
               if (debug)
               printf("associado ao processo pid %d o inode %d - index %d\n",
-                    processos[count_process_active_con].pid, processos[count_process_active_con].conection[c].inode, c);
+                    processos[tot_process_active_con].pid, processos[tot_process_active_con].conection[c].inode, c);
             }
 
           // contabiliza total de processos que possuem conexao ativa
-          count_process_active_con++;
+          tot_process_active_con++;
         }
 
     } //for process
 
   // sem processos com conexao ativa
-  if (!count_process_active_con){
+  if (!tot_process_active_con){
     *procs = NULL;
     return 0;
   }
 
   // alloca memoria para a struct passada por argumento
-  // *procs = malloc(sizeof(process_t) * count_process_active_con);
-  *procs = calloc(sizeof(process_t), count_process_active_con);
-  // memset(*procs, 0, sizeof(process_t) * count_process_active_con);
+  // se chamada pela primeira vez - ponteiro == NULL - aloca
+  // o dobro de memoria necessaria para um primeiro momento
+  if ( ! *procs )
+    {
+      puts("CHAMEU CALLOC");
+      *procs = calloc( sizeof(process_t), (tot_process_active_con * 2) );
+    }
+  // se total de processos com conexões ativas for maior
+  // que o dobro do total antigo, reallocar mais memoria
+  else if ( (tot_process_active_con > (tot_process_act_old * 2)) )
+    {
+      *procs = realloc(*procs, (tot_process_active_con * 2));
+      puts("\033[0;31mCHAMEI REALLOC!!!!");
+    }
+
 
   // copia os processos com conexões ativos para a struct informada
-  for (int i = 0; i < count_process_active_con; i++)
-       (*procs)[i] = processos[i];
+  for (int i = 0; i < tot_process_active_con; i++)
+    {
+      if (*procs)
+        {
+          for (int j = 0; j < tot_process_act_old; j++)
+            {
+              if (
+                   processos[i].pid == (*procs)[j].pid &&
+                  ( (*procs)[j].Bps_rx != 0 || (*procs)[j].Bps_tx != 0 )
+                )
+                {
+                  puts("MANTENDO STATISTICAS");
+                  processos[i].pps_rx = (*procs)[j].pps_rx;
+                  processos[i].pps_tx = (*procs)[j].pps_tx;
+                  processos[i].Bps_rx = (*procs)[j].Bps_rx;
+                  processos[i].Bps_tx = (*procs)[j].Bps_tx;
+
+                }
+            }
+        }
+        (*procs)[i] = processos[i];
+    }
 
 
   // retorna o numero de processos com conexão ativa
-  return count_process_active_con;
+  return tot_process_active_con;
+
+}
+
+
+int refresh_process_active_con(process_t **old_process, const int tot_old)
+{
+
+  process_t *new_processes = NULL;
+
+  int tot_new = get_process_active_con(&new_processes, tot_old);
+
+
+  for (int i = 0; i < tot_new; i++)
+    {
+      for (int j = 0; j < tot_old; j++)
+        {
+          if ( new_processes[i].pid == (*old_process)[j].pid ) // mesmo processo
+            {
+              new_processes[i].pps_rx = (*old_process)[j].pps_rx;
+              new_processes[i].pps_tx = (*old_process)[j].pps_tx;
+              new_processes[i].Bps_rx = (*old_process)[j].Bps_rx;
+              new_processes[i].Bps_tx = (*old_process)[j].Bps_tx;
+            }
+
+        }
+    }
+    printf("new %p\n", (void *) new_processes);
+    printf("old %p\n", (void*) *old_process);
+  // if (new_processes !=)
+  // free_process(*old_process, tot_old);
+  // *old_process = new_processes;
+  return tot_new;
 
 }

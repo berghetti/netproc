@@ -68,7 +68,10 @@ typedef struct
 
 // inicializa a estrutura process_t para o endereço onde estão
 // armazenados os processos ativos e retorna a quantidade processos ativos
-int get_process_active_con(process_t **procs);
+int get_process_active_con(process_t **procs, const int tot_process_act_old);
+
+
+int refresh_process_active_con(process_t **old_process, const int tot_old);
 
 
 void print_process(process_t *process, const int lenght);
