@@ -31,7 +31,8 @@ void cls(void){
    //https://pt.stackoverflow.com/questions/58453/como-fazer-efeito-de-loading-no-terminal-em-apenas-uma-linha
 }
 
-void reset_counters_process(process_t *processes, const int total_process)
+void
+reset_counters_process(process_t *processes, const int total_process)
 {
   for (int i = 0; i < total_process; i++)
     {
@@ -42,20 +43,21 @@ void reset_counters_process(process_t *processes, const int total_process)
     }
 }
 
-void print_proc_net(process_t *processes, const int tot_process)
+void
+print_proc_net(process_t *processes, const int tot_process)
 {
   cls();
 
   printf("%-5s\t %-45s %s\t %s\t %s\t %s \n",
-        "PID", "PROGRAM", "PPS RX", "PPS TX", "UP", "DOWN");
+        "PID", "PROGRAM", "PPS TX", "PPS RX", "UP", "DOWN");
 
   for (int i = 0; i < tot_process; i++)
     {
-      printf("%-5d\t %-45s %d\t %d\t %d kbps\t %d kbps \n",
+      printf("%-5d\t %-45s %d\t %d\t %d\t %-6d kbps\t \n",
             processes[i].pid,
             processes[i].name,
-            processes[i].pps_rx,
             processes[i].pps_tx,
+            processes[i].pps_rx,
             (processes[i].Bps_tx) ? (processes[i].Bps_tx * 8) / 1024 : 0,
             (processes[i].Bps_rx) ? (processes[i].Bps_rx * 8) / 1024 : 0
           );
@@ -63,7 +65,10 @@ void print_proc_net(process_t *processes, const int tot_process)
 }
 
 
-int add_statistics_in_process(process_t *processes, const int tot_proc, struct packet *pkt)
+int
+add_statistics_in_process(process_t *processes,
+                          const int tot_proc,
+                          struct packet *pkt)
 {
 
   for (size_t i = 0; i < tot_proc; i++)

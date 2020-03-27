@@ -289,12 +289,97 @@ void free_process(process_t *process, const int lenght)
     {
       free(process[i].name);
       process[i].name = NULL;
-      free(process[i].conection);
-      process[i].conection = NULL;
+      // free(process[i].conection);
+      // process[i].conection = NULL;
     }
 
   free(process);
   process = NULL;
+}
+
+// aloca memoria para o ponteiro conection da estrutura process_t
+// com base no numero de conexoes que o processo tem,
+// sendo numero de conexoes * 2 o tamanho alocado.
+// Antes de alocar memoria é feita verificações para checar se é necessario
+// mais memoria (realloc) ou reutilizamos a memoria alocada em momento anterior
+static void
+alloc_memory_conections(process_t **old_processes,
+                        const int tot_old_process,
+                        process_t *new_processes)
+{
+  bool new_proc = true;
+  if (! *old_processes)
+    { // primeira vez que a função é chamada estrutura esta nula
+      new_processes->conection = calloc(
+        sizeof(conection_t),
+        (new_processes->total_conections * 2)
+      );
+
+      if (!new_processes->conection)
+        {
+          perror("calloc");
+          exit(EXIT_FAILURE);
+        }
+    }
+  else // demais vezes...
+    {
+      for (int i = 0; i < tot_old_process ; i++)
+        {
+          if (new_processes->pid == (*old_processes)[i].pid)
+            {
+              new_proc = false;
+              // processo ja existe, verifica se precisa aumentar memoria
+              // com base no numero de conexoes
+              if ( new_processes->total_conections <=
+                 (*old_processes)[i].total_conections * 2)
+                { // utiliza a mesma memoria alocada na primeira vez para esse processo
+                  new_processes->conection = (*old_processes)[i].conection;
+                  break;
+                }
+              else
+                {  // mais conexoes do que antes, necessario realocar
+                   // mais memoria para esse processo
+                  if (debug){
+                  puts("\033[0;31mREALOCANDO AS CONEXOES");
+                  printf("tamanho antigo - %d\ntamanho novo - %d\n",
+                  (*old_processes)[i].total_conections, new_processes->total_conections);
+                  puts("\033[0;00m");
+                  }
+
+                  void *p;
+                  p = realloc( (*old_processes)[i].conection,
+                      (new_processes->total_conections * sizeof(conection_t) * 2));
+
+                  if (! p)
+                    {
+                      perror("malloc");
+                      exit(EXIT_FAILURE);
+                    }
+
+                  new_processes->conection = p;
+
+                  break;
+                }
+
+            }
+
+        }
+        if (new_proc)
+          {
+            new_processes->conection = calloc(
+              sizeof(conection_t),
+              (new_processes->total_conections * 2)
+            );
+
+            if (!new_processes->conection)
+              {
+                perror("calloc");
+                exit(EXIT_FAILURE);
+              }
+
+          }
+    }
+
 }
 
 int get_process_active_con(process_t **procs, const int tot_process_act_old)
@@ -423,12 +508,10 @@ int get_process_active_con(process_t **procs, const int tot_process_act_old)
 
           //pega as conexões ativas no array conections referentes ao processo
           //e adiciona a ele
-          processos[tot_process_active_con].conection = calloc(
-            sizeof(conection_t),
-            processos[tot_process_active_con].total_conections
-          );
 
-          for (int c = 0; c < index_conection; c++)
+          alloc_memory_conections(procs, tot_process_act_old, &processos[tot_process_active_con]);
+
+          for (int c = 0; c < processos[tot_process_active_con].total_conections; c++)
             {
               if (debug)
                 printf("associando ao processo pid %d o inode %d\n",
@@ -466,8 +549,9 @@ int get_process_active_con(process_t **procs, const int tot_process_act_old)
   // que o dobro do total antigo, reallocar mais memoria
   else if ( (tot_process_active_con > (tot_process_act_old * 2)) )
     {
-      *procs = realloc(*procs, (tot_process_active_con * 2));
       puts("\033[0;31mCHAMEI REALLOC!!!!");
+      *procs = realloc(*procs, (tot_process_active_con * 2));
+
     }
 
 
