@@ -1,5 +1,5 @@
 
-FLAGS = -Wall -pedantic -O2 -g
+FLAGS = -Wall -Wextra -Werror -pedantic -pedantic-errors -O2 -g
 
 all: process
 

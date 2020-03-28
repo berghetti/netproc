@@ -13,13 +13,15 @@
 #include <linux/tcp.h>
 #include <netpacket/packet.h>
 
-// user in parameter  function print_l2()
+// used in parameter of function print_l2()
 #define SRC  1
 #define DST  2
 #define BOTH 3
 
 #define PKT_DOWN 1
 #define PKT_UPL  2
+
+extern int sock;
 
 struct packet{ // used for function parse_packet
   uint32_t local_address;
@@ -28,7 +30,7 @@ struct packet{ // used for function parse_packet
   uint8_t  direction;
 };
 
-extern int sock;
+
 
 
 // inicializa o socket para escutar conexões

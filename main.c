@@ -67,20 +67,22 @@ print_proc_net(process_t *processes, const int tot_process)
 
 int
 add_statistics_in_process(process_t *processes,
-                          const int tot_proc,
+                          const uint32_t tot_proc,
                           struct packet *pkt)
 {
 
   for (size_t i = 0; i < tot_proc; i++)
     {
-      // putchar('\n');
-      int j = 0;
-      int tot_con = processes[i].total_conections;
-      while(tot_con--)
-        {
+      puts("add statistics");
+      printf("total de conexoes do processo %s - %d\n",
+       processes[i].name,
+       processes[i].total_conections);
 
+      for (size_t j = 0; j < processes[i].total_conections; j++)
+        {
           // printf ("local %d\n", processes[i].conection[j].local_port);
           // printf ("pkt   %d\n", pkt->local_port);
+
           if (processes[i].conection[j].local_port == pkt->local_port)
             {
 
@@ -98,22 +100,25 @@ add_statistics_in_process(process_t *processes,
               return 1;
             }
 
-            j++;
         }
 
     }
-
-    return 0; // processo não localizado para para a conexão
+    // não localizado o processo que fez essa conexao
+    return 0;
 }
 
 
 int sock;
+// armazena a quantidade maxima de PROCESSOS
+// que podem ser armazenas na memoria da struct process_t
+// antes que seja necessario realicar a memoria
+uint32_t max_n_proc;
 
-int main(int argc, char **argv)
+int main(void)
 {
 
   process_t *processes = NULL;
-  int tot_process_act = 0;
+  uint32_t tot_process_act = 0;
   tot_process_act = get_process_active_con(&processes, tot_process_act);
 
 
@@ -124,7 +129,13 @@ int main(int argc, char **argv)
   if ( (create_socket()) == -1 )
     exit(EXIT_FAILURE);
 
-  unsigned char *buffer = malloc(IP_MAXPACKET);
+  unsigned char *buffer = calloc(IP_MAXPACKET, 1);
+  if (! buffer)
+    {
+      perror("calloc");
+      exit(EXIT_FAILURE);
+    }
+
   struct packet packet;
   struct timespec initTime, endTime;
 
@@ -138,7 +149,8 @@ int main(int argc, char **argv)
       ssize_t bytes = get_packets(&link_level, buffer, IP_MAXPACKET);
 
       if (bytes == -1){
-        free(buffer);
+        if(buffer)
+          free(buffer);
         perror("get_packets");
         exit(EXIT_FAILURE);
       }
@@ -157,7 +169,7 @@ int main(int argc, char **argv)
       // print_packet(&packet);
       if ( ! add_statistics_in_process(processes, tot_process_act, &packet) )
         {
-          puts("BUSCANDO PROCESSOS/CONEXOES...");
+          // puts("BUSCANDO PROCESSOS/CONEXOES...");
             // puts("buscando novos processos");
             // checar o free, perdendo estatisticas ao checar novos processos/conexoes
             // no tempo em que ja temos estatisticas e nao deu tempo de atualizar/printar

@@ -26,27 +26,33 @@
 #define MAX_NAME_SOCKET 9 + 8 + 3 // socket:[99999999] + 3 safe
 #define MAX_NAME 1000
 
+// armazena a quantidade maxima de PROCESSOS
+// que podem ser armazenas na memoria da struct process_t
+// antes que seja necessario realicar a memoria
+extern uint32_t max_n_proc;
 
-typedef struct
-{
-  uint32_t pps_rx;    // packets per second
-  uint32_t pps_tx;
-  uint32_t Bps_rx;    // bytes per second, not bits
-  uint32_t Bps_tx;
-  uint32_t bytes_rx;  //total bytes rx
-  uint32_t bytes_tx;  // total bytes tx
-} networking_stats;
+// typedef struct
+// {
+//   uint32_t pps_rx;    // packets per second
+//   uint32_t pps_tx;
+//   uint32_t Bps_rx;    // bytes per second, not bits
+//   uint32_t Bps_tx;
+//   uint32_t bytes_rx;  //total bytes rx
+//   uint32_t bytes_tx;  // total bytes tx
+// } networking_stats;
 
 typedef struct
 {
   // uint32_t id;
   // struct in_addr
+
+  uint32_t inode;
   uint32_t local_address;
-  uint16_t local_port;
   uint32_t remote_address;
+  uint16_t local_port;
   uint16_t remote_port;
   // uint8_t  con_state;
-  uint32_t inode;
+
 
 }conection_t;
 
@@ -63,6 +69,10 @@ typedef struct
   uint32_t pps_tx;
   uint32_t Bps_rx;
   uint32_t Bps_tx;
+  // variavel de controle, armazena o numero maximo
+  // de conexoes que podem ser armazenada antes
+  // que a memoria precise ser realocada
+  uint32_t max_n_con;
 }process_t;
 
 
