@@ -3,7 +3,7 @@
 
 #include "network.h"
 
-
+int sock;
 int create_socket()
 {
 

@@ -87,7 +87,7 @@ int refresh_process_active_con(process_t **old_process, const int tot_old);
 void print_process(process_t *process, const int lenght);
 
 // percerre a array e os libera
-void free_process(process_t *process, const int lenght);
+// void free_process(process_t *process, const int lenght);
 
 
 

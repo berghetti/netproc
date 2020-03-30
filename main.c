@@ -73,10 +73,10 @@ add_statistics_in_process(process_t *processes,
 
   for (size_t i = 0; i < tot_proc; i++)
     {
-      puts("add statistics");
-      printf("total de conexoes do processo %s - %d\n",
-       processes[i].name,
-       processes[i].total_conections);
+      // puts("add statistics");
+      // printf("total de conexoes do processo %s - %d\n",
+      //  processes[i].name,
+      //  processes[i].total_conections);
 
       for (size_t j = 0; j < processes[i].total_conections; j++)
         {
@@ -108,11 +108,6 @@ add_statistics_in_process(process_t *processes,
 }
 
 
-int sock;
-// armazena a quantidade maxima de PROCESSOS
-// que podem ser armazenas na memoria da struct process_t
-// antes que seja necessario realicar a memoria
-uint32_t max_n_proc;
 
 int main(void)
 {
