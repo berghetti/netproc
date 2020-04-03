@@ -4,7 +4,7 @@
 #include "network.h"
 
 int sock;
-int create_socket()
+int create_socket(void)
 {
 
   // int sock;
@@ -43,7 +43,9 @@ int create_socket()
 
 
 ssize_t
-get_packets(struct sockaddr_ll *link_level, unsigned char *buffer, const int lenght)
+get_packets(struct sockaddr_ll *link_level,
+            unsigned char *buffer,
+            const int lenght)
 {
   socklen_t link_level_size = sizeof(struct sockaddr_ll);
 
@@ -64,7 +66,10 @@ get_packets(struct sockaddr_ll *link_level, unsigned char *buffer, const int len
 
 }
 
-int parse_packet(struct sockaddr_ll *ll, unsigned char *buf, struct packet *pkt)
+int
+parse_packet(struct packet *pkt,
+            unsigned char *buf,
+            struct sockaddr_ll *ll)
 {
   struct ethhdr *l2;
   struct iphdr  *l3;

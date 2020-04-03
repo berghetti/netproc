@@ -41,7 +41,7 @@ int create_socket();
 ssize_t get_packets(struct sockaddr_ll *link_level, unsigned char *buffer, const int lenght);
 
 // aloca os dados brutos nas camadas 2, 3 e 4, tambe verifica se é um pacote de down ou up
-int parse_packet(struct sockaddr_ll *ll, unsigned char *buf, struct packet *pkt);
+int parse_packet(struct packet *pkt, unsigned char *buf, struct sockaddr_ll *ll);
 
 
 // print address MAC

@@ -18,13 +18,21 @@
 
 
 #define MAX_PROCESS 13504 // ulimit -a
+
+// diretorios onde são listados os processos do sistema
 #define PROCESS_DIR "/proc/"
 
 #define MAX_CONECTIONS 1024
 #define PATH_INODE "/proc/net/tcp"
 
-#define MAX_NAME_SOCKET 9 + 8 + 3 // socket:[99999999] + 3 safe
-#define MAX_NAME 1000
+// socket:[99999999] + 3 safe
+#define MAX_NAME_SOCKET 9 + 8 + 3
+#define MAX_NAME 1024
+
+// maxpid = 2^22 = 4194304 = 7 chars
+//   6  +  7  + 4 + 7
+// /proc/<pid>/fd/<id-fd>
+#define MAX_PATH_FD 24
 
 // armazena a quantidade maxima de PROCESSOS
 // que podem ser armazenas na memoria da struct process_t
@@ -62,7 +70,7 @@ typedef struct
   conection_t *conection;       // conexoes do processo
   char *name;                   // nome processo
   // uint32_t *fds;             // todos os file descriptos - /proc/pid/fd
-  uint32_t pid;                 // pid do processo
+  pid_t pid;                    // pid do processo
   uint32_t total_fd;            // totalal de fd no processo
   uint32_t total_conections;    // total de conexoes do processo
   uint32_t pps_rx;
@@ -81,7 +89,7 @@ typedef struct
 int get_process_active_con(process_t **procs, const int tot_process_act_old);
 
 
-int refresh_process_active_con(process_t **old_process, const int tot_old);
+// int refresh_process_active_con(process_t **old_process, const int tot_old);
 
 
 void print_process(process_t *process, const int lenght);

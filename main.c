@@ -154,7 +154,7 @@ int main(void)
         goto PRINT;
 
 
-      if ( !parse_packet(&link_level, buffer, &packet) ) // packet not is IP
+      if ( !parse_packet(&packet, buffer, &link_level) ) // packet not is IP
         goto PRINT;
         // continue;
 
@@ -163,19 +163,8 @@ int main(void)
 
       // print_packet(&packet);
       if ( ! add_statistics_in_process(processes, tot_process_act, &packet) )
-        {
-          // puts("BUSCANDO PROCESSOS/CONEXOES...");
-            // puts("buscando novos processos");
-            // checar o free, perdendo estatisticas ao checar novos processos/conexoes
-            // no tempo em que ja temos estatisticas e nao deu tempo de atualizar/printar
-            // porem buscamos novas processos, perdemos essas estatisticas
+        tot_process_act = get_process_active_con(&processes, tot_process_act);
 
-            // free_process(processes, tot_process_act);
-            tot_process_act = get_process_active_con(&processes, tot_process_act);
-
-            // tot_process_act = refresh_process_active_con(&processes, tot_process_act);
-            // continue;
-        }
 
       PRINT:
       if (clock_gettime(CLOCK_MONOTONIC, &endTime) == -1 )
