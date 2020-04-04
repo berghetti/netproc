@@ -24,9 +24,9 @@
 extern int sock;
 
 struct packet{ // used for function parse_packet
+  size_t lenght;
   uint32_t local_address;
-  uint16_t local_port;
-  uint32_t lenght;
+  uint16_t local_port;  
   uint8_t  direction;
 };
 

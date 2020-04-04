@@ -340,7 +340,7 @@ process_already_existed(process_t **current_procs,
   return -1;
 }
 
-// armazena a quantidade maxima de PROCESSOS
+// variavel global que armazena a quantidade maxima de PROCESSOS
 // que podem ser armazenas na memoria da struct process_t
 // antes que seja necessario realicar a memoria
 uint32_t max_n_proc = 0;
@@ -579,14 +579,14 @@ get_process_active_con(process_t **cur_proc,
         {
           for (int j = 0; j < tot_cur_proc_act; j++)
             {
-              if ( (processos[i].pid == (*cur_proc)[j].pid) &&
-                  ( (*cur_proc)[j].Bps_rx > 0 || (*cur_proc)[j].Bps_tx > 0 ) )
-                {
-                  processos[i].pps_rx = (*cur_proc)[j].pps_rx;
-                  processos[i].pps_tx = (*cur_proc)[j].pps_tx;
-                  processos[i].Bps_rx = (*cur_proc)[j].Bps_rx;
-                  processos[i].Bps_tx = (*cur_proc)[j].Bps_tx;
-                }
+              // if ( (processos[i].pid == (*cur_proc)[j].pid) &&
+              //     ( (*cur_proc)[j].Bps_rx > 0 || (*cur_proc)[j].Bps_tx > 0 ) )
+              //   {
+              //     processos[i].pps_rx = (*cur_proc)[j].pps_rx;
+              //     processos[i].pps_tx = (*cur_proc)[j].pps_tx;
+              //     processos[i].Bps_rx = (*cur_proc)[j].Bps_rx;
+              //     processos[i].Bps_tx = (*cur_proc)[j].Bps_tx;
+              //   }
             }
         }
         (*cur_proc)[i] = processos[i];

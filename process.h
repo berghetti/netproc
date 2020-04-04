@@ -34,9 +34,12 @@
 // /proc/<pid>/fd/<id-fd>
 #define MAX_PATH_FD 24
 
-// armazena a quantidade maxima de PROCESSOS
-// que podem ser armazenas na memoria da struct process_t
-// antes que seja necessario realicar a memoria
+#define LEN_BUF_CIRC_RATE 5
+
+// variavel global - declarada em process.c -  que armazena
+// a quantidade maxima de PROCESSOS  que podem ser armazenas
+// na memoria da struct process_t antes que seja
+// necessario realicar a memoria
 extern uint32_t max_n_proc;
 
 // typedef struct
@@ -75,8 +78,13 @@ typedef struct
   uint32_t total_conections;    // total de conexoes do processo
   uint32_t pps_rx;
   uint32_t pps_tx;
-  uint32_t Bps_rx;
-  uint32_t Bps_tx;
+  uint32_t Bps_rx[LEN_BUF_CIRC_RATE];
+  uint32_t Bps_tx[LEN_BUF_CIRC_RATE];
+  uint32_t avg_rx;
+  uint32_t avg_tx;
+  uint8_t n_elements_buf_rx;
+  uint8_t n_elements_buf_tx;
+
   // variavel de controle, armazena o numero maximo
   // de conexoes que podem ser armazenada antes
   // que a memoria precise ser realocada

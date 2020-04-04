@@ -72,28 +72,32 @@ parse_packet(struct packet *pkt,
             struct sockaddr_ll *ll)
 {
   struct ethhdr *l2;
-  struct iphdr  *l3;
+  struct iphdr  *l3_ip;
   struct tcphdr *l4;
 
   l2 = (struct ethhdr *) buf;
   if(ntohs(l2->h_proto) != ETH_P_IP) // not is a packet internet protocol
     return 0;
 
-  l3 = (struct iphdr *) (buf + ETH_HLEN);
-  l4 = (struct tcphdr *) (buf + ETH_HLEN + (l3->ihl * 4));
+  l3_ip = (struct iphdr *) (buf + ETH_HLEN);
+  if (l3_ip->protocol != IPPROTO_TCP) // not is packet TCP... verify later
+    return 0;
+
+  l4 = (struct tcphdr *) (buf + ETH_HLEN + (l3_ip->ihl * 4));
 
   // criar packet
   if(ll->sll_pkttype == PACKET_OUTGOING )
     { // upload
       // print_l2(l2, BOTH);
       pkt->direction = PKT_UPL;
-      pkt->local_address = l3->saddr;
+      pkt->local_address = l3_ip->saddr;
       pkt->local_port = ntohs(l4->source);
     }
   else
     { // download
+      // print_l2(l2, BOTH);
       pkt->direction = PKT_DOWN;
-      pkt->local_address = l3->daddr;
+      pkt->local_address = l3_ip->daddr;
       pkt->local_port = ntohs(l4->dest);
     }
 
