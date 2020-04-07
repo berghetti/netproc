@@ -16,6 +16,8 @@
 
 #define NSTOS 1000000000.0  // convert nanoseconds for seconds
 
+#define T_REFRESH 1.0       // intervalo de atualização
+
 uint8_t id_buff_circ = 0;
 
 float diff(struct timespec *init, struct timespec *end)
@@ -77,56 +79,63 @@ calc_avg_rate(process_t *proc, const size_t tot_proc )
   size_t sum_rx;
   size_t sum_tx;
 
-  uint8_t div_rx;
-  uint8_t div_tx;
-
   for (size_t i = 0; i < tot_proc; i++)
     {
       sum_rx = 0;
       sum_tx = 0;
-      div_rx = 0;
-      div_tx = 0;
 
       for (size_t j = 0; j < LEN_BUF_CIRC_RATE; j++)
         {
-          // if (proc[i].Bps_rx[j])
-            // {
-              printf("buffer rx[%d] - %d\n", j, proc[i].Bps_rx[j]);
-              sum_rx += proc[i].Bps_rx[j];
-              // proc[i].Bps_rx[j] = 0; // zera o valor ja lido para que nao acumule com dados ja lidos
-              div_rx++;
-            // }
+          // printf("pid %d - buffer rx[%d] - %d\n", proc[i].pid, j, proc[i].Bps_rx[j]);
+          sum_rx += proc[i].Bps_rx[j];
+          sum_tx += proc[i].Bps_tx[j];
 
-          // if (proc[i].Bps_tx[j])
-            // {
-              sum_tx += proc[i].Bps_tx[j];
-              div_tx++;
-            // }
         }
-        printf("sum_rx %d\n", sum_rx);
+        // printf("sum_rx %d\n", sum_rx);
+        // putchar('\n');
         proc[i].avg_rx = (sum_rx) ? ((sum_rx) / 1024) / LEN_BUF_CIRC_RATE : 0;
-        proc[i].avg_tx = (sum_tx) ? (sum_tx * 8) / LEN_BUF_CIRC_RATE : 0;
-        // getchar();
+        proc[i].avg_tx = (sum_tx) ? ((sum_tx) / 1024) / LEN_BUF_CIRC_RATE : 0;
+
     }
-
-
 }
 
+
 uint8_t last = 0;
-int
+bool
 add_statistics_in_process(process_t *processes,
                           const size_t tot_proc,
                           struct packet *pkt)
 {
 
-  // last = (id_buff_circ >= 1) ? id_buff_circ - 1 : LEN_BUF_CIRC_RATE - 1;
+  bool locate = false;
 
   for (size_t i = 0; i < tot_proc; i++)
     {
-      // puts("add statistics");
-      // printf("total de conexoes do processo %s - %d\n",
-      //  processes[i].name,
-      //  processes[i].total_conections);
+      // caso o indice do buffer circular tenha atualizado,
+      // pois ja deu o tempo pre definido, T_REFRESH,
+      // apaga os dados antes de começar a escrever
+      // para não sobrescrever em cima de valores antigos
+      if (last != id_buff_circ)
+        {
+          processes[i].Bps_rx[ id_buff_circ] = 0;
+          processes[i].Bps_tx[ id_buff_circ] = 0;
+          // processes[i].pps_rx = 0;
+          // printf("processes[%s].Bps_rx[%d] - %d\n", processes[i].name, id_buff_circ, processes[i].Bps_rx[ id_buff_circ]);
+        }
+
+      // processo ja localizado, apenas continua
+      // para zerar buffer dos demais processos
+      // que por ficaram sem receber dados por
+      // T_REFRESH segundo
+      if (locate)
+        continue;
+
+      // caso n
+      if (!pkt->lenght)
+        {
+          // puts("pulando 0 bytes");
+          continue;
+        }
 
       for (size_t j = 0; j < processes[i].total_conections; j++)
         {
@@ -135,69 +144,34 @@ add_statistics_in_process(process_t *processes,
 
           if (processes[i].conection[j].local_port == pkt->local_port)
             {
+              locate = true;
 
               if (pkt->direction == PKT_DOWN)
                 {
-                  if (processes[i].n_elements_buf_rx >= LEN_BUF_CIRC_RATE)
-                    processes[i].n_elements_buf_rx = 0;
-
-                  // printf("buffer rx[%d] - recebe %d\n",
-                  // processes[i].n_elements_buf_rx, pkt->lenght);
-
-                  // printf("pkt len RX st - %d\n", pkt->lenght);
-
-
-
-                  // printf("last - %d\n", last);
-
-                  if (last != id_buff_circ)
-                    {
-                      puts("zerando para escrever");
-                      processes[i].Bps_rx[ id_buff_circ ] = 0;
-                      last = id_buff_circ;
-                    }
-
                   processes[i].pps_rx++;
-                  processes[i].Bps_rx[ id_buff_circ ] += pkt->lenght;
-
-                  // last = id_buff_circ;
+                  processes[i].Bps_rx[id_buff_circ] += pkt->lenght;
 
                   // printf("buffer rx[%d] - %d\n", id_buff_circ,
                   // processes[i].Bps_rx[id_buff_circ]);
-                  // getchar();
                 }
               else
                 {
-                  // printf("pkt len TX st - %d\n", pkt->lenght);
-                  if (processes[i].n_elements_buf_tx >= LEN_BUF_CIRC_RATE)
-                    processes[i].n_elements_buf_tx = 0;
-
                   processes[i].pps_tx++;
-                  processes[i].Bps_tx[ id_buff_circ ] += pkt->lenght;
+                  processes[i].Bps_tx[id_buff_circ] += pkt->lenght;
 
                   // printf("buffer tx[%d] - %d\n", id_buff_circ,
                   // processes[i].Bps_rx[id_buff_circ]);
                 }
 
-              return 1;
-            }
-          else
-            {
-              // if (processes[i].n_elements_buf_rx >= LEN_BUF_CIRC_RATE)
-              //   processes[i].n_elements_buf_rx = 0;
-              //
-              // if (processes[i].n_elements_buf_tx >= LEN_BUF_CIRC_RATE)
-              //   processes[i].n_elements_buf_tx = 0;
+              break;
 
-              // processes[i].Bps_rx[ processes[i].n_elements_buf_rx++ ] = 0;
-              // processes[i].Bps_tx[ processes[i].n_elements_buf_tx++ ] = 0;
             }
-
         }
-
     }
-    // não localizado o processo que fez essa conexao
-    return 0;
+
+    // atualiza para id de buffer atual
+    last = id_buff_circ;
+    return locate;
 }
 
 
@@ -230,10 +204,11 @@ int main(void)
 
 
   if (clock_gettime(CLOCK_MONOTONIC, &initTime) == -1)
-  {
-    perror("clock_gettime");
-    exit(EXIT_FAILURE);
-  }
+    {
+      perror("clock_gettime");
+      exit(EXIT_FAILURE);
+    }
+
   while (1)
     {
       ssize_t bytes = get_packets(&link_level, buffer, IP_MAXPACKET);
@@ -249,14 +224,13 @@ int main(void)
       // if (bytes == 0)
       //   goto PRINT;
 
-
-      if ( ! parse_packet(&packet, buffer, &link_level))
-      {
-        // puts("parse deu ruim");
-        goto PRINT;
-      } // packet not is IP
-
-        // continue;
+      if (bytes > 0)
+        {
+          if (!parse_packet(&packet, buffer, &link_level))
+            {
+              goto PRINT;
+            } // packet not is IP
+        }
 
 
       packet.lenght = bytes;
@@ -274,7 +248,7 @@ int main(void)
         perror("clock_gettime");
 
 
-      if (diff(&initTime, &endTime) >= 1.0)
+      if (diff(&initTime, &endTime) >= T_REFRESH)
         {
           calc_avg_rate(processes, tot_process_act);
           print_proc_net(processes, tot_process_act);

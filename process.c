@@ -233,8 +233,8 @@ void print_process(process_t *process, const int lenght)
     }
 }
 
-// liebra processos atuais que não foram localizados
-// na ultima checagem por processos ativos
+// libera processos atuais que não foram localizados
+// na ultima checagem por processos com conexão ativa
 void free_process(process_t *cur_procs,
                   const size_t len_cur_procs,
                   const process_t *new_procs,
@@ -347,7 +347,7 @@ uint32_t max_n_proc = 0;
 
 int
 get_process_active_con(process_t **cur_proc,
-                       const int tot_cur_proc_act)
+                       const size_t tot_cur_proc_act)
 {
   int total_process = 0;
   unsigned int process_pids[MAX_PROCESS] = {0};
@@ -573,23 +573,49 @@ get_process_active_con(process_t **cur_proc,
 
   // copia os processos com conexões ativos para
   // a struct process_t
+
   for (size_t i = 0; i < tot_process_active_con; i++)
     {
+      bool ta = false; // variavel provisoria só pra teste
       if (*cur_proc)
         {
-          for (int j = 0; j < tot_cur_proc_act; j++)
+          for (size_t j = 0; j < tot_cur_proc_act; j++)
             {
-              // if ( (processos[i].pid == (*cur_proc)[j].pid) &&
-              //     ( (*cur_proc)[j].Bps_rx > 0 || (*cur_proc)[j].Bps_tx > 0 ) )
-              //   {
-              //     processos[i].pps_rx = (*cur_proc)[j].pps_rx;
-              //     processos[i].pps_tx = (*cur_proc)[j].pps_tx;
-              //     processos[i].Bps_rx = (*cur_proc)[j].Bps_rx;
-              //     processos[i].Bps_tx = (*cur_proc)[j].Bps_tx;
-              //   }
+              if ( (processos[i].pid == (*cur_proc)[j].pid) &&
+                  ( (*cur_proc)[j].avg_rx > 0 || (*cur_proc)[j].avg_tx > 0 ) )
+                {
+                  ta = true;
+                  processos[i].avg_rx = (*cur_proc)[j].avg_rx;
+                  processos[i].avg_tx = (*cur_proc)[j].avg_tx;
+                  for (size_t l = 0; l < LEN_BUF_CIRC_RATE; l++)
+                    {
+                      // printf("valor - %d\n", (*cur_proc)[j].Bps_rx[l]);
+                      processos[i].Bps_rx[l] = (*cur_proc)[j].Bps_rx[l];
+                      processos[i].Bps_tx[l] = (*cur_proc)[j].Bps_tx[l];
+                      // printf("copiado processos[%d].Bps_rx[%d]\n",
+                      //   processos[i].pid,
+                      //   processos[i].Bps_rx[l]);
+                        // verificar amanha, a copia nao esta sendo passada para
+                        // novo array
+                    }
+                  // processos[i].pps_rx = (*cur_proc)[j].pps_rx;
+                  // processos[i].pps_tx = (*cur_proc)[j].pps_tx;
+                  // processos[i].Bps_rx = (*cur_proc)[j].Bps_rx;
+                  // processos[i].Bps_tx = (*cur_proc)[j].Bps_tx;
+                }
             }
         }
         (*cur_proc)[i] = processos[i];
+        // if (ta){
+        //   for (size_t t = 0; t < LEN_BUF_CIRC_RATE; t++) {
+        //     printf("valor foi copiado? processos[%d].Bps_rx[%d]\n",
+        //             (*cur_proc)[i].pid,
+        //             (*cur_proc)[i].Bps_rx[t]);
+        //   }
+        // }
+
+
+
     }
 
 

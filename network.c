@@ -32,7 +32,7 @@ int create_socket(void)
   my_sock.sll_ifindex = 0; // 0 equal all interfaces sniffer
 
 
-  if (bind(sock, (struct sockaddr *)&my_sock, (sizeof(my_sock))) == -1){
+  if (bind(sock, (struct sockaddr *)&my_sock, sizeof(my_sock)) == -1){
       perror("bind");
       return -1;
   }

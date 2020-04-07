@@ -82,8 +82,6 @@ typedef struct
   uint32_t Bps_tx[LEN_BUF_CIRC_RATE];
   uint32_t avg_rx;
   uint32_t avg_tx;
-  uint8_t n_elements_buf_rx;
-  uint8_t n_elements_buf_tx;
 
   // variavel de controle, armazena o numero maximo
   // de conexoes que podem ser armazenada antes
@@ -94,7 +92,7 @@ typedef struct
 
 // inicializa a estrutura process_t para o endereço onde estão
 // armazenados os processos ativos e retorna a quantidade processos ativos
-int get_process_active_con(process_t **procs, const int tot_process_act_old);
+int get_process_active_con(process_t **procs, const size_t tot_process_act_old);
 
 
 // int refresh_process_active_con(process_t **old_process, const int tot_old);
