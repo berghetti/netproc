@@ -25,7 +25,7 @@
 #define MAX_CONECTIONS 1024
 #define PATH_INODE "/proc/net/tcp"
 
-// socket:[99999999] + 3 safe
+// sizeof (socket:[99999999]) + 3 safe
 #define MAX_NAME_SOCKET 9 + 8 + 3
 #define MAX_NAME 1024
 
@@ -34,23 +34,23 @@
 // /proc/<pid>/fd/<id-fd>
 #define MAX_PATH_FD 24
 
+// tempo amostral para calcular a media
+// de estatisticas de rede.
+// 5 é um bom valor...
 #define LEN_BUF_CIRC_RATE 5
 
-// variavel global - declarada em process.c -  que armazena
-// a quantidade maxima de PROCESSOS  que podem ser armazenas
-// na memoria da struct process_t antes que seja
-// necessario realicar a memoria
-extern uint32_t max_n_proc;
 
-// typedef struct
-// {
-//   uint32_t pps_rx;    // packets per second
-//   uint32_t pps_tx;
-//   uint32_t Bps_rx;    // bytes per second, not bits
-//   uint32_t Bps_tx;
-//   uint32_t bytes_rx;  //total bytes rx
-//   uint32_t bytes_tx;  // total bytes tx
-// } networking_stats;
+struct net_stat
+{
+  uint32_t pps_rx[LEN_BUF_CIRC_RATE];
+  uint32_t pps_tx[LEN_BUF_CIRC_RATE];
+  uint32_t Bps_rx[LEN_BUF_CIRC_RATE];
+  uint32_t Bps_tx[LEN_BUF_CIRC_RATE];
+  uint32_t avg_Bps_rx;
+  uint32_t avg_Bps_tx;
+  uint32_t avg_pps_rx;
+  uint32_t avg_pps_tx;
+};
 
 typedef struct
 {
@@ -69,19 +69,13 @@ typedef struct
 
 typedef struct
 {
-  // networking_stats *stats_net;  // estatisticas da conexão
+  struct net_stat net_stat;     // estatisticas de rede
   conection_t *conection;       // conexoes do processo
   char *name;                   // nome processo
   // uint32_t *fds;             // todos os file descriptos - /proc/pid/fd
   pid_t pid;                    // pid do processo
   uint32_t total_fd;            // totalal de fd no processo
-  uint32_t total_conections;    // total de conexoes do processo
-  uint32_t pps_rx;
-  uint32_t pps_tx;
-  uint32_t Bps_rx[LEN_BUF_CIRC_RATE];
-  uint32_t Bps_tx[LEN_BUF_CIRC_RATE];
-  uint32_t avg_rx;
-  uint32_t avg_tx;
+  uint32_t total_conections;    // total de conexões apontada por conection_t *
 
   // variavel de controle, armazena o numero maximo
   // de conexoes que podem ser armazenada antes

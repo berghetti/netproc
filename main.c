@@ -35,17 +35,17 @@ void cls(void){
    //https://pt.stackoverflow.com/questions/58453/como-fazer-efeito-de-loading-no-terminal-em-apenas-uma-linha
 }
 
-void
-reset_counters_process(process_t *processes, const int total_process)
-{
-  // for (int i = 0; i < total_process; i++)
-  //   {
-  //     // processes[i].pps_rx = 0;
-  //     // processes[i].Bps_rx = 0;
-  //     // processes[i].pps_tx = 0;
-  //     // processes[i].Bps_tx = 0;
-  //   }
-}
+// void
+// reset_counters_process(process_t *processes, const int total_process)
+// {
+//   for (int i = 0; i < total_process; i++)
+//     {
+//       // processes[i].net_stat.avg_pps_rx = 0;
+//       // processes[i]net_stat.Bps_rx = 0;
+//       // processes[i].net_stat.avg_pps_tx = 0;
+//       // processes[i]net_stat.Bps_tx = 0;
+//     }
+// }
 
 void
 print_proc_net(process_t *processes, const size_t tot_process)
@@ -58,17 +58,12 @@ print_proc_net(process_t *processes, const size_t tot_process)
   for (size_t i = 0; i < tot_process; i++)
     {
       printf("%-5d\t %-45s %d\t %d\t %d\t %-6d kbps\t \n",
-      // printf("%-5d\t \n",
-
             processes[i].pid,
             processes[i].name,
-            processes[i].pps_tx,
-            processes[i].pps_rx,
-            processes[i].avg_tx,
-            processes[i].avg_rx
-            // processes[i].avg_rx
-            // (processes[i].Bps_tx) ? (processes[i].Bps_tx * 8) / 1024 : 0,
-            // (processes[i].Bps_rx) ? (processes[i].Bps_rx * 8) / 1024 : 0
+            processes[i].net_stat.avg_pps_tx,
+            processes[i].net_stat.avg_pps_rx,
+            processes[i].net_stat.avg_Bps_tx,
+            processes[i].net_stat.avg_Bps_rx
           );
     }
 }
@@ -76,37 +71,48 @@ print_proc_net(process_t *processes, const size_t tot_process)
 void
 calc_avg_rate(process_t *proc, const size_t tot_proc )
 {
-  size_t sum_rx;
-  size_t sum_tx;
+  size_t sum_Bps_rx,
+         sum_Bps_tx,
+         sum_pps_rx,
+         sum_pps_tx;
 
   for (size_t i = 0; i < tot_proc; i++)
     {
-      sum_rx = 0;
-      sum_tx = 0;
+      sum_Bps_rx = 0;
+      sum_Bps_tx = 0;
+      sum_pps_rx = 0;
+      sum_pps_tx = 0;
 
       for (size_t j = 0; j < LEN_BUF_CIRC_RATE; j++)
         {
-          // printf("pid %d - buffer rx[%d] - %d\n", proc[i].pid, j, proc[i].Bps_rx[j]);
-          sum_rx += proc[i].Bps_rx[j];
-          sum_tx += proc[i].Bps_tx[j];
+          // printf("pid %d - pps_tx[%d] - %d\n", proc[i].pid, j, proc[i].net_stat.pps_tx[j]);
+          sum_Bps_rx += proc[i].net_stat.Bps_rx[j];
+          sum_Bps_tx += proc[i].net_stat.Bps_tx[j];
 
+          sum_pps_rx += proc[i].net_stat.pps_rx[j];
+          sum_pps_tx += proc[i].net_stat.pps_tx[j];
         }
         // printf("sum_rx %d\n", sum_rx);
         // putchar('\n');
-        proc[i].avg_rx = (sum_rx) ? ((sum_rx) / 1024) / LEN_BUF_CIRC_RATE : 0;
-        proc[i].avg_tx = (sum_tx) ? ((sum_tx) / 1024) / LEN_BUF_CIRC_RATE : 0;
+        proc[i].net_stat.avg_Bps_rx = (sum_Bps_rx) ? ((sum_Bps_rx) / 1024) / LEN_BUF_CIRC_RATE : 0;
+        proc[i].net_stat.avg_Bps_tx = (sum_Bps_tx) ? ((sum_Bps_tx) / 1024) / LEN_BUF_CIRC_RATE : 0;
+        
+        proc[i].net_stat.avg_pps_rx = (sum_pps_rx) ? (sum_pps_rx / LEN_BUF_CIRC_RATE) : 0;
+        proc[i].net_stat.avg_pps_tx = (sum_pps_tx) ? (sum_pps_tx / LEN_BUF_CIRC_RATE) : 0;
 
+        // printf("pid %d sum_pps_tx %d\n", proc[i].pid, sum_pps_tx / 5);
+        // printf("pid %d sum_pps_rx %d\n", proc[i].pid, sum_pps_rx / 5);
     }
 }
 
 
-uint8_t last = 0;
+
 bool
 add_statistics_in_process(process_t *processes,
                           const size_t tot_proc,
                           struct packet *pkt)
 {
-
+  static uint8_t last = 0;
   bool locate = false;
 
   for (size_t i = 0; i < tot_proc; i++)
@@ -117,25 +123,19 @@ add_statistics_in_process(process_t *processes,
       // para não sobrescrever em cima de valores antigos
       if (last != id_buff_circ)
         {
-          processes[i].Bps_rx[ id_buff_circ] = 0;
-          processes[i].Bps_tx[ id_buff_circ] = 0;
-          // processes[i].pps_rx = 0;
-          // printf("processes[%s].Bps_rx[%d] - %d\n", processes[i].name, id_buff_circ, processes[i].Bps_rx[ id_buff_circ]);
+          processes[i].net_stat.Bps_rx[id_buff_circ] = 0;
+          processes[i].net_stat.Bps_tx[id_buff_circ] = 0;
+          processes[i].net_stat.pps_rx[id_buff_circ] = 0;
+          processes[i].net_stat.pps_tx[id_buff_circ] = 0;
+          // printf("processes[%s]net_stat.Bps_rx[%d] - %d\n", processes[i].name, id_buff_circ, processes[i]net_stat.Bps_rx[ id_buff_circ]);
         }
 
-      // processo ja localizado, apenas continua
-      // para zerar buffer dos demais processos
-      // que por ficaram sem receber dados por
-      // T_REFRESH segundo
-      if (locate)
+      // processo ja localizado ou sem dados para atualizar,
+      // apenas continua para zerar buffer dos demais processos
+      // que ficarem sem receber dados por T_REFRESH segundo
+      if (locate || !pkt->lenght)
         continue;
 
-      // caso n
-      if (!pkt->lenght)
-        {
-          // puts("pulando 0 bytes");
-          continue;
-        }
 
       for (size_t j = 0; j < processes[i].total_conections; j++)
         {
@@ -148,19 +148,13 @@ add_statistics_in_process(process_t *processes,
 
               if (pkt->direction == PKT_DOWN)
                 {
-                  processes[i].pps_rx++;
-                  processes[i].Bps_rx[id_buff_circ] += pkt->lenght;
-
-                  // printf("buffer rx[%d] - %d\n", id_buff_circ,
-                  // processes[i].Bps_rx[id_buff_circ]);
+                  processes[i].net_stat.pps_rx[id_buff_circ]++;
+                  processes[i].net_stat.Bps_rx[id_buff_circ] += pkt->lenght;
                 }
               else
                 {
-                  processes[i].pps_tx++;
-                  processes[i].Bps_tx[id_buff_circ] += pkt->lenght;
-
-                  // printf("buffer tx[%d] - %d\n", id_buff_circ,
-                  // processes[i].Bps_rx[id_buff_circ]);
+                  processes[i].net_stat.pps_tx[id_buff_circ]++;
+                  processes[i].net_stat.Bps_tx[id_buff_circ] += pkt->lenght;
                 }
 
               break;

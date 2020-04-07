@@ -195,43 +195,43 @@ get_name_process(char **buffer, const pid_t pid)
 }
 
 
-void print_process(process_t *process, const int lenght)
-{
-  int tot_con;
-  int j;
-  char buffer_ip[INET_ADDRSTRLEN];
-  for (int i = 0; i < lenght; i++)
-    {
-
-      printf("process pid      - %d\n"
-             "process name     - %s\n"
-             "tot fds          - %d\n"
-             "total conections - %d\n",
-              process[i].pid, process[i].name, process[i].total_fd,
-              process[i].total_conections);
-      printf("conections       -\n");
-
-      j = 0;
-      tot_con = process[i].total_conections;
-
-      while(tot_con--){
-        if (inet_ntop(AF_INET, &process[i].conection[j].local_address, buffer_ip, INET_ADDRSTRLEN) != NULL)
-        printf("%s:", buffer_ip);
-        printf("%d <--> ", process[i].conection[j].local_port);
-
-        if (inet_ntop(AF_INET, &process[i].conection[j].remote_address, buffer_ip, INET_ADDRSTRLEN) != NULL)
-        printf("%s:", buffer_ip);
-        printf("%d ", process[i].conection[j].remote_port);
-
-        printf("\t%d", process[i].conection[j].inode);
-        j++;
-        putchar('\n');
-      }
-
-      printf("\n\n");
-
-    }
-}
+// void print_process(process_t *process, const int lenght)
+// {
+//   int tot_con;
+//   int j;
+//   char buffer_ip[INET_ADDRSTRLEN];
+//   for (int i = 0; i < lenght; i++)
+//     {
+//
+//       printf("process pid      - %d\n"
+//              "process name     - %s\n"
+//              "tot fds          - %d\n"
+//              "total conections - %d\n",
+//               process[i].pid, process[i].name, process[i].total_fd,
+//               process[i].total_conections);
+//       printf("conections       -\n");
+//
+//       j = 0;
+//       tot_con = process[i].total_conections;
+//
+//       while(tot_con--){
+//         if (inet_ntop(AF_INET, &process[i].conection[j].local_address, buffer_ip, INET_ADDRSTRLEN) != NULL)
+//         printf("%s:", buffer_ip);
+//         printf("%d <--> ", process[i].conection[j].local_port);
+//
+//         if (inet_ntop(AF_INET, &process[i].conection[j].remote_address, buffer_ip, INET_ADDRSTRLEN) != NULL)
+//         printf("%s:", buffer_ip);
+//         printf("%d ", process[i].conection[j].remote_port);
+//
+//         printf("\t%d", process[i].conection[j].inode);
+//         j++;
+//         putchar('\n');
+//       }
+//
+//       printf("\n\n");
+//
+//     }
+// }
 
 // libera processos atuais que não foram localizados
 // na ultima checagem por processos com conexão ativa
@@ -340,18 +340,24 @@ process_already_existed(process_t **current_procs,
   return -1;
 }
 
-// variavel global que armazena a quantidade maxima de PROCESSOS
+// armazena a quantidade maxima de PROCESSOS
 // que podem ser armazenas na memoria da struct process_t
-// antes que seja necessario realicar a memoria
-uint32_t max_n_proc = 0;
+// principal antes que seja necessario realicar mais memoria
+static uint32_t max_n_proc = 0;
+
+// buffer utilizado na função get_process_active_con
+// para armazenar o PID de todos os processos do sistema
+static uint32_t process_pids[MAX_PROCESS] = {0};
+
+// buffer utilziado na função get_process_active_con
+// para armazenas todas as conexões do sistema
+static conection_t conections[MAX_CONECTIONS] = {0};
 
 int
 get_process_active_con(process_t **cur_proc,
                        const size_t tot_cur_proc_act)
 {
   int total_process = 0;
-  unsigned int process_pids[MAX_PROCESS] = {0};
-
   total_process = get_numeric_directory(process_pids, MAX_PROCESS, PROCESS_DIR);
 
   if (total_process < 0)
@@ -361,7 +367,6 @@ get_process_active_con(process_t **cur_proc,
     }
 
   int total_conections = 0;
-  conection_t conections[MAX_CONECTIONS] = {0};
   total_conections = get_info_conections(conections, MAX_CONECTIONS, PATH_INODE);
 
   if (total_conections < 0)
@@ -552,7 +557,7 @@ get_process_active_con(process_t **cur_proc,
   // que o espaço inicial reservado, realloca mais memoria
   else if ( tot_process_active_con > max_n_proc )
     {
-      process_t *p;
+      void *p;
       p = realloc(*cur_proc,
                   sizeof(process_t) * (tot_process_active_con * 2));
 
@@ -576,45 +581,35 @@ get_process_active_con(process_t **cur_proc,
 
   for (size_t i = 0; i < tot_process_active_con; i++)
     {
-      bool ta = false; // variavel provisoria só pra teste
       if (*cur_proc)
         {
           for (size_t j = 0; j < tot_cur_proc_act; j++)
             {
               if ( (processos[i].pid == (*cur_proc)[j].pid) &&
-                  ( (*cur_proc)[j].avg_rx > 0 || (*cur_proc)[j].avg_tx > 0 ) )
+                  ( (*cur_proc)[j].net_stat.avg_Bps_rx > 0 ||
+                    (*cur_proc)[j].net_stat.avg_Bps_tx > 0 )
+                 )
                 {
-                  ta = true;
-                  processos[i].avg_rx = (*cur_proc)[j].avg_rx;
-                  processos[i].avg_tx = (*cur_proc)[j].avg_tx;
+
+                  processos[i].net_stat.avg_Bps_rx =
+                                  (*cur_proc)[j].net_stat.avg_Bps_rx;
+
+                  processos[i].net_stat.avg_Bps_tx =
+                                  (*cur_proc)[j].net_stat.avg_Bps_tx;
                   for (size_t l = 0; l < LEN_BUF_CIRC_RATE; l++)
                     {
-                      // printf("valor - %d\n", (*cur_proc)[j].Bps_rx[l]);
-                      processos[i].Bps_rx[l] = (*cur_proc)[j].Bps_rx[l];
-                      processos[i].Bps_tx[l] = (*cur_proc)[j].Bps_tx[l];
-                      // printf("copiado processos[%d].Bps_rx[%d]\n",
+                      processos[i].net_stat.Bps_rx[l] = (*cur_proc)[j].net_stat.Bps_rx[l];
+                      processos[i].net_stat.Bps_tx[l] = (*cur_proc)[j].net_stat.Bps_tx[l];
+                      processos[i].net_stat.pps_rx[l] = (*cur_proc)[j].net_stat.pps_rx[l];
+                      processos[i].net_stat.pps_tx[l] = (*cur_proc)[j].net_stat.pps_tx[l];
+                      // printf("copiado processos[%d].net_stat.Bps_rx[%d]\n",
                       //   processos[i].pid,
-                      //   processos[i].Bps_rx[l]);
-                        // verificar amanha, a copia nao esta sendo passada para
-                        // novo array
+                      //   processos[i].net_stat.Bps_rx[l]);
                     }
-                  // processos[i].pps_rx = (*cur_proc)[j].pps_rx;
-                  // processos[i].pps_tx = (*cur_proc)[j].pps_tx;
-                  // processos[i].Bps_rx = (*cur_proc)[j].Bps_rx;
-                  // processos[i].Bps_tx = (*cur_proc)[j].Bps_tx;
                 }
             }
         }
         (*cur_proc)[i] = processos[i];
-        // if (ta){
-        //   for (size_t t = 0; t < LEN_BUF_CIRC_RATE; t++) {
-        //     printf("valor foi copiado? processos[%d].Bps_rx[%d]\n",
-        //             (*cur_proc)[i].pid,
-        //             (*cur_proc)[i].Bps_rx[t]);
-        //   }
-        // }
-
-
 
     }
 
