@@ -145,7 +145,7 @@ strlen_space(const char *string)
 }
 
 // armazena o nome do processo no buffer e retorna
-// o tamanho do nome do processo incluindo null bytes ou espaço
+// o tamanho do nome do processo incluindo null bytes ou espaço,
 // função cuida da alocação de memoria para o nome do processo
 static int
 get_name_process(char **buffer, const pid_t pid)
@@ -233,6 +233,27 @@ get_name_process(char **buffer, const pid_t pid)
 //     }
 // }
 
+// verifica se o pid ja existe no buffer.
+// retorna o indice do buffer em que o pid foi encontrado
+// ou -1 caso o pid não seja localizado
+// @param pid_t search_pid, o pid a ser buscado
+// @param ponteiro process_t procs, o buffer a procurar
+// @param size_t len_procs, tamanho do buffer procs
+static int
+search_pid(const pid_t search_pid,
+           const process_t *procs,
+           const size_t len_procs)
+{
+  if (! procs)
+    return -1;
+
+  for (size_t i = 0; i < len_procs; i++)
+    if (procs[i].pid == search_pid)
+      return i;
+
+  return -1;
+}
+
 // libera processos atuais que não foram localizados
 // na ultima checagem por processos com conexão ativa
 void free_process(process_t *cur_procs,
@@ -241,28 +262,23 @@ void free_process(process_t *cur_procs,
                   const size_t len_new_procs)
 {
 
-  bool locate;
   for (size_t i = 0; i < len_cur_procs; i++)
     {
-      locate = false;
-      for (size_t j = 0; j < len_new_procs; j++)
-        {
-          if (cur_procs[i].pid == new_procs[j].pid)
-            {
-              locate = true;
-              break;
-            }
-        }
+      // locate = false;
+      int id = -1;
+      id = search_pid(cur_procs[i].pid, new_procs, len_new_procs);
 
-      if (! locate)
+      // processo não localizado
+      // liberando memoria alocada para seus atributos
+      if (id == -1)
         {
           free(cur_procs[i].name);
           cur_procs[i].name = NULL;
           free(cur_procs[i].conection);
           cur_procs[i].conection = NULL;
         }
-    }
 
+    }
 }
 
 // aloca memoria INICIAL para conection da estrutura process_t
@@ -294,8 +310,8 @@ alloc_memory_conections(process_t *new_st_processes,
   else if ( current_st_processes->max_n_con <
             new_st_processes->total_conections )
     { // status atual do processo nao tem memoria suficiente
-      //  para armazenas a quantidade de conexões do novo status processo
-      // realoca memoria para o dobro da nova demanda...
+      // para armazenas a quantidade de conexões do novo status processo
+      // realoca memoria para o dobro da nova demanda.
 
       void *p = NULL;
       p = realloc( current_st_processes->conection,
@@ -320,25 +336,6 @@ alloc_memory_conections(process_t *new_st_processes,
 }
 
 
-// verifica se o processo ja existia na lista de processos
-// com conexões ativas.
-// returna o indice do processo do array de processos corrente
-// que corresponde ao novo processo candidato, ou nao, caso seja um processo
-// realmente novo, nesse caso retorna -1
-static int
-process_already_existed(process_t **current_procs,
-                        const size_t tot_proc_current,
-                        const pid_t new_proc_pid)
-{
-  if (! *current_procs)
-    return -1;
-
-  for (size_t i = 0; i < tot_proc_current; i++)
-    if ((*current_procs)[i].pid == new_proc_pid)
-      return i;
-
-  return -1;
-}
 
 // armazena a quantidade maxima de PROCESSOS
 // que podem ser armazenas na memoria da struct process_t
@@ -492,9 +489,9 @@ get_process_active_con(process_t **cur_proc,
           processos[tot_process_active_con].total_conections = index_conection;
 
           int id_proc;
-          id_proc = process_already_existed(cur_proc,
-                                            tot_cur_proc_act,
-                                            processos[tot_process_active_con].pid);
+          id_proc = search_pid(processos[tot_process_active_con].pid,
+                              *cur_proc,
+                              tot_cur_proc_act);
           if (id_proc != -1) // processo ja existe
             {
               // puts("processo ja existe");
@@ -519,7 +516,8 @@ get_process_active_con(process_t **cur_proc,
                       processos[tot_process_active_con].pid, conections[index_history_con[c]].inode);
                 // printf("index_histopry[%d] - %d\n", index_conection - c - 1, index_history_con[c])
 
-              processos[tot_process_active_con].conection[c] = conections[index_history_con[c]];
+              processos[tot_process_active_con].conection[c] =
+                                              conections[index_history_con[c]];
 
               if (debug)
               printf("associado ao processo pid %d o inode %d - index %d\n",
@@ -577,7 +575,7 @@ get_process_active_con(process_t **cur_proc,
     free_process(*cur_proc, tot_cur_proc_act, processos, tot_process_active_con);
 
   // copia os processos com conexões ativos para
-  // a struct process_t
+  // o buffer principal struct process_t
 
   for (size_t i = 0; i < tot_process_active_con; i++)
     {

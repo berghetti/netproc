@@ -63,8 +63,7 @@ print_proc_net(process_t *processes, const size_t tot_process)
             processes[i].net_stat.avg_pps_tx,
             processes[i].net_stat.avg_pps_rx,
             processes[i].net_stat.avg_Bps_tx,
-            processes[i].net_stat.avg_Bps_rx
-          );
+            processes[i].net_stat.avg_Bps_rx);
     }
 }
 
@@ -92,16 +91,13 @@ calc_avg_rate(process_t *proc, const size_t tot_proc )
           sum_pps_rx += proc[i].net_stat.pps_rx[j];
           sum_pps_tx += proc[i].net_stat.pps_tx[j];
         }
-        // printf("sum_rx %d\n", sum_rx);
-        // putchar('\n');
+
         proc[i].net_stat.avg_Bps_rx = (sum_Bps_rx) ? ((sum_Bps_rx) / 1024) / LEN_BUF_CIRC_RATE : 0;
         proc[i].net_stat.avg_Bps_tx = (sum_Bps_tx) ? ((sum_Bps_tx) / 1024) / LEN_BUF_CIRC_RATE : 0;
-        
+
         proc[i].net_stat.avg_pps_rx = (sum_pps_rx) ? (sum_pps_rx / LEN_BUF_CIRC_RATE) : 0;
         proc[i].net_stat.avg_pps_tx = (sum_pps_tx) ? (sum_pps_tx / LEN_BUF_CIRC_RATE) : 0;
 
-        // printf("pid %d sum_pps_tx %d\n", proc[i].pid, sum_pps_tx / 5);
-        // printf("pid %d sum_pps_rx %d\n", proc[i].pid, sum_pps_rx / 5);
     }
 }
 
@@ -228,12 +224,11 @@ int main(void)
 
 
       packet.lenght = bytes;
-      // printf("pkt len antes %d\n", packet.lenght);
 
       // print_packet(&packet);
       if (!add_statistics_in_process(processes, tot_process_act, &packet))
-        // lembrar que aqui esta perdendo estatisticas de rede, checar...
-        tot_process_act = get_process_active_con(&processes, tot_process_act);
+        if (packet.lenght > 0)
+          tot_process_act = get_process_active_con(&processes, tot_process_act);
 
 
 

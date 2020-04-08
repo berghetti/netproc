@@ -18,15 +18,15 @@
 #define DST  2
 #define BOTH 3
 
+// values of packet.direction
 #define PKT_DOWN 1
 #define PKT_UPL  2
 
-extern int sock;
 
 struct packet{ // used for function parse_packet
   size_t lenght;
   uint32_t local_address;
-  uint16_t local_port;  
+  uint16_t local_port;
   uint8_t  direction;
 };
 
