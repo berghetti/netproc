@@ -12,10 +12,10 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-
 #include <dirent.h>
 #include <ctype.h>
 
+#include "conection.h"
 
 #define MAX_PROCESS 13504 // ulimit -a
 
@@ -58,14 +58,7 @@ struct net_stat
   nstats_t avg_pps_tx;
 };
 
-typedef struct
-{
-  uint32_t inode;
-  uint32_t local_address;
-  uint32_t remote_address;
-  uint16_t local_port;
-  uint16_t remote_port;
-}conection_t;
+
 
 typedef struct
 {

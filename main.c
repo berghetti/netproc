@@ -11,10 +11,14 @@
 #include <time.h>
 
 #include "process.h"
+#include "conection.h"
 #include "network.h"
 
 
 #define NSTOS 1000000000.0  // convert nanoseconds for seconds
+
+// incremento circular de 0 até LEN_BUF_CIRC_RATE - 1
+#define UPDATE_ID_BUFF(id) ( (id + 1) < LEN_BUF_CIRC_RATE ? (id++) : (id = 0))
 
 #define T_REFRESH 1.0       // intervalo de atualização
 
@@ -244,11 +248,10 @@ int main(void)
           // reset_counters_process(processes, tot_process_act);
           initTime = endTime;
 
-
           // atualiza o indice para gravar dados do buffer circular a cada 1 segundo
-          id_buff_circ = ((id_buff_circ + 1) < LEN_BUF_CIRC_RATE) ? id_buff_circ + 1 : 0;
+          UPDATE_ID_BUFF(id_buff_circ);
+          // printf("%d\n", id_buff_circ);
         }
-
 
     }
 
