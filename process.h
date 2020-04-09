@@ -5,7 +5,6 @@
 
 #include "directory.h"
 #include "conection.h"
-// #include "proc_rate.h"
 
 
 #define MAX_PROCESS 13504 // ulimit -a

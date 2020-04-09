@@ -5,24 +5,16 @@
 #include "conection.h"
 #include "network.h"
 #include "proc_rate.h"
-
-
-#define NSTOS 1000000000.0  // convert nanoseconds for seconds
+#include "timer.h"
 
 // incremento circular de 0 até LEN_BUF_CIRC_RATE - 1
 #define UPDATE_ID_BUFF(id) ((id + 1) < LEN_BUF_CIRC_RATE ? (id++) : (id = 0))
 
-#define T_REFRESH 1.0       // intervalo de atualização
+#define T_REFRESH 1.0    // intervalo de atualização do programa
 
 uint8_t id_buff_circ = 0;
 
-float diff(struct timespec *init, struct timespec *end)
-{
-  float dif;
-  dif = end->tv_sec - init->tv_sec;
-  dif += (end->tv_nsec - init->tv_nsec) / NSTOS;
-  return dif;
-}
+
 
 void cls(void){
    printf("\033[2J");   // Limpa a tela
@@ -156,14 +148,8 @@ int main(void)
 
   struct packet packet;
   memset(&packet, 0, sizeof(packet));
-  struct timespec initTime, endTime;
 
-
-  if (clock_gettime(CLOCK_MONOTONIC, &initTime) == -1)
-    {
-      perror("clock_gettime");
-      exit(EXIT_FAILURE);
-    }
+ init_timer();
  ssize_t bytes = 0;
   while (1)
     {
@@ -199,16 +185,12 @@ int main(void)
 
 
       PRINT:
-      if (clock_gettime(CLOCK_MONOTONIC, &endTime) == -1 )
-        perror("clock_gettime");
-
-
-      if (diff(&initTime, &endTime) >= T_REFRESH)
+      if (timer() >= T_REFRESH)
         {
           calc_avg_rate(processes, tot_process_act);
           print_proc_net(processes, tot_process_act);
-          // reset_counters_process(processes, tot_process_act);
-          initTime = endTime;
+
+          restart_timer();
 
           // atualiza o indice para gravar dados do buffer circular a cada 1 segundo
           UPDATE_ID_BUFF(id_buff_circ);
