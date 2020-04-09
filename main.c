@@ -1,24 +1,16 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <string.h>
 
-#include <arpa/inet.h>
-#include <netinet/ip.h>
-#include <linux/if_ether.h>
-
-#include <time.h>
+#include "headers-system.h"
 
 #include "process.h"
 #include "conection.h"
 #include "network.h"
+#include "proc_rate.h"
 
 
 #define NSTOS 1000000000.0  // convert nanoseconds for seconds
 
 // incremento circular de 0 até LEN_BUF_CIRC_RATE - 1
-#define UPDATE_ID_BUFF(id) ( (id + 1) < LEN_BUF_CIRC_RATE ? (id++) : (id = 0))
+#define UPDATE_ID_BUFF(id) ((id + 1) < LEN_BUF_CIRC_RATE ? (id++) : (id = 0))
 
 #define T_REFRESH 1.0       // intervalo de atualização
 
@@ -71,40 +63,6 @@ print_proc_net(process_t *processes, const size_t tot_process)
     }
 }
 
-void
-calc_avg_rate(process_t *proc, const size_t tot_proc )
-{
-  size_t sum_Bps_rx,
-         sum_Bps_tx,
-         sum_pps_rx,
-         sum_pps_tx;
-
-  for (size_t i = 0; i < tot_proc; i++)
-    {
-      sum_Bps_rx = 0;
-      sum_Bps_tx = 0;
-      sum_pps_rx = 0;
-      sum_pps_tx = 0;
-
-      for (size_t j = 0; j < LEN_BUF_CIRC_RATE; j++)
-        {
-          // printf("pid %d - pps_tx[%d] - %d\n", proc[i].pid, j, proc[i].net_stat.pps_tx[j]);
-          sum_Bps_rx += proc[i].net_stat.Bps_rx[j];
-          sum_Bps_tx += proc[i].net_stat.Bps_tx[j];
-
-          sum_pps_rx += proc[i].net_stat.pps_rx[j];
-          sum_pps_tx += proc[i].net_stat.pps_tx[j];
-        }
-
-        proc[i].net_stat.avg_Bps_rx = (sum_Bps_rx) ? ((sum_Bps_rx) / 1024) / LEN_BUF_CIRC_RATE : 0;
-        proc[i].net_stat.avg_Bps_tx = (sum_Bps_tx) ? ((sum_Bps_tx) / 1024) / LEN_BUF_CIRC_RATE : 0;
-
-        proc[i].net_stat.avg_pps_rx = (sum_pps_rx) ? (sum_pps_rx / LEN_BUF_CIRC_RATE) : 0;
-        proc[i].net_stat.avg_pps_tx = (sum_pps_tx) ? (sum_pps_tx / LEN_BUF_CIRC_RATE) : 0;
-
-    }
-}
-
 
 
 bool
@@ -130,7 +88,12 @@ add_statistics_in_process(process_t *processes,
           // printf("processes[%s]net_stat.Bps_rx[%d] - %d\n", processes[i].name, id_buff_circ, processes[i]net_stat.Bps_rx[ id_buff_circ]);
         }
 
-      // processo ja localizado ou sem dados para atualizar,
+      // caso o pacote/processo ja tenha sido localizado
+      // e o tempo para refresh não alterou
+      if (locate && last == id_buff_circ)
+        break;
+
+      // processo/pacote ja localizado ou sem dados para atualizar,
       // apenas continua para zerar buffer dos demais processos
       // que ficarem sem receber dados por T_REFRESH segundo
       if (locate || !pkt->lenght)
@@ -158,7 +121,6 @@ add_statistics_in_process(process_t *processes,
                 }
 
               break;
-
             }
         }
     }
@@ -202,10 +164,10 @@ int main(void)
       perror("clock_gettime");
       exit(EXIT_FAILURE);
     }
-
+ ssize_t bytes = 0;
   while (1)
     {
-      ssize_t bytes = get_packets(&link_level, buffer, IP_MAXPACKET);
+      bytes = get_packets(&link_level, buffer, IP_MAXPACKET);
 
       if (bytes == -1){
         if(buffer)

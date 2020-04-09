@@ -1,17 +1,11 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <linux/if_ether.h>
-#include <netinet/ip.h>
-#include <string.h>
-#include <errno.h>
-#include <arpa/inet.h>
+#include "headers-system.h"
 
-#include <linux/tcp.h>
-#include <netpacket/packet.h>
+#ifndef IP_MAXPACKET
+#define IP_MAXPACKET 65535
+#endif
 
 // used in parameter of function print_l2()
 #define SRC  1
@@ -50,4 +44,4 @@ void print_l2(struct ethhdr *l2, const int flag);
 
 void print_packet(struct packet *pkt);
 
-#endif
+#endif //NETWORK_H

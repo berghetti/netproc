@@ -1,12 +1,7 @@
 #ifndef CONECTION_H
 #define CONECTION_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-// #include <sys/types.h>
-
+#include "headers-system.h"
 
 
 typedef struct

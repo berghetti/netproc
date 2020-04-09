@@ -1,21 +1,12 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdint.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+#include "headers-system.h"
 
-#include <dirent.h>
-#include <ctype.h>
-
+#include "directory.h"
 #include "conection.h"
+// #include "proc_rate.h"
+
 
 #define MAX_PROCESS 13504 // ulimit -a
 
@@ -57,8 +48,6 @@ struct net_stat
   nstats_t avg_pps_rx;
   nstats_t avg_pps_tx;
 };
-
-
 
 typedef struct
 {

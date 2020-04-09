@@ -4,44 +4,6 @@
 bool debug = false;
 
 
-static bool is_number(const char *string)
-{
-  while (*string)
-      if (! isdigit(*string++))
-        return false;
-
-  return true;
-}
-
-
-// recebe o nome do diretorio dos processos, um buffer para armazenar
-// os nomes dos diretorios e um tamanho maximo do buffer.
-// retorna o total de diretorios encontrados, -1 em caso de falha.
-static int
-get_numeric_directory(uint32_t *buffer,
-                      const size_t lenght,
-                      const char *path_dir)
-{
-  DIR *dir;
-
-  if ((dir = opendir(path_dir)) == NULL)
-    return -1;
-
-  struct dirent *directory = NULL;
-  uint32_t count = 0;
-
-  while ( (directory = readdir(dir)) && count < lenght )
-      if (is_number(directory->d_name))
-          buffer[count++] = atoi(directory->d_name);
-
-
-  closedir(dir);
-
-  return count;
-}
-
-
-
 // retorna o tamanho da string até null byte ou espaço
 // oque ocorrer primeiro
 static size_t
@@ -105,44 +67,6 @@ get_name_process(char **buffer, const pid_t pid)
 }
 
 
-// void print_process(process_t *process, const int lenght)
-// {
-//   int tot_con;
-//   int j;
-//   char buffer_ip[INET_ADDRSTRLEN];
-//   for (int i = 0; i < lenght; i++)
-//     {
-//
-//       printf("process pid      - %d\n"
-//              "process name     - %s\n"
-//              "tot fds          - %d\n"
-//              "total conections - %d\n",
-//               process[i].pid, process[i].name, process[i].total_fd,
-//               process[i].total_conections);
-//       printf("conections       -\n");
-//
-//       j = 0;
-//       tot_con = process[i].total_conections;
-//
-//       while(tot_con--){
-//         if (inet_ntop(AF_INET, &process[i].conection[j].local_address, buffer_ip, INET_ADDRSTRLEN) != NULL)
-//         printf("%s:", buffer_ip);
-//         printf("%d <--> ", process[i].conection[j].local_port);
-//
-//         if (inet_ntop(AF_INET, &process[i].conection[j].remote_address, buffer_ip, INET_ADDRSTRLEN) != NULL)
-//         printf("%s:", buffer_ip);
-//         printf("%d ", process[i].conection[j].remote_port);
-//
-//         printf("\t%d", process[i].conection[j].inode);
-//         j++;
-//         putchar('\n');
-//       }
-//
-//       printf("\n\n");
-//
-//     }
-// }
-
 // verifica se o pid ja existe no buffer.
 // retorna o indice do buffer em que o pid foi encontrado
 // ou -1 caso o pid não seja localizado
@@ -166,10 +90,11 @@ search_pid(const pid_t search_pid,
 
 // libera processos atuais que não foram localizados
 // na ultima checagem por processos com conexão ativa
-void free_process(process_t *cur_procs,
-                  const size_t len_cur_procs,
-                  const process_t *new_procs,
-                  const size_t len_new_procs)
+static void
+free_process(process_t *cur_procs,
+             const size_t len_cur_procs,
+             const process_t *new_procs,
+             const size_t len_new_procs)
 {
 
   for (size_t i = 0; i < len_cur_procs; i++)
@@ -246,6 +171,28 @@ alloc_memory_conections(process_t *new_st_processes,
 }
 
 
+// void add_conections_process(process_t *proc,
+//                             const conection_t con,
+//                             const size_t tot_con)
+// {
+//   for (size_t c = 0; c < tot_con; c++)
+//     {
+//       if (debug)
+//         printf("associando ao processo pid %d o inode %d\n",
+//               processos[tot_process_active_con].pid, conections[index_history_con[c]].inode);
+//         // printf("index_histopry[%d] - %d\n", index_conection - c - 1, index_history_con[c])
+//
+//       proc->conection[c] = con
+//
+//       processos[tot_process_active_con].conection[c] =
+//                                       conections[index_history_con[c]];
+//
+//       if (debug)
+//       printf("associado ao processo pid %d o inode %d - index %d\n",
+//             processos[tot_process_active_con].pid, processos[tot_process_active_con].conection[c].inode, c);
+//     }
+// }
+
 
 // armazena a quantidade maxima de PROCESSOS
 // que podem ser armazenas na memoria da struct process_t
@@ -302,11 +249,11 @@ get_process_active_con(process_t **cur_proc,
    sendo inode coletado do arquivo '/proc/net/tcp', caso a comparação seja igual,
    encontramos o processo que corresponde ao inode (conexão).
   */
-  // file descriptors of process
-  uint32_t fds_p[MAX_CONECTIONS] = {0}; // todos file descriptors de um processo
+
+  uint32_t fds_p[MAX_CONECTIONS] = {0};  // todos file descriptors de um processo
   char path_fd[MAX_PATH_FD] = {0};       // proc/pid/fd/
-  char socket[MAX_NAME_SOCKET] = {0};   //socket:[99999999]
-  char data_fd[MAX_NAME_SOCKET] = {0};  // dados lidos de um fd do processo
+  char socket[MAX_NAME_SOCKET] = {0};    //socket:[99999999]
+  char data_fd[MAX_NAME_SOCKET] = {0};   // dados lidos de um fd do processo
 
   int len_link = 0;
 

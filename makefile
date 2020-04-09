@@ -14,7 +14,7 @@
 # alvo: dependencia
 # <tab>regra
 
-PROGNAME=process
+PROGNAME=netproc
 
 CFLAGS=-Wall -Wextra -pedantic -pedantic-errors -O2 -g
 
@@ -30,7 +30,7 @@ C_SOURCE=$(wildcard *.c)
 # todos arquivos .c trocado a extensão para .o
 OBJECTS=$(C_SOURCE:.c=.o)
 
-# alvos fake, que não são arquivos
+# alvos fake, não são arquivos
 .PHONY: all clean run
 
 all: $(PROGNAME)
