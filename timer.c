@@ -12,11 +12,14 @@ timer(void)
   float dif = 0.0;
 
   if (clock_gettime(CLOCK_MONOTONIC, &end_time) == -1 )
-    perror("clock_gettime");
+    {
+      perror("clock_gettime");
+      exit(EXIT_FAILURE);
+    }
 
   dif = end_time.tv_sec - init_time.tv_sec;
   dif += (end_time.tv_nsec - init_time.tv_nsec) / NSTOS;
-  
+
   return dif;
 }
 
@@ -31,7 +34,7 @@ init_timer(void)
     }
 }
 
-void
+inline void
 restart_timer(void)
 {
   init_time = end_time;

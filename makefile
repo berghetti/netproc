@@ -19,7 +19,13 @@
 PROGNAME=netproc
 
 CC=gcc
-CFLAGS=-Wall -Wextra -pedantic -pedantic-errors -O2 -g
+
+CFLAGS=
+# ifdef DEBUG
+# 	CFLAGS+=-Wall -Wextra -pedantic -pedantic-errors -O0 -g
+# else
+# 	CFLAGS+= -O2 -march=native
+# endif
 
 
 #.c files
@@ -33,27 +39,34 @@ C_SOURCE=$(wildcard *.c)
 OBJECTS=$(C_SOURCE:.c=.o)
 
 # alvos fake, não são arquivos
-.PHONY: all clean run
+.PHONY: all clean distclean run
 
 all: $(PROGNAME)
 
+# linka os arquivos ojetos para o executavel
 # regra ja é implitica dessa forma,
 # adicionado apenas para 'clareza'
 $(PROGNAME): $(OBJECTS)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-# caso especial main que não possui .h
+# caso especial do main que não possui .h
 main.o: main.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 # mascara generica para compilar arquivos .o
+# quando usa regra implicita não compila quando o .h é alterado
+# não sei porque...
 %.o: %.c %.h
 	 $(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 
 clean:
 	@ echo "apagando arquivos .o"
-	@ -find . -type f -name '*.o' -delete
+	@ find . -type f -name '*.o' -delete
+
+distclean: clean
+	@ echo "apagando binario $(PROGNAME)"
+	@ find . -name $(PROGNAME) -delete
 
 run:
 	sudo ./$(PROGNAME)

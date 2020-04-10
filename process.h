@@ -1,10 +1,11 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
-#include "headers-system.h"
 
 #include "directory.h"
 #include "conection.h"
+
+
 
 
 #define MAX_PROCESS 13504 // ulimit -a

@@ -11,10 +11,8 @@ void init_timer(void);
 // com a hora atual
 float timer(void);
 
-// atribua hora atual como hora de inicio
+// atribui a hora atual como hora de inicio
 void restart_timer(void);
-
-
 
 
 #endif // MTIME_H

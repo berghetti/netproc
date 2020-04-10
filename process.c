@@ -1,197 +1,27 @@
 
+#include "headers-system.h"
 #include "process.h"
+
 
 bool debug = false;
 
+static size_t strlen_space(const char *string);
 
-// retorna o tamanho da string até null byte ou espaço
-// oque ocorrer primeiro
-static size_t
-strlen_space(const char *string)
-{
-  size_t n = 0;
-  while(*string && *string++ != ' ')
-    n++;
+static int get_name_process(char **buffer, const pid_t pid);
 
-  return n;
-}
+static void free_process(process_t *cur_procs,
+                        const size_t len_cur_procs,
+                        const process_t *new_procs,
+                        const size_t len_new_procs);
 
-// armazena o nome do processo no buffer e retorna
-// o tamanho do nome do processo incluindo null bytes ou espaço,
-// função cuida da alocação de memoria para o nome do processo
-static int
-get_name_process(char **buffer, const pid_t pid)
-{
-  char path_cmdline[MAX_NAME];
-  snprintf(path_cmdline, MAX_NAME, "/proc/%d/cmdline", pid);
+static int search_pid(const pid_t search_pid,
+                      const process_t *procs,
+                      const size_t len_procs);
 
 
-  FILE *arq = NULL;
-  arq = fopen(path_cmdline, "r");
+static void alloc_memory_conections(process_t *new_st_processes,
+                                    const process_t *current_st_processes);
 
-  if (arq == NULL)
-    {
-      perror("fopen");
-      return -1;
-    }
-
-  char line[MAX_NAME];
-  if ( ! fgets(line, MAX_NAME, arq) )
-    {
-      fclose(arq);
-      perror("fgets");
-      return -1;
-    }
-
-  // tamanho até null byte ou primeiro espaço
-  size_t len = strlen_space(line);
-
-  line[len] = '\0';
-
-  *buffer = calloc(1, len + 1);
-
-  if (! buffer)
-    {
-      perror("calloc");
-      return -1;
-    }
-
-  // copia a string junto com null byte
-  size_t i;
-  for (i = 0; i < len + 1; i++)
-    (*buffer)[i] = line[i];
-
-
-  fclose(arq);
-  return i;
-}
-
-
-// verifica se o pid ja existe no buffer.
-// retorna o indice do buffer em que o pid foi encontrado
-// ou -1 caso o pid não seja localizado
-// @param pid_t search_pid, o pid a ser buscado
-// @param ponteiro process_t procs, o buffer a procurar
-// @param size_t len_procs, tamanho do buffer procs
-static int
-search_pid(const pid_t search_pid,
-           const process_t *procs,
-           const size_t len_procs)
-{
-  if (! procs)
-    return -1;
-
-  for (size_t i = 0; i < len_procs; i++)
-    if (procs[i].pid == search_pid)
-      return i;
-
-  return -1;
-}
-
-// libera processos atuais que não foram localizados
-// na ultima checagem por processos com conexão ativa
-static void
-free_process(process_t *cur_procs,
-             const size_t len_cur_procs,
-             const process_t *new_procs,
-             const size_t len_new_procs)
-{
-
-  for (size_t i = 0; i < len_cur_procs; i++)
-    {
-      // locate = false;
-      int id = -1;
-      id = search_pid(cur_procs[i].pid, new_procs, len_new_procs);
-
-      // processo não localizado
-      // liberando memoria alocada para seus atributos
-      if (id == -1)
-        {
-          free(cur_procs[i].name);
-          cur_procs[i].name = NULL;
-          free(cur_procs[i].conection);
-          cur_procs[i].conection = NULL;
-        }
-
-    }
-}
-
-// aloca memoria INICIAL para conection da estrutura process_t
-// com base no numero de conexoes que o processo tem,
-// sendo numero de conexoes * 2 o tamanho alocado.
-// Antes de reallocar mais memoria é feita verificações para checar se o valor
-// alocado inicialmente não atende, caso não realocamos para nova quantidade
-// de conexões * 2;
-static void
-alloc_memory_conections(process_t *new_st_processes,
-                        const process_t *current_st_processes)
-{
-
-  if (! current_st_processes)
-    { // processo novo, aloca duas vezes quantidade de memoria necessaria
-      // para evitar realocar com frequencia...
-
-      new_st_processes->conection = calloc(sizeof(conection_t),
-                                        new_st_processes->total_conections * 2);
-
-      if (!new_st_processes->conection)
-        {
-          perror("calloc");
-          exit(EXIT_FAILURE);
-        }
-
-      new_st_processes->max_n_con = new_st_processes->total_conections * 2;
-    }
-  else if ( current_st_processes->max_n_con <
-            new_st_processes->total_conections )
-    { // status atual do processo nao tem memoria suficiente
-      // para armazenas a quantidade de conexões do novo status processo
-      // realoca memoria para o dobro da nova demanda.
-
-      void *p = NULL;
-      p = realloc( current_st_processes->conection,
-                  new_st_processes->total_conections * sizeof(conection_t) * 2);
-
-      if (! p)
-        {
-          perror("realloc deu ruim");
-          exit(EXIT_FAILURE);
-        }
-
-      new_st_processes->conection = p;
-      new_st_processes->max_n_con = new_st_processes->total_conections * 2;
-
-    }
-  else
-    {  // apenas reutiliza a memoria ja alocada, espaço é suficiente...
-       new_st_processes->conection = current_st_processes->conection;
-       new_st_processes->max_n_con = current_st_processes->max_n_con;
-    }
-
-}
-
-
-// void add_conections_process(process_t *proc,
-//                             const conection_t con,
-//                             const size_t tot_con)
-// {
-//   for (size_t c = 0; c < tot_con; c++)
-//     {
-//       if (debug)
-//         printf("associando ao processo pid %d o inode %d\n",
-//               processos[tot_process_active_con].pid, conections[index_history_con[c]].inode);
-//         // printf("index_histopry[%d] - %d\n", index_conection - c - 1, index_history_con[c])
-//
-//       proc->conection[c] = con
-//
-//       processos[tot_process_active_con].conection[c] =
-//                                       conections[index_history_con[c]];
-//
-//       if (debug)
-//       printf("associado ao processo pid %d o inode %d - index %d\n",
-//             processos[tot_process_active_con].pid, processos[tot_process_active_con].conection[c].inode, c);
-//     }
-// }
 
 
 // armazena a quantidade maxima de PROCESSOS
@@ -473,4 +303,171 @@ get_process_active_con(process_t **cur_proc,
   // retorna o numero de processos com conexão ativa
   return tot_process_active_con;
 
+}
+
+
+// aloca memoria INICIAL para conection da estrutura process_t
+// com base no numero de conexoes que o processo tem,
+// sendo numero de conexoes * 2 o tamanho alocado.
+// Antes de reallocar mais memoria é feita verificações para checar se o valor
+// alocado inicialmente não atende, caso não realocamos para nova quantidade
+// de conexões * 2;
+static void
+alloc_memory_conections(process_t *new_st_processes,
+                        const process_t *current_st_processes)
+{
+
+  if (! current_st_processes)
+    { // processo novo, aloca duas vezes quantidade de memoria necessaria
+      // para evitar realocar com frequencia...
+
+      new_st_processes->conection = calloc(sizeof(conection_t),
+                                        new_st_processes->total_conections * 2);
+
+      if (!new_st_processes->conection)
+        {
+          perror("calloc");
+          exit(EXIT_FAILURE);
+        }
+
+      new_st_processes->max_n_con = new_st_processes->total_conections * 2;
+    }
+  else if ( current_st_processes->max_n_con <
+            new_st_processes->total_conections )
+    { // status atual do processo nao tem memoria suficiente
+      // para armazenas a quantidade de conexões do novo status processo
+      // realoca memoria para o dobro da nova demanda.
+
+      void *p = NULL;
+      p = realloc( current_st_processes->conection,
+                  new_st_processes->total_conections * sizeof(conection_t) * 2);
+
+      if (! p)
+        {
+          perror("realloc deu ruim");
+          exit(EXIT_FAILURE);
+        }
+
+      new_st_processes->conection = p;
+      new_st_processes->max_n_con = new_st_processes->total_conections * 2;
+
+    }
+  else
+    {  // apenas reutiliza a memoria ja alocada, espaço é suficiente...
+       new_st_processes->conection = current_st_processes->conection;
+       new_st_processes->max_n_con = current_st_processes->max_n_con;
+    }
+
+}
+
+// verifica se o pid ja existe no buffer.
+// retorna o indice do buffer em que o pid foi encontrado
+// ou -1 caso o pid não seja localizado
+// @param pid_t search_pid, o pid a ser buscado
+// @param ponteiro process_t procs, o buffer a procurar
+// @param size_t len_procs, tamanho do buffer procs
+static int
+search_pid(const pid_t search_pid,
+           const process_t *procs,
+           const size_t len_procs)
+{
+  if (! procs)
+    return -1;
+
+  for (size_t i = 0; i < len_procs; i++)
+    if (procs[i].pid == search_pid)
+      return i;
+
+  return -1;
+}
+
+// libera processos atuais que não foram localizados
+// na ultima checagem por processos com conexão ativa
+static void
+free_process(process_t *cur_procs,
+             const size_t len_cur_procs,
+             const process_t *new_procs,
+             const size_t len_new_procs)
+{
+
+  for (size_t i = 0; i < len_cur_procs; i++)
+    {
+      // locate = false;
+      int id = -1;
+      id = search_pid(cur_procs[i].pid, new_procs, len_new_procs);
+
+      // processo não localizado
+      // liberando memoria alocada para seus atributos
+      if (id == -1)
+        {
+          free(cur_procs[i].name);
+          cur_procs[i].name = NULL;
+          free(cur_procs[i].conection);
+          cur_procs[i].conection = NULL;
+        }
+
+    }
+}
+
+// armazena o nome do processo no buffer e retorna
+// o tamanho do nome do processo incluindo null bytes ou espaço,
+// função cuida da alocação de memoria para o nome do processo
+static int
+get_name_process(char **buffer, const pid_t pid)
+{
+  char path_cmdline[MAX_NAME];
+  snprintf(path_cmdline, MAX_NAME, "/proc/%d/cmdline", pid);
+
+
+  FILE *arq = NULL;
+  arq = fopen(path_cmdline, "r");
+
+  if (arq == NULL)
+    {
+      perror("fopen");
+      return -1;
+    }
+
+  char line[MAX_NAME];
+  if ( ! fgets(line, MAX_NAME, arq) )
+    {
+      fclose(arq);
+      perror("fgets");
+      return -1;
+    }
+
+  // tamanho até null byte ou primeiro espaço
+  size_t len = strlen_space(line);
+
+  line[len] = '\0';
+
+  *buffer = calloc(1, len + 1);
+
+  if (! buffer)
+    {
+      perror("calloc");
+      return -1;
+    }
+
+  // copia a string junto com null byte
+  size_t i;
+  for (i = 0; i < len + 1; i++)
+    (*buffer)[i] = line[i];
+
+
+  fclose(arq);
+  return i;
+}
+
+
+// retorna o tamanho da string até null byte ou espaço
+// oque ocorrer primeiro
+static size_t
+strlen_space(const char *string)
+{
+  size_t n = 0;
+  while(*string && *string++ != ' ')
+    n++;
+
+  return n;
 }
