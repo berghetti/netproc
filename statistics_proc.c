@@ -1,13 +1,17 @@
 
-#include "statistics_proc.h"
+// #include "statistics_proc.h"
 
+#include "process.h"
+#include "network.h"
+
+extern uint8_t id_buff_circ;
 
 bool
 add_statistics_in_processes(process_t *processes,
-                          const size_t tot_proc,
-                          struct packet *pkt)
+                            const size_t tot_proc,
+                            struct packet *pkt)
 {
-  static uint8_t last = 0;
+  static uint8_t last_id = 0;
   bool locate = false;
 
   for (size_t i = 0; i < tot_proc; i++)
@@ -16,7 +20,7 @@ add_statistics_in_processes(process_t *processes,
       // pois ja deu o tempo pre definido, T_REFRESH,
       // apaga os dados antes de começar a escrever
       // para não sobrescrever em cima de valores antigos
-      if (last != id_buff_circ)
+      if (last_id != id_buff_circ)
         {
           processes[i].net_stat.Bps_rx[id_buff_circ] = 0;
           processes[i].net_stat.Bps_tx[id_buff_circ] = 0;
@@ -29,7 +33,7 @@ add_statistics_in_processes(process_t *processes,
 
       // caso o pacote/processo ja tenha sido localizado
       // e o tempo para refresh não alterou
-      if (locate && last == id_buff_circ)
+      if (locate && last_id == id_buff_circ)
         break;
 
       // processo/pacote ja localizado ou sem dados para atualizar,
@@ -65,6 +69,6 @@ add_statistics_in_processes(process_t *processes,
     }
 
     // atualiza para id de buffer atual
-    last = id_buff_circ;
+    last_id = id_buff_circ;
     return locate;
 }

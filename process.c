@@ -1,9 +1,12 @@
 
 #include "headers-system.h"
 #include "process.h"
+#include "m_error.h"
 
 
 bool debug = false;
+
+
 
 static size_t strlen_space(const char *string);
 
@@ -53,11 +56,8 @@ get_process_active_con(process_t **cur_proc,
   int total_conections = 0;
   total_conections = get_info_conections(conections, MAX_CONECTIONS, PATH_INODE);
 
-  if (total_conections < 0)
-    {
-      perror("get_info_conections");
-      exit(EXIT_FAILURE);
-    }
+  if (total_conections == -1)
+    fatal_error("Error get_info_conections");
 
   if (debug)
     {

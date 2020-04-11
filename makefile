@@ -21,11 +21,11 @@ PROGNAME=netproc
 CC=gcc
 
 CFLAGS=
-# ifdef DEBUG
-# 	CFLAGS+=-Wall -Wextra -pedantic -pedantic-errors -O0 -g
-# else
-# 	CFLAGS+= -O2 -march=native
-# endif
+ifdef DEBUG
+	CFLAGS+=-Wall -Wextra -pedantic -pedantic-errors -O0 -g
+else
+	CFLAGS+= -O2 -march=native
+endif
 
 
 #.c files

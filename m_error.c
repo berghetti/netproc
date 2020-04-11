@@ -5,7 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdarg.h>
-
+#include "m_error.h"
 
 static void print_error(const char *msg, va_list args);
 
@@ -13,6 +13,7 @@ void error(const char *msg, ...)
 {
   va_list args;
 
+  fprintf(stderr, ERROR"\n");
   va_start(args, msg);
 
   print_error(msg, args);
@@ -24,6 +25,7 @@ void fatal_error(const char *msg, ...)
 {
   va_list args;
 
+  fprintf(stderr, FATAL"\n");
   va_start(args, msg);
 
   print_error(msg, args);

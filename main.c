@@ -1,14 +1,18 @@
 
 #include "headers-system.h"
 
+// #define USE_ANSI  //enable color
+
 #include "process.h"
-#include "conection.h"
+// #include "conection.h"
 #include "network.h"
 #include "proc_rate.h"
 #include "timer.h"
 #include "statistics_proc.h"
 #include "show.h"
-#include "error.h"
+#include "m_error.h"
+
+
 
 // incremento circular de 0 até LEN_BUF_CIRC_RATE - 1
 #define UPDATE_ID_BUFF(id) ((id + 1) < LEN_BUF_CIRC_RATE ? (id++) : (id = 0))
@@ -38,8 +42,9 @@ int main(void)
   if (! buffer)
     fatal_error("Falha ao alocar buffer: %s", strerror(errno));
 
-  struct packet packet;
-  memset(&packet, 0, sizeof(packet));
+  struct packet packet = {0};
+  // memset(&packet, 0, sizeof(packet));
+
 
  init_timer();
  ssize_t bytes = 0;
