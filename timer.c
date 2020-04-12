@@ -4,7 +4,7 @@
 #include <errno.h>
 #include "m_error.h"
 
-#define NSTOS 1000000000.0  // convert nanoseconds for seconds
+#define NSTOS 1000000000.0  // convert nanoseconds to seconds
 
 inline static void get_time(struct timespec *);
 

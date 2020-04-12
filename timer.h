@@ -1,7 +1,5 @@
-#ifndef MTIME_H
-#define MTIME_H
-
-// #include "headers-system.h"
+#ifndef M_TIME_H
+#define M_TIME_H
 
 
 // inicializa o timer com a hora atual

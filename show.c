@@ -1,5 +1,6 @@
 
-#include "show.h"
+#include <stdio.h>
+#include "process.h"
 
 
 static void cls(void);

@@ -1,6 +1,16 @@
 
+#include <string.h>             // memset, strerror
+#include <errno.h>              // variable errno
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>          // htons
+#include <linux/if_packet.h>    // struct sockaddr_ll
+#include <linux/if_ether.h>     // struct ethhdr
+#include <linux/ip.h>           // struct iphdr
+#include <linux/tcp.h>          // struct tcphdr
 
 #include "network.h"
+#include "m_error.h"
 
 static int sock;
 
@@ -9,10 +19,7 @@ int create_socket(void)
 
   // int sock;
   if ( (sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) == -1 )
-  {
-    perror("Necessario root");
-    return -1;
-  }
+    fatal_error("create socket: %s", strerror(errno));
 
 
   struct timeval read_timeout;
@@ -20,10 +27,7 @@ int create_socket(void)
   read_timeout.tv_usec = 100000; // 1/10 of second
   // set timeout for read in socket
   if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout)) == -1)
-    {
-      perror("setsockopt");
-      return -1;
-    }
+    fatal_error("set timeout socket: %s", strerror(errno));
 
   struct sockaddr_ll my_sock;
   memset(&my_sock, 0 , sizeof(my_sock));
@@ -32,10 +36,9 @@ int create_socket(void)
   my_sock.sll_ifindex = 0; // 0 equal all interfaces sniffer
 
 
-  if (bind(sock, (struct sockaddr *)&my_sock, sizeof(my_sock)) == -1){
-      perror("bind");
-      return -1;
-  }
+  if (bind(sock, (struct sockaddr *)&my_sock, sizeof(my_sock)) == -1)
+    fatal_error("bind interface %s", strerror(errno));
+
 
   return sock;
 
@@ -60,7 +63,7 @@ get_packets(struct sockaddr_ll *link_level,
     return 0;
 
   if(bytes_received == -1)
-    perror("recvfrom");
+    error("get packets");
 
   return -1;
 
@@ -107,38 +110,38 @@ parse_packet(struct packet *pkt,
 }
 
 
-void print_l2(struct ethhdr *l2, const int flag)
-{
-  if (flag == SRC || flag == BOTH)
-    {
-      printf("MAC SRC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-            l2->h_source[0],
-            l2->h_source[1],
-            l2->h_source[2],
-            l2->h_source[3],
-            l2->h_source[4],
-            l2->h_source[5]);
-    }
-  if (flag == DST || flag == BOTH)
-    {
-      printf("MAC DST: %02x:%02x:%02x:%02x:%02x:%02x\n",
-            l2->h_dest[0],
-            l2->h_dest[1],
-            l2->h_dest[2],
-            l2->h_dest[3],
-            l2->h_dest[4],
-            l2->h_dest[5]);
-    }
-}
+// void print_l2(struct ethhdr *l2, const int flag)
+// {
+//   if (flag == SRC || flag == BOTH)
+//     {
+//       printf("MAC SRC: %02x:%02x:%02x:%02x:%02x:%02x\n",
+//             l2->h_source[0],
+//             l2->h_source[1],
+//             l2->h_source[2],
+//             l2->h_source[3],
+//             l2->h_source[4],
+//             l2->h_source[5]);
+//     }
+//   if (flag == DST || flag == BOTH)
+//     {
+//       printf("MAC DST: %02x:%02x:%02x:%02x:%02x:%02x\n",
+//             l2->h_dest[0],
+//             l2->h_dest[1],
+//             l2->h_dest[2],
+//             l2->h_dest[3],
+//             l2->h_dest[4],
+//             l2->h_dest[5]);
+//     }
+// }
 
-void print_packet(struct packet *pkt)
-{
-
-  char buf_ip[INET_ADDRSTRLEN];
-  printf("IP local    -> %s\n", inet_ntop(AF_INET, &pkt->local_address, buf_ip, INET_ADDRSTRLEN));
-  // printf("IP remote -> %s\n", inet_ntop(AF_INET, pkt->daddr, buf_ip, INET_ADDRSTRLEN));
-
-  printf("PORT local  -> %d\n", ntohs(pkt->local_port));
-  // printf("PORT remote -> %d\n", ntohs(pkt->dest));
-
-}
+// void print_packet(struct packet *pkt)
+// {
+//
+//   char buf_ip[INET_ADDRSTRLEN];
+//   printf("IP local    -> %s\n", inet_ntop(AF_INET, &pkt->local_address, buf_ip, INET_ADDRSTRLEN));
+//   // printf("IP remote -> %s\n", inet_ntop(AF_INET, pkt->daddr, buf_ip, INET_ADDRSTRLEN));
+//
+//   printf("PORT local  -> %d\n", ntohs(pkt->local_port));
+//   // printf("PORT remote -> %d\n", ntohs(pkt->dest));
+//
+// }

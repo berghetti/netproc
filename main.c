@@ -1,10 +1,7 @@
 
-#include "headers-system.h"
-
-// #define USE_ANSI  //enable color
-
+#include <string.h>
+#include <errno.h>    // variable errno
 #include "process.h"
-// #include "conection.h"
 #include "network.h"
 #include "proc_rate.h"
 #include "timer.h"
@@ -22,11 +19,12 @@
 
 uint8_t id_buff_circ = 0;
 
+process_t *processes = NULL;
 
 int main(void)
 {
 
-  process_t *processes = NULL;
+
   uint32_t tot_process_act = 0;
   tot_process_act = get_process_active_con(&processes, tot_process_act);
 
@@ -55,8 +53,7 @@ int main(void)
       if (bytes == -1){
         if(buffer)
           free(buffer);
-        perror("get_packets");
-        exit(EXIT_FAILURE);
+        fatal_error("sniffer packets");
       }
 
 
@@ -75,7 +72,6 @@ int main(void)
       if (!add_statistics_in_processes(processes, tot_process_act, &packet))
         if (packet.lenght > 0)
           tot_process_act = get_process_active_con(&processes, tot_process_act);
-
 
 
       PRINT:

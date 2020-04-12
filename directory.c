@@ -1,5 +1,10 @@
 
-#include "directory.h"
+#include <stdlib.h>     // atoi
+#include <stdbool.h>    // type boolean
+#include <ctype.h>      // isdigit
+#include <stdint.h>     // type uint*
+#include <sys/types.h>  // *dir
+#include <dirent.h>     // *dir
 
 static bool is_number(const char *string);
 

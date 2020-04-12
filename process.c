@@ -1,11 +1,13 @@
 
-#include "headers-system.h"
-#include "process.h"
-#include "m_error.h"
+#include <stdio.h>
+#include <string.h>     // memset
+#include <unistd.h>    // readliink
+#include <stdbool.h>    // type boolean
+#include "process.h"    // process_t
+#include "m_error.h"    // fatal_error, error
 
 
-bool debug = false;
-
+int debug = 0;
 
 
 static size_t strlen_space(const char *string);
@@ -24,6 +26,8 @@ static int search_pid(const pid_t search_pid,
 
 static void alloc_memory_conections(process_t *new_st_processes,
                                     const process_t *current_st_processes);
+
+static void alloc_memory_process(process_t **proc, size_t len);
 
 
 
@@ -47,11 +51,8 @@ get_process_active_con(process_t **cur_proc,
   int total_process = 0;
   total_process = get_numeric_directory(process_pids, MAX_PROCESS, PROCESS_DIR);
 
-  if (total_process < 0)
-    {
-      perror("get_numeric_directory");
-      exit(EXIT_FAILURE);
-    }
+  if (total_process == -1)
+    fatal_error("Error get PIDs of processes");
 
   int total_conections = 0;
   total_conections = get_info_conections(conections, MAX_CONECTIONS, PATH_INODE);
@@ -59,14 +60,7 @@ get_process_active_con(process_t **cur_proc,
   if (total_conections == -1)
     fatal_error("Error get_info_conections");
 
-  if (debug)
-    {
-      printf("total de process %d\n", total_process);
-      printf("tam struct process %zu\n", sizeof(process_t));
-    }
 
-  // process_t processos[MAX_PROCESS] = {0};
-  //
   process_t processos[total_process];
   memset(processos, 0, total_process * sizeof(process_t));
 
@@ -223,38 +217,7 @@ get_process_active_con(process_t **cur_proc,
     return 0;
   }
 
-  // alloca memoria para a struct passada por argumento
-  // se chamada pela primeira vez - ponteiro == NULL - aloca
-  // o dobro de memoria necessaria para um primeiro momento
-  if ( ! *cur_proc )
-    {
-      *cur_proc = calloc( sizeof(process_t), (tot_process_active_con * 2) );
-
-      if (! *cur_proc)
-        {
-          perror("calloc processos");
-          exit(EXIT_FAILURE);
-        }
-
-      max_n_proc = tot_process_active_con * 2;
-    }
-  // se total de processos com conexões ativas for maior
-  // que o espaço inicial reservado, realloca mais memoria
-  else if ( tot_process_active_con > max_n_proc )
-    {
-      void *p;
-      p = realloc(*cur_proc,
-                  sizeof(process_t) * (tot_process_active_con * 2));
-
-      if (! p)
-        {
-          perror("realloc processos");
-          exit(EXIT_FAILURE);
-        }
-
-      *cur_proc = p;
-      max_n_proc = tot_process_active_con * 2;
-    }
+  alloc_memory_process(cur_proc, tot_process_active_con);
 
 
   // free processes que nao tem mais conexoes ativas
@@ -294,15 +257,56 @@ get_process_active_con(process_t **cur_proc,
                 }
             }
         }
-        (*cur_proc)[i] = processos[i];
+        printf("atrbuindo em  - %p\n", *cur_proc+i);
+        printf("atrbuindo ou em  - %p\n", (void *) (cur_proc)[i]);
+        // (*cur_proc)[i] = processos[i];
+        *(*cur_proc + i) = processos[i];
 
     }
-
 
 
   // retorna o numero de processos com conexão ativa
   return tot_process_active_con;
 
+}
+
+
+// alloca memoria para process_t com o dobro do tamanho informado
+// se chamada pela primeira vez - ponteiro == NULL,
+// se não, verifica se o espaço de memoria atual é
+// insuficiente com base no numero de processos ativos x alocação anterior
+static void
+alloc_memory_process(process_t **proc, size_t len)
+{
+  if ( ! *proc )
+    {
+      *proc = calloc( sizeof(process_t), (len * 2) );
+
+      if (! *proc)
+        {
+          perror("calloc processos");
+          exit(EXIT_FAILURE);
+        }
+
+      max_n_proc = len * 2;
+    }
+  // se total de processos com conexões ativas for maior
+  // que o espaço inicial reservado, realloca mais memoria
+  else if ( len > max_n_proc )
+    {
+      void *p;
+      p = realloc(*proc,
+                  sizeof(process_t) * (len * 2));
+
+      if (! p)
+        {
+          perror("realloc processos");
+          exit(EXIT_FAILURE);
+        }
+
+      *proc = p;
+      max_n_proc = len * 2;
+    }
 }
 
 

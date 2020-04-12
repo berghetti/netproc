@@ -1,7 +1,8 @@
 #ifndef DIRECTORY_H
 #define DIRECTORY_H
 
-#include "headers-system.h"
+#include <stdint.h>
+#include <stdlib.h>
 
 
 int get_numeric_directory(uint32_t *buffer,

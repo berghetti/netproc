@@ -1,5 +1,5 @@
 
-// #include "statistics_proc.h"
+#include <stdbool.h>
 
 #include "process.h"
 #include "network.h"

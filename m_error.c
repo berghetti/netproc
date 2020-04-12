@@ -2,9 +2,9 @@
 #define _GNU_SOURCE // for asprintf
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <stdarg.h>
+// #include <string.h>
+#include <errno.h>    // variable errno
+#include <stdarg.h>   // va_*
 #include "m_error.h"
 
 static void print_error(const char *msg, va_list args);
@@ -13,7 +13,7 @@ void error(const char *msg, ...)
 {
   va_list args;
 
-  fprintf(stderr, ERROR"\n");
+  fprintf(stderr, ERROR" ");
   va_start(args, msg);
 
   print_error(msg, args);
@@ -25,7 +25,7 @@ void fatal_error(const char *msg, ...)
 {
   va_list args;
 
-  fprintf(stderr, FATAL"\n");
+  fprintf(stderr, FATAL" ");
   va_start(args, msg);
 
   print_error(msg, args);

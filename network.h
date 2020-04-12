@@ -1,7 +1,8 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-#include "headers-system.h"
+#include <stdint.h>
+#include <linux/if_packet.h>    // struct sockaddr_ll
 
 #ifndef IP_MAXPACKET
 #define IP_MAXPACKET 65535
@@ -40,7 +41,7 @@ int parse_packet(struct packet *pkt, unsigned char *buf, struct sockaddr_ll *ll)
 
 // print address MAC
 // flag SRC, DST or BOTH for source, detination ou both address
-void print_l2(struct ethhdr *l2, const int flag);
+// void print_l2(struct ethhdr *l2, const int flag);
 
 void print_packet(struct packet *pkt);
 
