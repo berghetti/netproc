@@ -1,6 +1,7 @@
 #ifndef RATE_H
 #define RATE_H
 
+#include <stdlib.h>
 #include "process.h"
 
 void

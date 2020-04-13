@@ -1,13 +1,10 @@
 
 #include <stdio.h>
 #include <string.h>     // memset
-#include <unistd.h>    // readliink
+#include <unistd.h>     // readliink
 #include <stdbool.h>    // type boolean
 #include "process.h"    // process_t
 #include "m_error.h"    // fatal_error, error
-
-
-int debug = 0;
 
 
 static size_t strlen_space(const char *string);
@@ -29,6 +26,14 @@ static void alloc_memory_conections(process_t *new_st_processes,
 
 static void alloc_memory_process(process_t **proc, size_t len);
 
+// static void process_copy(process_t **proc, size_t len_proc,
+//                          process_t *temp_proc, size_t len_temp_proc);
+
+static void process_copy(process_t *proc,
+                         const size_t cur_tot_proc,
+                         process_t *new_procs,
+                         const size_t new_tot_proc);
+
 
 
 // armazena a quantidade maxima de PROCESSOS
@@ -44,6 +49,15 @@ static uint32_t process_pids[MAX_PROCESS] = {0};
 // para armazenas todas as conexões do sistema
 static conection_t conections[MAX_CONECTIONS] = {0};
 
+
+/*
+ percorre todos os processos encontrados no diretório '/proc/',
+ em cada processo encontrado armazena todos os file descriptors
+ do processo - /proc/$id/fd - no buffer fds_p
+ depois compara o link simbolico apontado pelo FD com 'socket:[inode]',
+ sendo inode coletado do arquivo '/proc/net/tcp', caso a comparação seja igual,
+ encontramos o processo que corresponde ao inode (conexão).
+*/
 int
 get_process_active_con(process_t **cur_proc,
                        const size_t tot_cur_proc_act)
@@ -65,31 +79,27 @@ get_process_active_con(process_t **cur_proc,
   memset(processos, 0, total_process * sizeof(process_t));
 
 
-  /*
-   percorre todos os processos encontrados no diretório '/proc/',
-   em cada processo encontrado armazena todos os file descriptors
-   do processo - /proc/$id/fd - em process_t->fds,
-   depois compara o link simbolico apontado pelo FD com 'socket:[inode]',
-   sendo inode coletado do arquivo '/proc/net/tcp', caso a comparação seja igual,
-   encontramos o processo que corresponde ao inode (conexão).
-  */
-
   uint32_t fds_p[MAX_CONECTIONS] = {0};  // todos file descriptors de um processo
   char path_fd[MAX_PATH_FD] = {0};       // proc/pid/fd/
   char socket[MAX_NAME_SOCKET] = {0};    //socket:[99999999]
   char data_fd[MAX_NAME_SOCKET] = {0};   // dados lidos de um fd do processo
 
-  int len_link = 0;
+  // tamanho da string armazenada em data_fd por readlink
+  int len_link;
 
-  int total_fd_process = 0;
+  // total de file descriptors em /proc/<pid>/fd
+  int total_fd_process;
 
-
+  // true caso o processo tenha alguma conexão ativa
+  // utilziada para associar a conexão ao processo
   bool process_have_conection_active;
   uint32_t tot_process_active_con = 0; // contador de processos com conexões ativas
 
+  // armazena o indice que contem os dados referente a conexão
+  // do processo no buffer conections
   uint32_t index_conection;
   int index_history_con[total_conections];
-  // int index_history_con[MAX_CONECTIONS] = {0};
+
 
   for (int index_pd = 0; index_pd < total_process; index_pd++) // index_pd - process pid index
     {
@@ -106,22 +116,25 @@ get_process_active_con(process_t **cur_proc,
       total_fd_process = get_numeric_directory(fds_p, MAX_CONECTIONS, path_fd);
 
 
-      if (debug)
-        printf("total_fd_process %d\n", total_fd_process);
+      #ifdef DEBUG2
+      printf(DEBUG" total_fd_process %d\n", total_fd_process);
+      #endif
 
-      // falha ao abrir diretorio,
+      // falha ao pegar file descriptos do processo,
       // troca de processo
-      if (total_fd_process < 0)
+      if (total_fd_process <= 0)
         continue;
 
       // passa por todos file descriptors do processo
-      for (size_t id_fd = 0; id_fd < (uint32_t) total_fd_process; id_fd++)
+      for (int id_fd = 0; id_fd < total_fd_process; id_fd++)
         {
           // isola um fd por vez do processo
           snprintf(path_fd, MAX_PATH_FD, "/proc/%d/fd/%d", process_pids[index_pd], fds_p[id_fd]);
 
-          if (debug)
-            printf("path_fd %s\n", path_fd);
+          #ifdef DEBUG2
+          printf(DEBUG" path_fd %s\n", path_fd);
+          #endif
+
           // se der erro para ler, provavel acesso negado
           // vai pro proximo fd do processo
           if ((len_link = readlink(path_fd, data_fd, MAX_NAME_SOCKET)) == -1)
@@ -143,8 +156,9 @@ get_process_active_con(process_t **cur_proc,
 
               snprintf(socket, MAX_NAME_SOCKET, "socket:[%d]", conections[c].inode);
 
-              if (debug)
-                printf("socket %s\n", socket);
+              #ifdef DEBUG2
+              printf(DEBUG" socket %s\n", socket);
+              #endif
 
               // se o conteudo de socket - socket:[$inode] - for igual
               // ao valor lido do fd do processo,
@@ -158,7 +172,7 @@ get_process_active_con(process_t **cur_proc,
                 }
 
             }
-        } // for fd
+        } // for id_fd
 
 
       if (process_have_conection_active)
@@ -175,14 +189,12 @@ get_process_active_con(process_t **cur_proc,
                               tot_cur_proc_act);
           if (id_proc != -1) // processo ja existe
             {
-              // puts("processo ja existe");
               processos[tot_process_active_con].name = (*cur_proc)[id_proc].name;
               alloc_memory_conections(&processos[tot_process_active_con],
                                       &(*cur_proc)[id_proc]);
             }
           else // processo novo
             {
-              // puts("allocando memoria para nome e conecxões");
               get_name_process(&processos[tot_process_active_con].name,
                                processos[tot_process_active_con].pid);
 
@@ -192,17 +204,18 @@ get_process_active_con(process_t **cur_proc,
 
           for (uint32_t c = 0; c < processos[tot_process_active_con].total_conections; c++)
             {
-              if (debug)
-                printf("associando ao processo pid %d o inode %d\n",
+              #ifdef DEBUG2
+              printf(DEBUG" associando ao processo pid %d o inode %d\n",
                       processos[tot_process_active_con].pid, conections[index_history_con[c]].inode);
-                // printf("index_histopry[%d] - %d\n", index_conection - c - 1, index_history_con[c])
+              #endif
 
               processos[tot_process_active_con].conection[c] =
                                               conections[index_history_con[c]];
 
-              if (debug)
-              printf("associado ao processo pid %d o inode %d - index %d\n",
+              #ifdef DEBUG2
+              printf(DEBUG" associado ao processo pid %d o inode %d - index %d\n",
                     processos[tot_process_active_con].pid, processos[tot_process_active_con].conection[c].inode, c);
+              #endif
             }
 
           // contabiliza total de processos que possuem conexao ativa
@@ -212,7 +225,7 @@ get_process_active_con(process_t **cur_proc,
     } //for process
 
   // sem processos com conexao ativa
-  if (!tot_process_active_con){
+  if (tot_process_active_con == 0){
     *cur_proc = NULL;
     return 0;
   }
@@ -225,50 +238,58 @@ get_process_active_con(process_t **cur_proc,
     free_process(*cur_proc, tot_cur_proc_act, processos, tot_process_active_con);
 
   // copia os processos com conexões ativos para
-  // o buffer principal struct process_t
-
-  for (size_t i = 0; i < tot_process_active_con; i++)
-    {
-      if (*cur_proc)
-        {
-          for (size_t j = 0; j < tot_cur_proc_act; j++)
-            {
-              if ( (processos[i].pid == (*cur_proc)[j].pid) &&
-                  ( (*cur_proc)[j].net_stat.avg_Bps_rx > 0 ||
-                    (*cur_proc)[j].net_stat.avg_Bps_tx > 0 )
-                 )
-                {
-
-                  processos[i].net_stat.avg_Bps_rx =
-                                  (*cur_proc)[j].net_stat.avg_Bps_rx;
-
-                  processos[i].net_stat.avg_Bps_tx =
-                                  (*cur_proc)[j].net_stat.avg_Bps_tx;
-                  for (size_t l = 0; l < LEN_BUF_CIRC_RATE; l++)
-                    {
-                      processos[i].net_stat.Bps_rx[l] = (*cur_proc)[j].net_stat.Bps_rx[l];
-                      processos[i].net_stat.Bps_tx[l] = (*cur_proc)[j].net_stat.Bps_tx[l];
-                      processos[i].net_stat.pps_rx[l] = (*cur_proc)[j].net_stat.pps_rx[l];
-                      processos[i].net_stat.pps_tx[l] = (*cur_proc)[j].net_stat.pps_tx[l];
-                      // printf("copiado processos[%d].net_stat.Bps_rx[%d]\n",
-                      //   processos[i].pid,
-                      //   processos[i].net_stat.Bps_rx[l]);
-                    }
-                }
-            }
-        }
-        printf("atrbuindo em  - %p\n", *cur_proc+i);
-        printf("atrbuindo ou em  - %p\n", (void *) (cur_proc)[i]);
-        // (*cur_proc)[i] = processos[i];
-        *(*cur_proc + i) = processos[i];
-
-    }
+  // o buffer principal struct process_t, mantendo as estatisticas
+  // dos processos que não são novos
+  process_copy(*cur_proc, tot_cur_proc_act, processos, tot_process_active_con);
 
 
   // retorna o numero de processos com conexão ativa
   return tot_process_active_con;
 
 }
+
+
+// copia os processos com conexões ativos para
+// o buffer principal struct process_t, mantendo as estatisticas
+// dos processos que não são novos
+static void
+process_copy(process_t *proc, const size_t cur_tot_proc,
+             process_t *new_procs, const size_t new_tot_proc)
+{
+
+  for (size_t i = 0; i < new_tot_proc; i++)
+    {
+      if (cur_tot_proc) // na primeira vez valor sera 0, não tem oque testar...
+        {
+        for (size_t j = 0; j < cur_tot_proc; j++)
+          {
+            if ( ( (proc+j)->pid == (new_procs+i)->pid ) &&
+                 ( (proc+j)->net_stat.avg_Bps_rx > 0 ||
+                   (proc+j)->net_stat.avg_Bps_tx > 0 )
+               )
+              {
+                (new_procs+i)->net_stat.avg_Bps_rx = (proc+j)->net_stat.avg_Bps_rx;
+                (new_procs+i)->net_stat.avg_Bps_tx = (proc+j)->net_stat.avg_Bps_tx;
+
+                for (size_t l = 0; l < LEN_BUF_CIRC_RATE; l++)
+                  {
+                    (new_procs+i)->net_stat.Bps_rx[l] = (proc+j)->net_stat.Bps_rx[l];
+                    (new_procs+i)->net_stat.Bps_tx[l] = (proc+j)->net_stat.Bps_tx[l];
+                    (new_procs+i)->net_stat.pps_rx[l] = (proc+j)->net_stat.pps_rx[l];
+                    (new_procs+i)->net_stat.pps_tx[l] = (proc+j)->net_stat.pps_tx[l];
+                  }
+
+                break;
+              }
+          }
+        }
+
+        // copia conteudo do buffer temporario
+        *(proc + i) = *(new_procs + i);
+    }
+}
+
+
 
 
 // alloca memoria para process_t com o dobro do tamanho informado

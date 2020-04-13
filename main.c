@@ -1,6 +1,7 @@
 
 #include <string.h>
-#include <errno.h>    // variable errno
+#include <errno.h>              // variable errno
+
 #include "process.h"
 #include "network.h"
 #include "proc_rate.h"
@@ -24,24 +25,20 @@ process_t *processes = NULL;
 int main(void)
 {
 
-
   uint32_t tot_process_act = 0;
   tot_process_act = get_process_active_con(&processes, tot_process_act);
 
 
-  struct sockaddr_ll link_level;
-  memset(&link_level, 0, sizeof(link_level));
+  struct sockaddr_ll link_level = {0};
 
 
-  if ( (create_socket()) == -1 )
-    exit(EXIT_FAILURE);
+  create_socket();
 
   unsigned char *buffer = calloc(IP_MAXPACKET, 1);
   if (! buffer)
-    fatal_error("Falha ao alocar buffer: %s", strerror(errno));
+    fatal_error(FATAL" Error alloc buffer packets: %s", strerror(errno));
 
   struct packet packet = {0};
-  // memset(&packet, 0, sizeof(packet));
 
 
  init_timer();
@@ -68,7 +65,6 @@ int main(void)
 
       packet.lenght = bytes;
 
-      // print_packet(&packet);
       if (!add_statistics_in_processes(processes, tot_process_act, &packet))
         if (packet.lenght > 0)
           tot_process_act = get_process_active_con(&processes, tot_process_act);

@@ -20,6 +20,9 @@ PROGNAME=netproc
 
 CC=gcc
 
+# enable macro DEBUG for pre-processor
+# CPPFLAGS=-DDEBUG2
+
 CFLAGS=
 ifdef DEBUG
 	CFLAGS+=-Wall -Wextra -pedantic -pedantic-errors -O0 -g

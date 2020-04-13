@@ -6,7 +6,7 @@
 static void cls(void);
 
 void
-show_process(process_t *processes, const size_t tot_process)
+show_process(const process_t *const processes, const size_t tot_process)
 {
   cls();
 

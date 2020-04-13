@@ -1,5 +1,6 @@
 
-#include "proc_rate.h"
+#include <stdlib.h>
+#include "process.h"
 
 
 void
