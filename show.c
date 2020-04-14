@@ -15,7 +15,7 @@ show_process(const process_t *const processes, const size_t tot_process)
 
   for (size_t i = 0; i < tot_process; i++)
     {
-      printf("%-5d\t %-45s %d\t %d\t %d\t %-6d kbps\t \n",
+      printf("%-5d\t %-45s %ld\t %ld\t %s\t %-6s\t \n",
             processes[i].pid,
             processes[i].name,
             processes[i].net_stat.avg_pps_tx,

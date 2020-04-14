@@ -2,10 +2,12 @@
 #define _GNU_SOURCE // for asprintf
 #include <stdio.h>
 #include <stdlib.h>
-// #include <string.h>
 #include <errno.h>    // variable errno
 #include <stdarg.h>   // va_*
 #include "m_error.h"
+
+// inspired in source code of program t50
+// https://gitlab.com/fredericopissarra/t50/
 
 static void print_error(const char *msg, va_list args);
 

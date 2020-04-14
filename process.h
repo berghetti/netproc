@@ -35,7 +35,7 @@
 // 5 é um bom valor...
 #define LEN_BUF_CIRC_RATE 5
 
-typedef uint32_t nstats_t;
+typedef uint64_t nstats_t;
 
 struct net_stat
 {
@@ -43,8 +43,8 @@ struct net_stat
   nstats_t pps_tx[LEN_BUF_CIRC_RATE];
   nstats_t Bps_rx[LEN_BUF_CIRC_RATE];
   nstats_t Bps_tx[LEN_BUF_CIRC_RATE];
-  nstats_t avg_Bps_rx;
-  nstats_t avg_Bps_tx;
+  char avg_Bps_rx[10];
+  char avg_Bps_tx[10];
   nstats_t avg_pps_rx;
   nstats_t avg_pps_tx;
 };

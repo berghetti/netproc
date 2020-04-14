@@ -268,8 +268,10 @@ process_copy(process_t *proc, const size_t cur_tot_proc,
                    (proc+j)->net_stat.avg_Bps_tx > 0 )
                )
               {
-                (new_procs+i)->net_stat.avg_Bps_rx = (proc+j)->net_stat.avg_Bps_rx;
-                (new_procs+i)->net_stat.avg_Bps_tx = (proc+j)->net_stat.avg_Bps_tx;
+                // (new_procs+i)->net_stat.avg_Bps_rx = (proc+j)->net_stat.avg_Bps_rx;
+                // (new_procs+i)->net_stat.avg_Bps_tx = (proc+j)->net_stat.avg_Bps_tx;
+                // memcpy((new_procs+i)->net_stat.avg_Bps_rx, (proc+j)->net_stat.avg_Bps_rx, 10);
+                // memcpy((new_procs+i)->net_stat.avg_Bps_tx, (proc+j)->net_stat.avg_Bps_tx, 10);
 
                 for (size_t l = 0; l < LEN_BUF_CIRC_RATE; l++)
                   {
