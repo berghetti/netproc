@@ -1,6 +1,7 @@
 
 #include <stdlib.h>
 #include "process.h"
+#include "round.h"
 #include "human_readable.h"
 
 
@@ -43,19 +44,25 @@ calc_avg_rate(process_t *proc, const size_t tot_proc )
 
         // proc[i].net_stat.avg_Bps_rx = calc_Kbps(sum_bytes_rx);
         // proc[i].net_stat.avg_Bps_tx = calc_Kbps(sum_bytes_tx);
+        // sum_bytes_rx *= 8;   // transformar em bits
+        // sum_bytes_tx *= 8;
 
-        // printf("sum_bytes_rx - %ld\n", sum_pps_rx);
-        // printf("sum_bytes_tx - %ld\n", sum_pps_tx);
+        proc[i].net_stat.avg_Bps_rx = (sum_bytes_rx) ?
+                        m_round( (double) (sum_bytes_rx) / LEN_BUF_CIRC_RATE) : 0;
 
-        human_readable(proc[i].net_stat.avg_Bps_rx, 10, (sum_bytes_rx / LEN_BUF_CIRC_RATE));
-        human_readable(proc[i].net_stat.avg_Bps_tx, 10, (sum_bytes_tx / LEN_BUF_CIRC_RATE));
+        proc[i].net_stat.avg_Bps_tx = (sum_bytes_tx) ?
+                        m_round( (double) (sum_bytes_tx) / LEN_BUF_CIRC_RATE) : 0;
 
-        // printf("human rx - %s\n", proc[i].net_stat.avg_Bps_rx);
-        // printf("human tx - %s\n", proc[i].net_stat.avg_Bps_tx);
-        // getchar();
 
-        proc[i].net_stat.avg_pps_rx = (sum_pps_rx) ? (sum_pps_rx / LEN_BUF_CIRC_RATE) : 0;
-        proc[i].net_stat.avg_pps_tx = (sum_pps_tx) ? (sum_pps_tx / LEN_BUF_CIRC_RATE) : 0;
+        human_readable(proc[i].net_stat.rx_rate, LEN_STR_RATE, proc[i].net_stat.avg_Bps_rx);
+        human_readable(proc[i].net_stat.tx_rate, LEN_STR_RATE, proc[i].net_stat.avg_Bps_tx);
+
+
+        proc[i].net_stat.avg_pps_rx = (sum_pps_rx) ?
+                        m_round( (double) sum_pps_rx / LEN_BUF_CIRC_RATE) : 0;
+
+        proc[i].net_stat.avg_pps_tx = (sum_pps_tx) ?
+                        m_round( (double) sum_pps_tx / LEN_BUF_CIRC_RATE) : 0;
 
     }
 }

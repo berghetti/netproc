@@ -16,6 +16,8 @@
    }; */
 #define n_elements(array) (sizeof (array) / sizeof ((array)[0]))
 
+// 1024 sistema IEC, base 2
+// 1000 sistema SI, base 10
 
 
 // @ n - bytes á computar
@@ -23,11 +25,12 @@
 // @ decimals - numero de casa decimais que sera colocado
 char * human_readable (char *buffer, size_t len_buff, uint64_t n)
 {
-  const int acc = 1000;
+  const int acc = 1024;   // melhor valor, não alterar
   const int decimals = 2;
   // printf("bytes recebidos - %"PRIu64"\n", n);
   /* These suffixes are compatible with those of GNU `ls -lh'. */
   const char *const powers[] = {" KB/s", " MB/s", " GB/s", " TB/s" };
+  // const char *const powers[] = {" Kb/s", " Mb/s", " Gb/s", " Tb/s" };
 
   // 'M',                      /* megabyte, 2^20 bytes */
   // 'G',                      /* gigabyte, 2^30 bytes */

@@ -251,7 +251,7 @@ get_process_active_con(process_t **cur_proc,
 
 // copia os processos com conexões ativos para
 // o buffer principal struct process_t, mantendo as estatisticas
-// dos processos que não são novos
+// dos processos que não são novos e possem
 static void
 process_copy(process_t *proc, const size_t cur_tot_proc,
              process_t *new_procs, const size_t new_tot_proc)
@@ -268,10 +268,8 @@ process_copy(process_t *proc, const size_t cur_tot_proc,
                    (proc+j)->net_stat.avg_Bps_tx > 0 )
                )
               {
-                // (new_procs+i)->net_stat.avg_Bps_rx = (proc+j)->net_stat.avg_Bps_rx;
-                // (new_procs+i)->net_stat.avg_Bps_tx = (proc+j)->net_stat.avg_Bps_tx;
-                // memcpy((new_procs+i)->net_stat.avg_Bps_rx, (proc+j)->net_stat.avg_Bps_rx, 10);
-                // memcpy((new_procs+i)->net_stat.avg_Bps_tx, (proc+j)->net_stat.avg_Bps_tx, 10);
+                (new_procs+i)->net_stat.avg_Bps_rx = (proc+j)->net_stat.avg_Bps_rx;
+                (new_procs+i)->net_stat.avg_Bps_tx = (proc+j)->net_stat.avg_Bps_tx;
 
                 for (size_t l = 0; l < LEN_BUF_CIRC_RATE; l++)
                   {

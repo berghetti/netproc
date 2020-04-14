@@ -7,8 +7,8 @@
 
 
 
-
-#define MAX_PROCESS 13504 // ulimit -a
+// ulimit -a do meu sistema, melhorar isso...
+#define MAX_PROCESS 13504
 
 // diretorios onde são listados os processos do sistema
 #define PROCESS_DIR "/proc/"
@@ -19,7 +19,7 @@
 // caminho das conexoes TCP, estender isso....
 #define PATH_INODE "/proc/net/tcp"
 
-// sizeof (socket:[99999999]) + 3 safe
+// sizeof ("socket:[99999999]") + 3 safe
 #define MAX_NAME_SOCKET 9 + 8 + 3
 
 // tamanho maximo do nome de um processo
@@ -30,21 +30,34 @@
 // /proc/<pid>/fd/<id-fd>
 #define MAX_PATH_FD 24
 
-// espaço amostral para calcular a media
+// espaço amostral para calcular a média
 // de estatisticas de rede.
 // 5 é um bom valor...
 #define LEN_BUF_CIRC_RATE 5
+
+// Considerando que a cada 1024 bits ou bytes (bits por segundo ou bytes por segundo),
+// caso escolhido o padrão IEC com base 2,
+// ou 1000 bits/bytes caso escolhido o padrão SI, com base 10,
+ // o valor sera dividido por 1000 ou
+// 1024 para que possa ser apresentado de forma "legivel por humanos", assim
+// sempre teriamos algo como:
+// 1023 B/s, 1023.99 KB/s, 1023.99 Mib/s, 1023.99 Gib/s, ou 8388608 TiB/s (:o)
+// então no pior caso teremos umas string com tamanhao de 14 bytes ja incluido
+// null byte.
+#define LEN_STR_RATE 14
 
 typedef uint64_t nstats_t;
 
 struct net_stat
 {
+  char rx_rate[LEN_STR_RATE];
+  char tx_rate[LEN_STR_RATE];
   nstats_t pps_rx[LEN_BUF_CIRC_RATE];
   nstats_t pps_tx[LEN_BUF_CIRC_RATE];
   nstats_t Bps_rx[LEN_BUF_CIRC_RATE];
   nstats_t Bps_tx[LEN_BUF_CIRC_RATE];
-  char avg_Bps_rx[10];
-  char avg_Bps_tx[10];
+  nstats_t avg_Bps_rx;
+  nstats_t avg_Bps_tx;
   nstats_t avg_pps_rx;
   nstats_t avg_pps_tx;
 };
