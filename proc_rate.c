@@ -4,15 +4,9 @@
 #include "round.h"
 #include "human_readable.h"
 
+extern bool view_bytes;
 
-#include <stdio.h> //provisorio
-
-#define Kb (1UL<<10)  // 1024
-#define Mb (1UL<<20)  // 1024^2
-#define Gb (1UL<<30)  // 1024^3
-
-
-float calc_Kbps(const size_t bytes);
+// float calc_Kbps(const size_t bytes);
 
 void
 calc_avg_rate(process_t *proc, const size_t tot_proc )
@@ -44,14 +38,19 @@ calc_avg_rate(process_t *proc, const size_t tot_proc )
 
         // proc[i].net_stat.avg_Bps_rx = calc_Kbps(sum_bytes_rx);
         // proc[i].net_stat.avg_Bps_tx = calc_Kbps(sum_bytes_tx);
-        // sum_bytes_rx *= 8;   // transformar em bits
-        // sum_bytes_tx *= 8;
+
+        if(!view_bytes)
+          {// transformar em bits
+            sum_bytes_rx *= 8;
+            sum_bytes_tx *= 8;
+          }
+
 
         proc[i].net_stat.avg_Bps_rx = (sum_bytes_rx) ?
-                        m_round( (double) (sum_bytes_rx) / LEN_BUF_CIRC_RATE) : 0;
+                      m_round( (double) (sum_bytes_rx) / LEN_BUF_CIRC_RATE) : 0;
 
         proc[i].net_stat.avg_Bps_tx = (sum_bytes_tx) ?
-                        m_round( (double) (sum_bytes_tx) / LEN_BUF_CIRC_RATE) : 0;
+                      m_round( (double) (sum_bytes_tx) / LEN_BUF_CIRC_RATE) : 0;
 
 
         human_readable(proc[i].net_stat.rx_rate, LEN_STR_RATE, proc[i].net_stat.avg_Bps_rx);
@@ -67,7 +66,7 @@ calc_avg_rate(process_t *proc, const size_t tot_proc )
     }
 }
 
-float calc_Kbps(const size_t bytes)
-{
-  return (float) (bytes / Kb) / LEN_BUF_CIRC_RATE;
-}
+// float calc_Kbps(const size_t bytes)
+// {
+//   return (float) (bytes / Kb) / LEN_BUF_CIRC_RATE;
+// }

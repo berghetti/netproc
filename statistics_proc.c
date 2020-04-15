@@ -4,6 +4,7 @@
 #include "process.h"
 #include "network.h"
 
+// defined in main.c
 extern uint8_t id_buff_circ;
 
 bool

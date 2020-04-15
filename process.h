@@ -38,10 +38,10 @@
 // Considerando que a cada 1024 bits ou bytes (bits por segundo ou bytes por segundo),
 // caso escolhido o padrão IEC com base 2,
 // ou 1000 bits/bytes caso escolhido o padrão SI, com base 10,
- // o valor sera dividido por 1000 ou
-// 1024 para que possa ser apresentado de forma "legivel por humanos", assim
-// sempre teriamos algo como:
-// 1023 B/s, 1023.99 KB/s, 1023.99 Mib/s, 1023.99 Gib/s, ou 8388608 TiB/s (:o)
+// o valor sera dividido por 1000 ou 1024 para que
+// possa ser apresentado de forma "legivel por humanos",
+// assim sempre teriamos algo como:
+// 1023 B/s, 1023.99 KB/s, 1023.99 Mib/s, 1023.99 Gib/s, ou 8388608 TiB/s :o
 // então no pior caso teremos umas string com tamanhao de 14 bytes ja incluido
 // null byte.
 #define LEN_STR_RATE 14

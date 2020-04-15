@@ -7,6 +7,7 @@
 #include "proc_rate.h"
 #include "timer.h"
 #include "statistics_proc.h"
+#include "sufix.h"
 #include "show.h"
 #include "m_error.h"
 
@@ -17,6 +18,8 @@
 
 #define T_REFRESH 1.0   // intervalo de atualização do programa, não alterar
 
+bool view_si = false;
+bool view_bytes = false;
 
 uint8_t id_buff_circ = 0;
 
@@ -24,6 +27,8 @@ process_t *processes = NULL;
 
 int main(void)
 {
+
+  define_sufix();
 
   uint32_t tot_process_act = 0;
   tot_process_act = get_process_active_con(&processes, tot_process_act);

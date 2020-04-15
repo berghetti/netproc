@@ -11,7 +11,7 @@ show_process(const process_t *const processes, const size_t tot_process)
   cls();
 
   printf("%-5s\t %-45s %s\t %s\t %-14s\t %s \n",
-        "PID", "PROGRAM", "PPS TX", "PPS RX", "UP", "DOWN");
+        "PID", "PROGRAM", "PPS TX", "PPS RX", "RATE UP", "RATE DOWN");
 
   for (size_t i = 0; i < tot_process; i++)
     {
