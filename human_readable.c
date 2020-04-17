@@ -1,6 +1,5 @@
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdio.h>      // snprintf
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -46,7 +45,6 @@ bool human_readable (char *buffer, size_t len_buff, uint64_t bytes)
 // a cada loop os bytes/bits recebidos são divididos por sua base (1000 ou 1024)
 // quando o valor for menor que sua base, ou ja estejamos no ultimo elemento
 // do array de sufixos, temos a melhor aproximação com o sufixo apropriado.
-printf("len - %ld\n", len_sufix);
   size_t i;
   for (i = 1; i < len_sufix; i++)
     {

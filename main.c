@@ -12,12 +12,13 @@
 #include "m_error.h"
 
 
-
 // incremento circular de 0 até LEN_BUF_CIRC_RATE - 1
 #define UPDATE_ID_BUFF(id) ((id + 1) < LEN_BUF_CIRC_RATE ? (id++) : (id = 0))
 
-#define T_REFRESH 1.0   // intervalo de atualização do programa, não alterar
+// intervalo de atualização do programa, não alterar
+#define T_REFRESH 1.0
 
+bool udp = true;
 bool view_si = false;
 bool view_bytes = false;
 

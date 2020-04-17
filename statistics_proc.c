@@ -1,5 +1,6 @@
 
 #include <stdbool.h>
+#include <stdio.h>    // provisorio
 
 #include "process.h"
 #include "network.h"

@@ -69,7 +69,7 @@ get_process_active_con(process_t **cur_proc,
     fatal_error("Error get PIDs of processes");
 
   int total_conections = 0;
-  total_conections = get_info_conections(conections, MAX_CONECTIONS, PATH_INODE);
+  total_conections = get_info_conections(conections, MAX_CONECTIONS);
 
   if (total_conections == -1)
     fatal_error("Error get_info_conections");

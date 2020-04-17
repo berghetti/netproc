@@ -1,8 +1,17 @@
 #ifndef CONECTION_H
 #define CONECTION_H
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
+
+// checar isso...
+#define MAX_CONECTIONS 1024
+
+// caminho do arquivo onde o kernel
+// fornece as conexoes TCP e UDP
+#define PATH_TCP "/proc/net/tcp"
+#define PATH_UDP "/proc/net/udp"
 
 
 typedef struct
@@ -15,7 +24,7 @@ typedef struct
 }conection_t;
 
 int get_info_conections(conection_t *conection,
-                    const size_t lenght,
-                    const char *conection_file);
+                    const size_t lenght);
+
 
 #endif //CONECTION_H

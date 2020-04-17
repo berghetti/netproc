@@ -1,10 +1,19 @@
 
 #include <stdio.h>
-#include <string.h>
-#include <errno.h>
+#include <stdbool.h>
+#include <string.h>     // strlen, strerror
+#include <errno.h>      // variable errno
 
 #include "conection.h"
 #include "m_error.h"
+
+// defined in main.c
+extern bool udp;
+
+static char *conection_file;
+
+static inline void define_conection_file(void);
+
 
 // le o arquivo onde fica salva as conexoes '/proc/net/tcp',
 // recebe o local do arquivo, um buffer para armazenar
@@ -13,9 +22,9 @@
 // ou -1 em caso de erro
 int
 get_info_conections(conection_t *conection,
-                    const size_t lenght,
-                    const char *conection_file)
+                    const size_t lenght)
 {
+  define_conection_file();
 
   FILE *arq = NULL;
 
@@ -26,7 +35,8 @@ get_info_conections(conection_t *conection,
   char *line = NULL;
   size_t len = 0;
 
-  // ignore header in first line
+// ignore header in first line
+// sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
   if ((getline(&line, &len, arq)) == -1)
     {
       free(line);
@@ -39,7 +49,7 @@ get_info_conections(conection_t *conection,
   uint32_t count = 0;
   char local_addr[64], rem_addr[64] = {0};
 
-  unsigned int matches, local_port, rem_port; // local_addr, rem_addr;
+  unsigned int matches, local_port, rem_port;
   unsigned long int inode;
 
   while ( (getline(&line, &len, arq)) != -1 && (count < lenght) )
@@ -86,4 +96,13 @@ get_info_conections(conection_t *conection,
   fclose(arq);
 
   return count;
+}
+
+static inline void
+define_conection_file(void)
+{
+  if (udp)
+    conection_file = PATH_UDP;
+  else
+    conection_file = PATH_TCP;
 }

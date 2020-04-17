@@ -5,7 +5,7 @@
 #include <linux/if_packet.h>    // struct sockaddr_ll
 
 #ifndef IP_MAXPACKET
-#define IP_MAXPACKET 65535
+#define IP_MAXPACKET 65535      // maximum packet size
 #endif
 
 // used in parameter of function print_l2()
@@ -21,7 +21,9 @@
 struct packet{ // used for function parse_packet
   size_t lenght;
   uint32_t local_address;
+  uint32_t remote_address;
   uint16_t local_port;
+  uint16_t remote_port;
   uint8_t  direction;
 };
 
