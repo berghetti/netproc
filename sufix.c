@@ -1,7 +1,6 @@
 #include <stdbool.h>
-#include <stdio.h>  // provisorio
 
-#define BASE_IEC 1024
+#define BASE_IEC 1024   //default
 #define BASE_SI 1000
 
 
@@ -9,9 +8,10 @@
 static const char *const sufix_iec_B[] = {"B/s", "KiB/s", "MiB/s", "GiB/s", "TiB/s"};
 
 // sufixos padrão IEC com bits
+// default
 static const char *const sufix_iec_b[] = {"b/s", "Kib/s", "Mib/s", "Gib/s", "Tib/s"};
 
-// sufixos padrão SI, com potências de 10, 1000, 2000..., com bytes
+// sufixos padrão SI, com potências de 10. 1000, 2000..., com bytes
 static const char *const sufix_si_B[] = {"B/s", "KB/s", "MB/s", "GB/s", "TB/s"};
 
 // suficos padrão SI com bits

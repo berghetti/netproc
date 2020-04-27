@@ -29,14 +29,6 @@ struct packet{ // used for function parse_packet
 
 
 
-
-// inicializa o socket para escutar conexões
-int create_socket();
-
-// pega os dados do socket armazena no buffer e preenche a struct sockaddr_ll
-// lenght tamanho maximo do buffer
-ssize_t get_packets(struct sockaddr_ll *link_level, unsigned char *buffer, const int lenght);
-
 // aloca os dados brutos nas camadas 2, 3 e 4, tambe verifica se é um pacote de down ou up
 int parse_packet(struct packet *pkt, unsigned char *buf, struct sockaddr_ll *ll);
 

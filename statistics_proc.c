@@ -35,6 +35,7 @@ add_statistics_in_processes(process_t *processes,
 
       // caso o pacote/processo ja tenha sido localizado
       // e o tempo para refresh não alterou
+      // podemos sair do loop pois não ha nada para atualizar
       if (locate && last_id == id_buff_circ)
         break;
 
