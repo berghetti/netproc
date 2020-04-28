@@ -15,8 +15,8 @@
 #include <stdio.h>   //provisorio
 
 
-// incremento circular de 0 até LEN_BUF_CIRC_RATE - 1
-#define UPDATE_ID_BUFF(id) ((id + 1) < LEN_BUF_CIRC_RATE ? (id++) : (id = 0))
+// // incremento circular de 0 até LEN_BUF_CIRC_RATE - 1
+// #define UPDATE_ID_BUFF(id) ((id + 1) < LEN_BUF_CIRC_RATE ? (id++) : (id = 0))
 
 #define TIC_TAC(tic) ( (tic) ? (tic)-- : (tic)++ )
 
@@ -28,7 +28,7 @@ bool view_si = false;
 bool view_bytes = false;
 
 uint8_t tic_tac = 0;
-uint8_t id_buff_circ = 0;   // checar isso...
+// uint8_t id_buff_circ = 0;   // checar isso...
 
 process_t *processes = NULL;
 
@@ -95,7 +95,7 @@ int main(void)
           // atualiza o indice para gravar dados do
           // buffer circular a cada 1 segundo
           // printf("tic_tax %d\n", tic_tac);
-          UPDATE_ID_BUFF(id_buff_circ);
+          // UPDATE_ID_BUFF(id_buff_circ);
           // trocar update_id... por tic_tac
           TIC_TAC(tic_tac);
         }
