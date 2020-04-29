@@ -11,10 +11,10 @@
 
 // caso valor final obtido seja maior ou igual que accuracy
 // não será impresso casas decimais
-// 1024 é melhor valor pois só não ira exibir casas decimais quando o fluxo
+// 1024 é o melhor valor pois só não ira exibir casas decimais quando o fluxo
 // for maior ou igual 1024 Tib ou TiB... :p
 // caso o valor fosse 1000, poderiamos ter resultados como
-// 1023 Kb/s, quando seria mais apropriado 1023.00 Kb/s
+// 1023 Kb/s, quando seria mais apropriado 1023.00 Kb/s ou 1023.50 Kb/s
 #define ACCURACY 1024
 
 // numero de casas decimais que serão inseridas caso
@@ -24,7 +24,9 @@
 
 bool human_readable (char *buffer, size_t len_buff, uint64_t bytes)
 {
+  // retorno da função snprintf
   ssize_t sn;
+  // 0 ou DECIMAL_PLACES
   int decimals;
 
 

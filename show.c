@@ -1,14 +1,17 @@
 
 #include <stdio.h>
+
 #include "process.h"
+#include "clear.h"    // clear_cmd
 
 
-static void cls(void);
+// inline static void cls(void);
 
 void
 show_process(const process_t *const processes, const size_t tot_process)
 {
-  cls();
+  // limpa a tela e o scroll
+  clear_cmd(1);
 
   printf("%-5s\t %-45s %s\t %s\t %-14s\t %s \n",
         "PID", "PROGRAM", "PPS TX", "PPS RX", "RATE UP", "RATE DOWN");
@@ -26,9 +29,14 @@ show_process(const process_t *const processes, const size_t tot_process)
 }
 
 // limpa tela
-static void cls(void){
-   printf("\033[2J");   // Limpa a tela
-   printf("\033[0;0H"); // Devolve o cursor para a linha 0, coluna 0
-
-//https://pt.stackoverflow.com/questions/58453/como-fazer-efeito-de-loading-no-terminal-em-apenas-uma-linha
-}
+// inline static void cls(void)
+// {
+//   // putp(clear_screen);                 // limpa tela
+//   // putp(reset_1string);                // reset terminal, exclui scroll
+//   // putp(tparm(cursor_address, 0, 0));  // posiciona cursor para 0 linha coluna 0
+//
+//    // versão com codigo de escape ANSI direto
+//    // printf("\033[2J"     // limpa a parte visivel da tela
+//    //        "\033[3J"     // limpa o buffer do scroll
+//    //        "\033[0;0H"); // posiciona o cursor para a linha 0, coluna 0
+// }

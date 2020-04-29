@@ -9,6 +9,7 @@
 #include "timer.h"
 #include "statistics_proc.h"
 #include "sufix.h"
+#include "clear.h"
 #include "show.h"
 #include "m_error.h"
 
@@ -18,6 +19,9 @@
 // // incremento circular de 0 até LEN_BUF_CIRC_RATE - 1
 // #define UPDATE_ID_BUFF(id) ((id + 1) < LEN_BUF_CIRC_RATE ? (id++) : (id = 0))
 
+// a cada vez que o tempo de T_REFRESH é atingido
+// esse valor é alterado (entre 0 e 1), para que outras partes
+// do programa possam ter uma referencia de tempo
 #define TIC_TAC(tic) ( (tic) ? (tic)-- : (tic)++ )
 
 // intervalo de atualização do programa, não alterar
@@ -37,14 +41,16 @@ int main(void)
 
   define_sufix();
 
+  load_terminal();
+
+  create_socket();
+
   uint32_t tot_process_act = 0;
   tot_process_act = get_process_active_con(&processes, tot_process_act);
 
 
   struct sockaddr_ll link_level = {0};
 
-
-  create_socket();
 
   unsigned char *buffer = calloc(IP_MAXPACKET, 1);
   if (! buffer)

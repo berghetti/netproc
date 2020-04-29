@@ -30,6 +30,8 @@ else
 	CFLAGS+= -O2 -march=native
 endif
 
+# biblioteca terminfo
+LDLIBS=-ltinfo
 
 #.c files
 C_SOURCE=$(wildcard *.c)

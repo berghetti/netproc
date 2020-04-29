@@ -49,7 +49,7 @@ start_timer(void)
 }
 
 float
-timer(float old_time)
+timer(const float old_time)
 {
   float dif = 0.0;
   struct timespec new_time = {0};
@@ -61,9 +61,6 @@ timer(float old_time)
 
   return dif;
 }
-
-
-
 
 
 inline static void

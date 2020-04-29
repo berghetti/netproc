@@ -16,7 +16,7 @@
 
 // retorna a diferença entre o tempo atual em segundos
 // e o valor em segundos passado por parametro
-float timer(float old_time);
+float timer(const float old_time);
 
 // retorna a tempo atual em segundos
 float start_timer(void);

@@ -308,7 +308,7 @@ clear_frag(void)
     {
       if ( timer(pkt_ip_frag[i].ttl) >= LIFETIME_FRAG )
         {
-          printf("removendo pct - %x no id - %d\n", pkt_ip_frag[i].pkt_id, i);
+          // printf("removendo pct - %x no id - %d\n", pkt_ip_frag[i].pkt_id, i);
           pkt_ip_frag[i].ttl = 0;
           DEC_REASSEMBLE(count_reassemblies);
         }
