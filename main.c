@@ -32,7 +32,6 @@ bool view_si = false;
 bool view_bytes = false;
 
 uint8_t tic_tac = 0;
-// uint8_t id_buff_circ = 0;   // checar isso...
 
 process_t *processes = NULL;
 
@@ -59,9 +58,9 @@ int main(void)
   struct packet packet = {0};
 
 
- // init_timer();
  float m_timer = start_timer();
  ssize_t bytes = 0;
+ // main loop
   while (1)
     {
       bytes = get_packets(&link_level, buffer, IP_MAXPACKET);
@@ -90,8 +89,7 @@ int main(void)
 
 
       PRINT:
-      // if (timer() >= T_REFRESH)
-      if (timer(m_timer) >= T_REFRESH)
+      if ( timer(m_timer) >= T_REFRESH )
         {
           calc_avg_rate(processes, tot_process_act);
           show_process(processes, tot_process_act);
@@ -105,8 +103,7 @@ int main(void)
           // trocar update_id... por tic_tac
           TIC_TAC(tic_tac);
         }
-
     }
 
-  return 0;
+  return EXIT_SUCCESS;
 }

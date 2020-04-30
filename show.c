@@ -11,7 +11,7 @@ void
 show_process(const process_t *const processes, const size_t tot_process)
 {
   // limpa a tela e o scroll
-  clear_cmd(1);
+  clear_cmd();
 
   printf("%-5s\t %-45s %s\t %s\t %-14s\t %s \n",
         "PID", "PROGRAM", "PPS TX", "PPS RX", "RATE UP", "RATE DOWN");
