@@ -4,7 +4,6 @@
 #include <errno.h>
 #include "m_error.h"
 
-// #define NSTOS 1000000000.0  // convert nanoseconds to seconds
 
 // multiply nanoseconds for this const convert nanoseconds to seconds
 #define NSTOS 1E-9
@@ -13,28 +12,24 @@
 inline static void get_time(struct timespec *);
 
 
-float
+double
 start_timer(void)
 {
-  struct timespec time = {0};
+  struct timespec time;
   get_time(&time);
 
-  // return time.tv_sec + (time.tv_nsec / NSTOS);
-  return (float) time.tv_sec + (time.tv_nsec * NSTOS) ;
-
+  return (double) time.tv_sec + (time.tv_nsec * NSTOS) ;
 }
 
-float
+double
 timer(const float old_time)
 {
-  float dif = 0.0;
-  struct timespec new_time = {0};
+  double dif = 0.0;
+  struct timespec new_time;
 
   get_time(&new_time);
 
-  // dif = new_time.tv_sec + (new_time.tv_nsec / NSTOS);
-  dif = new_time.tv_sec + (new_time.tv_nsec * NSTOS);
-  dif = dif - old_time;
+  dif = (new_time.tv_sec + (new_time.tv_nsec * NSTOS)) - old_time;
 
   return dif;
 }

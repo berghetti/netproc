@@ -8,17 +8,12 @@
 #define IP_MAXPACKET 65535      // maximum packet size
 #endif
 
-// used in parameter of function print_l2()
-#define SRC  1
-#define DST  2
-#define BOTH 3
-
 // values of packet.direction
 #define PKT_DOWN 1
 #define PKT_UPL  2
 
-
-struct packet{ // used for function parse_packet
+// used for function parse_packet
+struct packet{
   size_t lenght;
   uint32_t local_address;
   uint32_t remote_address;
@@ -28,15 +23,9 @@ struct packet{ // used for function parse_packet
 };
 
 
-
-// aloca os dados brutos nas camadas 2, 3 e 4, tambe verifica se é um pacote de down ou up
+// organiza os dados recebidosnas camadas 2, 3 e 4 e
+// tambem verifica se é um pacote de download(entrada) ou upload(saida)
 int parse_packet(struct packet *pkt, unsigned char *buf, struct sockaddr_ll *ll);
 
-
-// print address MAC
-// flag SRC, DST or BOTH for source, detination ou both address
-// void print_l2(struct ethhdr *l2, const int flag);
-
-void print_packet(struct packet *pkt);
 
 #endif //NETWORK_H

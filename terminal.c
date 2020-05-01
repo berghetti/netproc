@@ -9,7 +9,7 @@
 static char *E3;
 
 // carrega informações do terminal a associa a stdout
-void load_terminal(void)
+void setup_terminal(void)
 {
   int err;
   setupterm(NULL, STDOUT_FILENO, &err);
@@ -28,6 +28,8 @@ void load_terminal(void)
       case 0:
         fatal_error("unknown terminal");
   	}
+
+  // tputs(cursor_invisible, 1, putchar);
 }
 
 

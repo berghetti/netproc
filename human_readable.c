@@ -40,7 +40,7 @@ bool human_readable (char *buffer, size_t len_buff, uint64_t bytes)
       return (sn > 0 && (size_t) sn < len_buff);
     }
 
-// comentário original wget
+// comentário original code wget
 /* Loop over powers, dividing N with 1024 in each iteration.  This
    works unchanged for all sizes of wgint, while still avoiding
    non-portable `long double' arithmetic.  */
