@@ -75,3 +75,7 @@ distclean: clean
 
 run:
 	sudo ./$(PROGNAME)
+
+format:
+	@ echo "formatando codigo"
+	@ clang-format -i *.[ch]

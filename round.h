@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
-uint64_t m_round(double number);
+uint64_t
+m_round ( double number );
 
-#endif //M_ROUND_H
+#endif  // M_ROUND_H

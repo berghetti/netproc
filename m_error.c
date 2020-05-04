@@ -1,60 +1,64 @@
 
-#define _GNU_SOURCE // for asprintf
+#define _GNU_SOURCE  // for asprintf
+#include "m_error.h"
+#include <errno.h>   // variable errno
+#include <stdarg.h>  // va_*
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>    // variable errno
-#include <stdarg.h>   // va_*
-#include "m_error.h"
 
 // inspired in source code of program t50
 // https://gitlab.com/fredericopissarra/t50/
 
-static void print_error(const char *msg, va_list args);
+static void
+print_error ( const char *msg, va_list args );
 
-void error(const char *msg, ...)
+void
+error ( const char *msg, ... )
 {
   va_list args;
 
-  fprintf(stderr, ERROR" ");
-  va_start(args, msg);
+  fprintf ( stderr, ERROR " " );
+  va_start ( args, msg );
 
-  print_error(msg, args);
+  print_error ( msg, args );
 
-  va_end(args);
+  va_end ( args );
 }
 
-void fatal_error(const char *msg, ...)
+void
+fatal_error ( const char *msg, ... )
 {
   va_list args;
 
-  fprintf(stderr, FATAL" ");
-  va_start(args, msg);
+  fprintf ( stderr, FATAL " " );
+  va_start ( args, msg );
 
-  print_error(msg, args);
+  print_error ( msg, args );
 
-  va_end(args);
-  exit(EXIT_FAILURE);
+  va_end ( args );
+  exit ( EXIT_FAILURE );
 }
 
 // inclui '\n' no fim da mensagem e imprime
 // na saida de erro padrão
 static void
-print_error(const char *msg, va_list args)
+print_error ( const char *msg, va_list args )
 {
   char *msg_formated;
 
   errno = 0;
-  if (asprintf(&msg_formated, "%s\n", msg) == -1) // inclui '\n' na mensagem
+  if ( asprintf ( &msg_formated, "%s\n", msg ) ==
+       -1 )  // inclui '\n' na mensagem
     {
-      if (errno) // asprintf set errno in case fault?
-        perror("asprintf");
+      if ( errno )  // asprintf set errno in case fault?
+        perror ( "asprintf" );
       else
-        fprintf(stderr, "%s\n", "asprintf: Unknown error");
+        fprintf ( stderr, "%s\n", "asprintf: Unknown error" );
 
-      exit(EXIT_FAILURE);
+      exit ( EXIT_FAILURE );
     }
 
   // exibe a mensagem
-  vfprintf(stderr, msg_formated, args);
-  free(msg_formated);
+  vfprintf ( stderr, msg_formated, args );
+  free ( msg_formated );
 }

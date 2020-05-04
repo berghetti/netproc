@@ -1,43 +1,39 @@
 
-#include <time.h>
-#include <string.h>
 #include <errno.h>
-#include "m_error.h"
+#include <string.h>
+#include <time.h>
 
+#include "m_error.h"
 
 // multiply nanoseconds for this const convert nanoseconds to seconds
 #define NSTOS 1E-9
 
-
-inline static void get_time(struct timespec *);
-
+inline static void
+get_time ( struct timespec * );
 
 double
-start_timer(void)
+start_timer ( void )
 {
   struct timespec time;
-  get_time(&time);
+  get_time ( &time );
 
-  return (double) time.tv_sec + (time.tv_nsec * NSTOS) ;
+  return ( double ) time.tv_sec + ( time.tv_nsec * NSTOS );
 }
 
 double
-timer(const float old_time)
+timer ( const float old_time )
 {
-  double dif = 0.0;
   struct timespec new_time;
+  get_time ( &new_time );
 
-  get_time(&new_time);
-
-  dif = (new_time.tv_sec + (new_time.tv_nsec * NSTOS)) - old_time;
+  double dif = ( new_time.tv_sec + ( new_time.tv_nsec * NSTOS ) ) - old_time;
 
   return dif;
 }
 
-
 inline static void
-get_time(struct timespec *buff_time)
+get_time ( struct timespec *buff_time )
 {
-  if ( clock_gettime(CLOCK_MONOTONIC, buff_time) == -1 )
-    fatal_error("clock_gettime: %s", strerror(errno));
+  if ( clock_gettime ( CLOCK_MONOTONIC, buff_time ) == -1 )
+    fatal_error ( "clock_gettime: %s", strerror ( errno ) );
 }

@@ -1,11 +1,8 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
-
-#include "directory.h"
 #include "conection.h"
-
-
+#include "directory.h"
 
 // ulimit -a do meu sistema, melhorar isso...
 #define MAX_PROCESS 13504
@@ -29,15 +26,13 @@
 // 5 é um bom valor...
 #define LEN_BUF_CIRC_RATE 5
 
-// Considerando que a cada 1024 bits ou bytes (bits por segundo ou bytes por segundo),
-// caso escolhido o padrão IEC com base 2,
-// ou 1000 bits/bytes caso escolhido o padrão SI, com base 10,
-// o valor sera dividido por 1000 ou 1024 para que
-// possa ser apresentado de forma "legivel por humanos",
-// assim sempre teremos algo como:
-// 1023 B/s, 1023.99 KB/s, 1023.99 Mib/s, 1023.99 Gib/s, ou 8388608 TiB/s :o
-// então no pior caso teremos umas string com tamanhao de 14 bytes ja incluido
-// null byte.
+// Considerando que a cada 1024 bits ou bytes (bits por segundo ou bytes por
+// segundo), caso escolhido o padrão IEC com base 2, ou 1000 bits/bytes caso
+// escolhido o padrão SI, com base 10, o valor sera dividido por 1000 ou 1024
+// para que possa ser apresentado de forma "legivel por humanos", assim sempre
+// teremos algo como: 1023 B/s, 1023.99 KB/s, 1023.99 Mib/s, 1023.99 Gib/s, ou
+// 8388608 TiB/s :o então no pior caso teremos umas string com tamanhao de 14
+// bytes ja incluido null byte.
 #define LEN_STR_RATE 14
 
 typedef uint64_t nstats_t;
@@ -58,34 +53,30 @@ struct net_stat
 
 typedef struct
 {
-  struct net_stat net_stat;     // estatisticas de rede
-  conection_t *conection;       // conexoes do processo
-  char *name;                   // nome processo
-  pid_t pid;                    // pid do processo
-  uint32_t total_fd;            // totalal de fd no processo
-  uint32_t total_conections;    // total de conexões apontada por conection_t *
+  struct net_stat net_stat;   // estatisticas de rede
+  conection_t *conection;     // conexoes do processo
+  char *name;                 // nome processo
+  pid_t pid;                  // pid do processo
+  uint32_t total_fd;          // totalal de fd no processo
+  uint32_t total_conections;  // total de conexões apontada por conection_t *
 
   // variavel de controle, armazena o numero maximo
   // de conexoes que podem ser armazenada antes
   // que a memoria precise ser realocada
   uint32_t max_n_con;
-}process_t;
-
+} process_t;
 
 // inicializa a estrutura process_t para o endereço onde estão
 // armazenados os processos ativos e retorna a quantidade processos ativos
-int get_process_active_con(process_t **procs, const size_t tot_process_act_old);
-
+int
+get_process_active_con ( process_t **procs, const size_t tot_process_act_old );
 
 // int refresh_process_active_con(process_t **old_process, const int tot_old);
 
-
-void print_process(process_t *process, const int lenght);
+void
+print_process ( process_t *process, const int lenght );
 
 // percerre a array e os libera
 // void free_process(process_t *process, const int lenght);
 
-
-
-
-#endif // PROCESS_H
+#endif  // PROCESS_H

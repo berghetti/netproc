@@ -6,9 +6,11 @@
 
 // retorna a diferença entre o tempo atual em segundos
 // e o valor em segundos passado por parametro
-double timer(const float old_time);
+double
+timer ( const float old_time );
 
 // retorna a tempo atual em segundos
-double start_timer(void);
+double
+start_timer ( void );
 
-#endif // MTIME_H
+#endif  // MTIME_H

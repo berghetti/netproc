@@ -2,10 +2,11 @@
 #define TERMINAL_H
 
 // carrega os parametros do terminal
-void setup_terminal(void);
+void
+setup_terminal ( void );
 
 // limpa a tela, podendo tambem limpar o buffer do scroll se disponivel
-void clear_cmd(void);
+void
+clear_cmd ( void );
 
-
-#endif // TERMINAL_H
+#endif  // TERMINAL_H

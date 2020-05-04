@@ -10,7 +10,8 @@
 // input 1.4 - output 1
 // input 1.5 - output 2
 // input 1.9 - output 2
-uint64_t m_round(double number)
+uint64_t
+m_round ( double number )
 {
-    return (uint64_t)(number + 0.5);
+  return ( uint64_t ) ( number + 0.5 );
 }
