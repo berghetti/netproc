@@ -14,7 +14,7 @@
 #include "timer.h"
 
 // a cada vez que o tempo de T_REFRESH segundo(s) é atingido
-// esse valor é alterado (entre 0 e 1), para que outras partes
+// esse valor é alterado (entre 0 e 1), para que outras partes, statistics_proc,
 // do programa possam ter uma referencia de tempo
 #define TIC_TAC( t ) ( ( t ) ? ( t )-- : ( t )++ )
 
@@ -45,7 +45,7 @@ main ( void )
 
   uint8_t *buffer = calloc ( IP_MAXPACKET, 1 );
   if ( !buffer )
-    fatal_error ( " Error alloc buffer packets: %s", strerror ( errno ) );
+    fatal_error ( "Error alloc buffer packets: %s", strerror ( errno ) );
 
   struct sockaddr_ll link_level = {0};
   struct packet packet = {0};
@@ -72,7 +72,7 @@ main ( void )
 
       packet.lenght = bytes;
 
-      // se não foi possivel identificar de qual processo o trafego pertence
+      // se não for possivel identificar de qual processo o trafego pertence
       // é sinal que existe um novo processo que ainda não foi mapeado,
       // então atualizamos a lista de processos com conexões ativas.
 

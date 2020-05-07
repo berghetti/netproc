@@ -1,7 +1,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>  // snprintf()
+#include <stdio.h>    // snprintf()
 
 #include "integer.h"  // is_integer()
 #include "sufix.h"    // define chosen_base, sufix and LEN_ARR_SUFIX
@@ -22,7 +22,7 @@
 #define DECIMAL_PLACES 2
 
 bool
-human_readable ( char *buffer, const size_t len_buff, uint64_t bytes )
+human_readable ( char *buffer, const size_t len_buff, const uint64_t bytes )
 {
   // retorno da função snprintf
   ssize_t sn;
@@ -39,25 +39,26 @@ human_readable ( char *buffer, const size_t len_buff, uint64_t bytes )
   // elemento do array de sufixos, temos a melhor aproximação com o sufixo
   // apropriado.
 
-  // up: alterado divisão por multiplicação para melhor otimização
+  // obs: alterado divisão por multiplicação para melhor otimização
   // pelo compilador
 
   const double base = INVERSE_BASE ( chosen_base );
   int decimals;
   double val;
+
+  // not necessary this variable, only val is necessary,
+  // but make the code more readable
+  double bytest = bytes;
+
   for ( size_t i = 1; i < LEN_ARR_SUFIX; i++ )
     {
       /* At each iteration N is greater than the *subsequent* power.
          That way N/1024.0 produces a decimal number in the units of
          *this* power.  */
-      if ( ( val = bytes * base ) < chosen_base || i == ( LEN_ARR_SUFIX - 1 ) )
+      if ( ( val = bytest * base ) < chosen_base || i == ( LEN_ARR_SUFIX - 1 ) )
         {
           // coloca casas decimais se o valor for menor que ACCURACY
           // e se não for um valor inteiro
-
-          // FIXME: alguns arredondamentos do printf ainda não batem com a
-          // função
-          // is_integer, e acaba exibindo casas decimais para "valores inteiros"
           decimals =
               ( ( uint32_t ) val < ACCURACY )
                   ? !is_integer ( val, DECIMAL_PLACES, 1 ) ? DECIMAL_PLACES : 0
@@ -70,7 +71,8 @@ human_readable ( char *buffer, const size_t len_buff, uint64_t bytes )
           return ( sn > 0 && ( size_t ) sn < len_buff );
         }
 
-      bytes *= base;
+      bytest = val;
     }
+
   return false; /* unreached */
 }

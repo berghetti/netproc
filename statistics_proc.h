@@ -10,6 +10,6 @@
 bool
 add_statistics_in_processes ( process_t *processes,
                               const size_t tot_proc,
-                              struct packet *pkt );
+                              const struct packet *pkt );
 
 #endif  // STATISTICS_PROC_H

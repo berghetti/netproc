@@ -1,6 +1,5 @@
 
 #include <stdbool.h>
-#include <stdio.h>  // provisorio
 
 #include "network.h"
 #include "process.h"
@@ -15,7 +14,7 @@ extern uint8_t tic_tac;
 bool
 add_statistics_in_processes ( process_t *processes,
                               const size_t tot_proc,
-                              struct packet *pkt )
+                              const struct packet *pkt )
 {
   static int last_tic;
   static uint8_t id_buff_circ;
