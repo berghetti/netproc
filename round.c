@@ -1,7 +1,8 @@
 
+#include <stdint.h>
+
 // based in https://www.codeproject.com/Articles/58289/C-Round-Function
 
-#include <stdint.h>
 // input never is negative here then
 // we not verify number negative for more performance
 

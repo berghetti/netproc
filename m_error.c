@@ -1,12 +1,13 @@
 
 #define _GNU_SOURCE  // for asprintf
-#include "m_error.h"
 #include <errno.h>   // variable errno
 #include <stdarg.h>  // va_*
 #include <stdio.h>
 #include <stdlib.h>
 
-// inspired in source code of program t50
+#include "m_error.h"
+
+// based in source code of program t50
 // https://gitlab.com/fredericopissarra/t50/
 
 static void
@@ -47,8 +48,8 @@ print_error ( const char *msg, va_list args )
   char *msg_formated;
 
   errno = 0;
-  if ( asprintf ( &msg_formated, "%s\n", msg ) ==
-       -1 )  // inclui '\n' na mensagem
+  // inclui '\n' na mensagem
+  if ( asprintf ( &msg_formated, "%s\n", msg ) == -1 )
     {
       if ( errno )  // asprintf set errno in case fault?
         perror ( "asprintf" );

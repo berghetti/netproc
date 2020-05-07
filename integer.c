@@ -1,4 +1,3 @@
-#include <stdio.h>
 
 // determina se um valor float é inteiro
 // com base nas casas decimais (precision) fornecida
@@ -24,8 +23,9 @@ is_integer ( float n, int precision, int round )
   float temp;
 
   if ( round )
-    temp = ( float )
-   ( ( int ) ( ( n + ( ( float ) 5 / ( mult * 10 ) ) ) * mult ) ) / mult;
+    temp = ( float ) ( ( int ) ( ( n + ( ( float ) 5 / ( mult * 10 ) ) ) *
+                                 mult ) ) /
+           mult;
   else
     temp = ( float ) ( ( int ) ( ( float ) n * mult ) ) / mult;
 

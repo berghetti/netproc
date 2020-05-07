@@ -1,14 +1,17 @@
 
 #include <arpa/inet.h>        // htons
+#include <errno.h>            // variable errno
 #include <linux/if_ether.h>   // struct ethhdr
 #include <linux/if_packet.h>  // struct sockaddr_ll
 #include <linux/ip.h>         // struct iphdr
 #include <stdbool.h>          // boolean type
-
-#include <stdio.h>  // provisorio
+#include <string.h>           // strerror
+#include <sys/socket.h>       // recvfrom
+#include <sys/types.h>        // recvfrom
 
 #include "m_error.h"
 #include "network.h"
+#include "sock.h"  // defined sock
 #include "timer.h"
 
 // bit dont fragment flag do cabeçalho IP
@@ -35,7 +38,7 @@
 // do programa
 #define LIFETIME_FRAG 1.0
 
-// numero maximo de fragmentos de um pacote aitigido
+// codigo de erro para numero maximo de fragmentos de um pacote aitigido
 #define ER_MAX_FRAGMENTS -2
 
 // atualiza o total de pacotes fragmentados
@@ -70,9 +73,11 @@ struct pkt_ip_fragment
 };
 
 static int
-is_first_frag ( struct iphdr *l3, struct tcp_udp_h *l4 );
+is_first_frag ( const struct iphdr *const l3,
+                const struct tcp_udp_h *const l4 );
+
 static int
-is_frag ( struct iphdr *l3 );
+is_frag ( const struct iphdr *const l3 );
 
 static void
 insert_data_packet ( struct packet *pkt,
@@ -91,8 +96,36 @@ static struct pkt_ip_fragment pkt_ip_frag[MAX_REASSEMBLIES] = {0};
 // contador de pacotes IP que estão fragmentados
 static uint8_t count_reassemblies;
 
+// pega os da rede e adicona em buffer
+ssize_t
+get_packet ( struct sockaddr_ll *link_level, uint8_t *buffer, const int lenght )
+{
+  socklen_t link_level_size = sizeof ( struct sockaddr_ll );
+
+  ssize_t bytes_received = recvfrom ( sock,
+                                      buffer,
+                                      lenght,
+                                      0,
+                                      ( struct sockaddr * ) link_level,
+                                      &link_level_size );
+
+  // retorna quantidade de bytes farejados
+  if ( bytes_received >= 0 && bytes_received != -1 )
+    return bytes_received;
+
+  // recvfrom retornou por conta do timeout definido no socket
+  if ( bytes_received == -1 && ( errno == EAGAIN || errno == EWOULDBLOCK ) )
+    return 0;
+
+  if ( bytes_received == -1 )
+    error ( "Error get packets %s", strerror ( errno ) );
+
+  return -1;
+}
+
+// separa os dados brutos em suas camadas 2, 3 4
 int
-parse_packet ( struct packet *pkt, unsigned char *buf, struct sockaddr_ll *ll )
+parse_packet ( struct packet *pkt, const uint8_t *buf, struct sockaddr_ll *ll )
 {
   struct ethhdr *l2;
   struct iphdr *l3;
@@ -116,7 +149,6 @@ parse_packet ( struct packet *pkt, unsigned char *buf, struct sockaddr_ll *ll )
   else
     goto END;
 
-  // printf("TOTAL count_reassemblies - %d\n", count_reassemblies);
   // atigido MAX_REASSEMBLIES, dados não computados
   if ( is_first_frag ( l3, l4 ) == -1 )
     goto END;
@@ -196,7 +228,7 @@ END:
 // retorna 0 se não for primeiro fragmento
 // retorna -1 caso de erro, buffer cheio
 static int
-is_first_frag ( struct iphdr *l3, struct tcp_udp_h *l4 )
+is_first_frag ( const struct iphdr *const l3, const struct tcp_udp_h *const l4 )
 {
   // bit não fragmente ligado, logo não pode ser um fragmento
   if ( ntohs ( l3->frag_off ) & IP_DF )
@@ -222,14 +254,11 @@ is_first_frag ( struct iphdr *l3, struct tcp_udp_h *l4 )
         {
           if ( pkt_ip_frag[i].ttl == 0 )  // posição livre no array
             {
-              // printf("novo fragmento %x no array - %d\n", l3->id, i);
               pkt_ip_frag[i].pkt_id = l3->id;
               pkt_ip_frag[i].source_port = ntohs ( l4->source );
               pkt_ip_frag[i].dest_port = ntohs ( l4->dest );
-              pkt_ip_frag[i].c_frag = 1;  // first fragment
-              // pkt_ip_frag[i].ttl = LIFETIME_FRAG;
-              pkt_ip_frag[i].ttl = start_timer ();
-              // printf("timer setado - %f\n", pkt_ip_frag[i].ttl);
+              pkt_ip_frag[i].c_frag = 1;            // first fragment
+              pkt_ip_frag[i].ttl = start_timer ();  // anota tempo atual
 
               // it's first fragment
               return 1;
@@ -247,7 +276,7 @@ is_first_frag ( struct iphdr *l3, struct tcp_udp_h *l4 )
 // qualquer outro valor maior igual a 0 indica que sim,
 // sendo o valor o indice correspondente no array de fragmentos
 static int
-is_frag ( struct iphdr *l3 )
+is_frag ( const struct iphdr *const l3 )
 {
   // bit não fragmentação ligado, logo não pode ser um fragmento
   if ( ntohs ( l3->frag_off ) & IP_DF )
@@ -279,8 +308,6 @@ is_frag ( struct iphdr *l3 )
                 {
                   pkt_ip_frag[i].ttl = 0;
                   DEC_REASSEMBLE ( count_reassemblies );
-                  // printf("removido ultimo fragmento %x no id %d\n", l3->id,
-                  // i);
                 }
 
               // fragmento localizado, retorna o indice do array de fragmentos
@@ -297,7 +324,7 @@ is_frag ( struct iphdr *l3 )
 // ja tenham atingido o tempo limite de LIFETIME_FRAG definido em ttl e ainda
 // tenham mais fragmentos para enviar.
 // Essa ação é necessaria caso alguma aplicação numca envie um fragmento
-// finalizando ser o ultimo, os fragmentos subsequentes enviados
+// sinalizando ser o ultimo, os fragmentos subsequentes enviados
 // por esse pacote apos o tempo limite, não serão calculados
 // nas estatisticas de rede do processo
 static void
@@ -307,15 +334,13 @@ clear_frag ( void )
     {
       if ( timer ( pkt_ip_frag[i].ttl ) >= LIFETIME_FRAG )
         {
-          // printf("removendo pct - %x no id - %d\n", pkt_ip_frag[i].pkt_id,
-          // i);
           pkt_ip_frag[i].ttl = 0;
           DEC_REASSEMBLE ( count_reassemblies );
         }
     }
 }
 
-void
+static void
 insert_data_packet ( struct packet *pkt,
                      const uint8_t direction,
                      const uint32_t local_address,

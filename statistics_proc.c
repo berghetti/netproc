@@ -36,9 +36,6 @@ add_statistics_in_processes ( process_t *processes,
           processes[i].net_stat.Bps_tx[id_buff_circ] = 0;
           processes[i].net_stat.pps_rx[id_buff_circ] = 0;
           processes[i].net_stat.pps_tx[id_buff_circ] = 0;
-          // printf("processes[%s]net_stat.Bps_rx[%d] - %d\n",
-          // processes[i].name, id_buff_circ,
-          // processes[i]net_stat.Bps_rx[ id_buff_circ]);
         }
 
       // caso o pacote<->processo ja tenha sido localizado e/ou não tenha
@@ -58,9 +55,6 @@ add_statistics_in_processes ( process_t *processes,
       // percorre todas as conexões do processo...
       for ( size_t j = 0; j < processes[i].total_conections; j++ )
         {
-          // printf ("local %d\n", processes[i].conection[j].local_port);
-          // printf ("pkt   %d\n", pkt->local_port);
-
           // ... e verifica com o pacote recebido pela rede com base
           // na porta local, visto que somente um processo por vez pode usar
           // determinada porta

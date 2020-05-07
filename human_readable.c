@@ -4,16 +4,16 @@
 #include <stdio.h>  // snprintf()
 
 #include "integer.h"  // is_integer()
-#include "sufix.h"    //define chosen_base, sufix and LEN_ARR_SUFIX
+#include "sufix.h"    // define chosen_base, sufix and LEN_ARR_SUFIX
 
 // based in source code of program wget
 // https://github.com/mirror/wget/blob/master/src/utils.c
 
 // caso valor final obtido seja maior ou igual que accuracy
 // não será impresso casas decimais
-// 1023 é o melhor valor pois só não ira exibir casas decimais quando o fluxo
-// for maior ou igual 1024 Tib ou TiB... :p
-// caso o valor fosse 1000, poderiamos ter resultados como
+// 1024 é o melhor valor pois só não ira exibir casas decimais quando o fluxo
+// for maior ou igual 1024 ? (? == ultimo array do array sufix),
+// atualmento Tib/s, caso o valor fosse 1000, poderiamos ter resultados como
 // 1023 Kb/s, quando seria mais apropriado 1023.50 Kb/s
 #define ACCURACY 1024
 
@@ -53,14 +53,14 @@ human_readable ( char *buffer, const size_t len_buff, uint64_t bytes )
       if ( ( val = bytes * base ) < chosen_base || i == ( LEN_ARR_SUFIX - 1 ) )
         {
           // coloca casas decimais se o valor for menor que ACCURACY
-          // e se não for inteiro um valor inteiro
+          // e se não for um valor inteiro
 
-          //FIXME: alguns arredondamentos do printf ainda não batem com a função
+          // FIXME: alguns arredondamentos do printf ainda não batem com a
+          // função
           // is_integer, e acaba exibindo casas decimais para "valores inteiros"
-          // considerados por printf
           decimals =
               ( ( uint32_t ) val < ACCURACY )
-                  ? ! is_integer ( val, DECIMAL_PLACES, 1 ) ? DECIMAL_PLACES : 0
+                  ? !is_integer ( val, DECIMAL_PLACES, 1 ) ? DECIMAL_PLACES : 0
                   : 0;
 
           /* Print values smaller than the accuracy level (acc) with (decimal)
