@@ -29,7 +29,7 @@ setup_terminal ( void )
         fatal_error ( "unknown terminal" );
     }
 
-  // tputs(cursor_invisible, 1, putchar);
+  tputs ( cursor_invisible, 1, putchar );
 }
 
 // limpa a tela, podendo tambem limpar o buffer do scroll se disponivel

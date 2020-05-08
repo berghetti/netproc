@@ -66,17 +66,13 @@ typedef struct
   uint32_t max_n_con;
 } process_t;
 
-// inicializa a estrutura process_t para o endereço onde estão
-// armazenados os processos ativos e retorna a quantidade processos ativos
+// inicializa a estrutura process_t com os processos ativos e
+// retorna a quantidade processos armazenados
 int
 get_process_active_con ( process_t **procs, const size_t tot_process_act_old );
 
-// int refresh_process_active_con(process_t **old_process, const int tot_old);
-
+// libera os processos informados (usado para apagar todos os processos)
 void
-print_process ( process_t *process, const int lenght );
-
-// percerre a array e os libera
-// void free_process(process_t *process, const int lenght);
+free_process ( process_t *proc, const size_t qtd_proc );
 
 #endif  // PROCESS_H

@@ -1,7 +1,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>    // snprintf()
+#include <stdio.h>  // snprintf()
 
 #include "integer.h"  // is_integer()
 #include "sufix.h"    // define chosen_base, sufix and LEN_ARR_SUFIX
@@ -59,15 +59,16 @@ human_readable ( char *buffer, const size_t len_buff, const uint64_t bytes )
         {
           // coloca casas decimais se o valor for menor que ACCURACY
           // e se não for um valor inteiro
-          decimals =
-              ( ( uint32_t ) val < ACCURACY )
-                  ? !is_integer ( val, DECIMAL_PLACES, 1 ) ? DECIMAL_PLACES : 0
-                  : 0;
+          decimals = ( ( uint32_t ) val < ACCURACY )
+                             ? !is_integer ( val, DECIMAL_PLACES, 1 )
+                                       ? DECIMAL_PLACES
+                                       : 0
+                             : 0;
 
           /* Print values smaller than the accuracy level (acc) with (decimal)
            * decimal digits, and others without any decimals.  */
-          sn =
-              snprintf ( buffer, len_buff, "%.*f %s", decimals, val, sufix[i] );
+          sn = snprintf (
+                  buffer, len_buff, "%.*f %s", decimals, val, sufix[i] );
           return ( sn > 0 && ( size_t ) sn < len_buff );
         }
 

@@ -4,13 +4,19 @@
 #include "sufix.h"
 
 // sufixos padrão IEC, com potências de 2, 1024, 2048..., com bytes
-static const char *const sufix_iec_B[] = {
-    "B/s", "KiB/s", "MiB/s", "GiB/s", "TiB/s"};
+static const char *const sufix_iec_B[] = {"B/s",
+                                          "KiB/s",
+                                          "MiB/s",
+                                          "GiB/s",
+                                          "TiB/s"};
 
 // sufixos padrão IEC com bits
 // default
-static const char *const sufix_iec_b[] = {
-    "b/s", "Kib/s", "Mib/s", "Gib/s", "Tib/s"};
+static const char *const sufix_iec_b[] = {"b/s",
+                                          "Kib/s",
+                                          "Mib/s",
+                                          "Gib/s",
+                                          "Tib/s"};
 
 // sufixos padrão SI, com potências de 10. 1000, 2000..., com bytes
 static const char *const sufix_si_B[] = {"B/s", "KB/s", "MB/s", "GB/s", "TB/s"};

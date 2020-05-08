@@ -1,6 +1,15 @@
 
 #include <errno.h>   // variable errno
+#include <signal.h>  // sigaction
+#include <stdio.h>   // putchar
+#include <stdlib.h>  // exit
 #include <string.h>  // strerror
+#include <term.h>    // tputs
+
+//
+//
+// #include <sys/types.h>
+// #include <unistd.h>
 
 #include "m_error.h"
 #include "network.h"
@@ -21,15 +30,22 @@
 // intervalo de atualização do programa, não alterar
 #define T_REFRESH 1.0
 
+void
+clear_exit ( void );
+
+void
+sig_handler ( int );
+
 // options default
 bool udp = true;          // mode TCP
 bool view_si = false;     // view in prefix IEC "Kib, Mib, ..."
 bool view_bytes = false;  // view in bits
 char *iface = NULL;       // sniff all interfaces
 
-uint8_t tic_tac = 0;
-
+uint8_t *buff_pkt = NULL;
 process_t *processes = NULL;
+static uint32_t tot_process_act = 0;
+uint8_t tic_tac = 0;
 
 int
 main ( void )
@@ -40,34 +56,38 @@ main ( void )
 
   define_sufix ();
 
-  uint32_t tot_process_act = 0;
+  struct sigaction sigact = {.sa_handler = sig_handler};
+  sigemptyset ( &sigact.sa_mask );
+
+  sigaction ( SIGINT, &sigact, NULL );
+  sigaction ( SIGTERM, &sigact, NULL );
+
   tot_process_act = get_process_active_con ( &processes, tot_process_act );
 
-  uint8_t *buffer = calloc ( IP_MAXPACKET, 1 );
-  if ( !buffer )
-    fatal_error ( "Error alloc buffer packets: %s", strerror ( errno ) );
+  buff_pkt = calloc ( IP_MAXPACKET, 1 );
+  if ( !buff_pkt )
+    fatal_error ( "Error alloc buff_pkt packets: %s", strerror ( errno ) );
 
   struct sockaddr_ll link_level = {0};
   struct packet packet = {0};
 
   double m_timer = start_timer ();
   ssize_t bytes;
+
+  atexit ( clear_exit );
   // main loop
   while ( 1 )
     {
-      bytes = get_packet ( &link_level, buffer, IP_MAXPACKET );
+      bytes = get_packet ( &link_level, buff_pkt, IP_MAXPACKET );
 
       if ( bytes == -1 )
-        {
-          free ( buffer );
-          close_socket ();
-          fatal_error ( "sniffer packets" );
-        }
+        fatal_error ( "sniffer packets" );
 
       // se houver dados porem não foi possivel identificar o trafego,
-      // não tem estatisticas para ser adicionada aos processos
+      // não tem estatisticas para ser adicionada aos processos.
+      // deve ser trafego de protocolo não suportado
       if ( bytes > 0 )
-        if ( !parse_packet ( &packet, buffer, &link_level ) )
+        if ( !parse_packet ( &packet, buff_pkt, &link_level ) )
           goto PRINT;
 
       packet.lenght = bytes;
@@ -79,10 +99,10 @@ main ( void )
       // mesmo que não tenha dados para atualizar(bytes == 0), chamamos a
       // função para que possa contabilizar na média.
       if ( !add_statistics_in_processes (
-               processes, tot_process_act, &packet ) )
+                   processes, tot_process_act, &packet ) )
         if ( bytes > 0 )
           tot_process_act =
-              get_process_active_con ( &processes, tot_process_act );
+                  get_process_active_con ( &processes, tot_process_act );
 
     PRINT:
       if ( timer ( m_timer ) >= T_REFRESH )
@@ -97,4 +117,27 @@ main ( void )
     }
 
   return EXIT_SUCCESS;
+}
+
+void
+clear_exit ( void )
+{
+  close_socket ();
+
+  if ( buff_pkt )
+    free ( buff_pkt );
+
+  if ( tot_process_act )
+    free_process ( processes, tot_process_act );
+
+  tputs ( cursor_normal, 1, putchar );
+}
+
+void
+sig_handler ( int sig )
+{
+  // The return value of a simple command is its exit status,
+  // or 128+n if the command is terminated by signal n
+  // by man bash
+  exit ( 128 + sig );
 }

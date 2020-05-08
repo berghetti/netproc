@@ -40,30 +40,34 @@ calc_avg_rate ( process_t *proc, const size_t tot_proc )
 
       // calcula a média de bytes recebidos
       proc[i].net_stat.avg_Bps_rx =
-          ( sum_bytes_rx )
-              ? m_round ( ( double ) ( sum_bytes_rx ) / LEN_BUF_CIRC_RATE )
-              : 0;
+              ( sum_bytes_rx ) ? m_round ( ( double ) ( sum_bytes_rx ) /
+                                           LEN_BUF_CIRC_RATE )
+                               : 0;
 
       proc[i].net_stat.avg_Bps_tx =
-          ( sum_bytes_tx )
-              ? m_round ( ( double ) ( sum_bytes_tx ) / LEN_BUF_CIRC_RATE )
-              : 0;
+              ( sum_bytes_tx ) ? m_round ( ( double ) ( sum_bytes_tx ) /
+                                           LEN_BUF_CIRC_RATE )
+                               : 0;
 
       // calcula a média de pacotes recebidos
       proc[i].net_stat.avg_pps_rx =
-          ( sum_pps_rx ) ? m_round ( ( double ) sum_pps_rx / LEN_BUF_CIRC_RATE )
-                         : 0;
+              ( sum_pps_rx )
+                      ? m_round ( ( double ) sum_pps_rx / LEN_BUF_CIRC_RATE )
+                      : 0;
 
       proc[i].net_stat.avg_pps_tx =
-          ( sum_pps_tx ) ? m_round ( ( double ) sum_pps_tx / LEN_BUF_CIRC_RATE )
-                         : 0;
+              ( sum_pps_tx )
+                      ? m_round ( ( double ) sum_pps_tx / LEN_BUF_CIRC_RATE )
+                      : 0;
 
       // transforma o total de bytes recebidos em
       // algo legivel, como 1024 bits em 1 Kib
-      human_readable (
-          proc[i].net_stat.rx_rate, LEN_STR_RATE, proc[i].net_stat.avg_Bps_rx );
+      human_readable ( proc[i].net_stat.rx_rate,
+                       LEN_STR_RATE,
+                       proc[i].net_stat.avg_Bps_rx );
 
-      human_readable (
-          proc[i].net_stat.tx_rate, LEN_STR_RATE, proc[i].net_stat.avg_Bps_tx );
+      human_readable ( proc[i].net_stat.tx_rate,
+                       LEN_STR_RATE,
+                       proc[i].net_stat.avg_Bps_tx );
     }
 }

@@ -114,7 +114,8 @@ get_packet ( struct sockaddr_ll *link_level, uint8_t *buffer, const int lenght )
     return bytes_received;
 
   // recvfrom retornou por conta do timeout definido no socket
-  if ( bytes_received == -1 && ( errno == EAGAIN || errno == EWOULDBLOCK ) )
+  if ( bytes_received == -1 &&
+       ( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ) )
     return 0;
 
   if ( bytes_received == -1 )

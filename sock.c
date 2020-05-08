@@ -1,10 +1,10 @@
 
-#include <string.h>           // strerror
-#include <errno.h>            // variable errno
 #include <arpa/inet.h>        // htons
+#include <errno.h>            // variable errno
 #include <linux/if_ether.h>   // defined ETH_P_ALL
 #include <linux/if_packet.h>  // struct sockaddr_ll
 #include <net/if.h>           // if_nametoindex
+#include <string.h>           // strerror
 #include <sys/socket.h>       // socket
 #include <sys/types.h>        // socket
 #include <unistd.h>           // close
@@ -25,7 +25,7 @@ static void
 bind_interface ( const char *iface );
 
 static void
-set_timeout( void );
+set_timeout ( void );
 
 int
 create_socket ( void )
@@ -33,7 +33,7 @@ create_socket ( void )
   if ( ( sock = socket ( AF_PACKET, SOCK_RAW, htons ( ETH_P_ALL ) ) ) == -1 )
     fatal_error ( "Error create socket: %s", strerror ( errno ) );
 
-  set_timeout();
+  set_timeout ();
 
   bind_interface ( iface );
 
@@ -48,7 +48,7 @@ close_socket ( void )
 }
 
 static void
-set_timeout( void )
+set_timeout ( void )
 {
   struct timeval read_timeout;
   read_timeout.tv_sec = 0;
