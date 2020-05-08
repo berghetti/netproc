@@ -12,9 +12,9 @@
 extern uint8_t tic_tac;
 
 bool
-add_statistics_in_processes ( process_t *processes,
+add_statistics_in_processes ( process_t *restrict processes,
                               const size_t tot_proc,
-                              const struct packet *pkt )
+                              const struct packet *restrict pkt )
 {
   static int last_tic;
   static uint8_t id_buff_circ;

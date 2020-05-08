@@ -6,11 +6,6 @@
 #include <string.h>  // strerror
 #include <term.h>    // tputs
 
-//
-//
-// #include <sys/types.h>
-// #include <unistd.h>
-
 #include "m_error.h"
 #include "network.h"
 #include "proc_rate.h"

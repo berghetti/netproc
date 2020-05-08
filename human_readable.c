@@ -42,6 +42,7 @@ human_readable ( char *buffer, const size_t len_buff, const uint64_t bytes )
   // obs: alterado divisão por multiplicação para melhor otimização
   // pelo compilador
 
+  // pega elemento inverso da base escolhida
   const double base = INVERSE_BASE ( chosen_base );
   int decimals;
   double val;

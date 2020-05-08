@@ -21,7 +21,7 @@ static const char *const sufix_iec_b[] = {"b/s",
 // sufixos padrão SI, com potências de 10. 1000, 2000..., com bytes
 static const char *const sufix_si_B[] = {"B/s", "KB/s", "MB/s", "GB/s", "TB/s"};
 
-// suficos padrão SI com bits
+// sufixos padrão SI com bits
 static const char *const sufix_si_b[] = {"b/s", "Kb/s", "Mb/s", "Gb/s", "Tb/s"};
 
 // defined in main.c

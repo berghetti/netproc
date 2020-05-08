@@ -8,8 +8,8 @@
 // e adiciona/incrementa estatisticas de pacotes por segundo
 // e total de bytes
 bool
-add_statistics_in_processes ( process_t *processes,
+add_statistics_in_processes ( process_t *restrict processes,
                               const size_t tot_proc,
-                              const struct packet *pkt );
+                              const struct packet *restrict pkt );
 
 #endif  // STATISTICS_PROC_H

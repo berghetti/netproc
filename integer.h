@@ -7,6 +7,6 @@
 // @int precision, casas decimais para testar
 // @round, 1 arredonda, 0 não
 int
-is_integer ( float n, int precision, int round );
+is_integer ( const float n, const int precision, const int round );
 
 #endif  // INTEGER_H

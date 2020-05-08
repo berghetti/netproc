@@ -5,7 +5,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-// checar isso...
+// FIXME: ... value is ideal???
+// tamanho do buffer para identificar as conexões do sistema
 #define MAX_CONECTIONS 1024
 
 // caminho do arquivo onde o kernel

@@ -13,9 +13,9 @@ is_number ( const char *string );
 // os nomes dos diretorios que são numericos e um tamanho maximo do buffer.
 // retorna o total de diretorios encontrados, -1 em caso de falha.
 int
-get_numeric_directory ( uint32_t *buffer,
+get_numeric_directory ( uint32_t *restrict buffer,
                         const size_t lenght,
-                        const char *path_dir )
+                        const char *restrict path_dir )
 {
   DIR *dir;
 

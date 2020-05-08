@@ -39,15 +39,15 @@ typedef uint64_t nstats_t;
 
 struct net_stat
 {
-  char rx_rate[LEN_STR_RATE];
-  char tx_rate[LEN_STR_RATE];
-  nstats_t pps_rx[LEN_BUF_CIRC_RATE];
+  char rx_rate[LEN_STR_RATE];          // taxa de download final
+  char tx_rate[LEN_STR_RATE];          // taxa de upload final
+  nstats_t pps_rx[LEN_BUF_CIRC_RATE];  // pacotes por segundo, amostras
   nstats_t pps_tx[LEN_BUF_CIRC_RATE];
-  nstats_t Bps_rx[LEN_BUF_CIRC_RATE];
+  nstats_t Bps_rx[LEN_BUF_CIRC_RATE];  // bytes/bits por segundos, amostras
   nstats_t Bps_tx[LEN_BUF_CIRC_RATE];
-  nstats_t avg_Bps_rx;
+  nstats_t avg_Bps_rx;  // média de bytes/bits por segundos
   nstats_t avg_Bps_tx;
-  nstats_t avg_pps_rx;
+  nstats_t avg_pps_rx;  // média pacotes por segundos
   nstats_t avg_pps_tx;
 };
 

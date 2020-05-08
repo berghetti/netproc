@@ -5,7 +5,7 @@
 
 #include "m_error.h"
 
-// multiply nanoseconds for this const convert nanoseconds to seconds
+// multiply nanoseconds for this const convert nanoseconds TO seconds
 #define NSTOS 1E-9
 
 inline static void

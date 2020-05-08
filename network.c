@@ -73,8 +73,8 @@ struct pkt_ip_fragment
 };
 
 static int
-is_first_frag ( const struct iphdr *const l3,
-                const struct tcp_udp_h *const l4 );
+is_first_frag ( const struct iphdr *const restrict l3,
+                const struct tcp_udp_h *const restrict l4 );
 
 static int
 is_frag ( const struct iphdr *const l3 );
@@ -88,7 +88,7 @@ insert_data_packet ( struct packet *pkt,
                      const uint16_t remote_port );
 
 static void
-clear_frag ();
+clear_frag ( void );
 
 // armazena os dados da camada de transporte dos pacotes fragmentados
 static struct pkt_ip_fragment pkt_ip_frag[MAX_REASSEMBLIES] = {0};
@@ -98,7 +98,9 @@ static uint8_t count_reassemblies;
 
 // pega os da rede e adicona em buffer
 ssize_t
-get_packet ( struct sockaddr_ll *link_level, uint8_t *buffer, const int lenght )
+get_packet ( struct sockaddr_ll *restrict link_level,
+             uint8_t *restrict buffer,
+             const int lenght )
 {
   socklen_t link_level_size = sizeof ( struct sockaddr_ll );
 
@@ -126,7 +128,9 @@ get_packet ( struct sockaddr_ll *link_level, uint8_t *buffer, const int lenght )
 
 // separa os dados brutos em suas camadas 2, 3 4
 int
-parse_packet ( struct packet *pkt, const uint8_t *buf, struct sockaddr_ll *ll )
+parse_packet ( struct packet *restrict pkt,
+               const uint8_t *restrict buf,
+               const struct sockaddr_ll *restrict ll )
 {
   struct ethhdr *l2;
   struct iphdr *l3;
@@ -229,7 +233,8 @@ END:
 // retorna 0 se não for primeiro fragmento
 // retorna -1 caso de erro, buffer cheio
 static int
-is_first_frag ( const struct iphdr *const l3, const struct tcp_udp_h *const l4 )
+is_first_frag ( const struct iphdr *const restrict l3,
+                const struct tcp_udp_h *const restrict l4 )
 {
   // bit não fragmente ligado, logo não pode ser um fragmento
   if ( ntohs ( l3->frag_off ) & IP_DF )
