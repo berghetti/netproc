@@ -32,15 +32,21 @@ setup_terminal ( void )
   tputs ( cursor_invisible, 1, putchar );
 }
 
+void
+restore_terminal ( void )
+{
+  tputs ( cursor_normal, 1, putchar );
+}
+
 // limpa a tela, podendo tambem limpar o buffer do scroll se disponivel
 // Obs: não alterar ordem entre limpar a tela e limpar scroll
 void
 clear_cmd ( void )
 {
   // limpa a tela
-  tputs ( clear_screen, lines > 0 ? lines : 1, putchar );
-
-  // se recurso para limpar scroll estiver disponivel
-  if ( E3 )
-    tputs ( E3, lines > 0 ? lines : 1, putchar );
+  // tputs ( clear_screen, lines > 0 ? lines : 1, putchar );
+  //
+  // // se recurso para limpar scroll estiver disponivel
+  // if ( E3 )
+  //   tputs ( E3, lines > 0 ? lines : 1, putchar );
 }

@@ -17,6 +17,8 @@
 #include "terminal.h"
 #include "timer.h"
 
+#define PROG_NAME "netproc"
+
 // a cada vez que o tempo de T_REFRESH segundo(s) é atingido
 // esse valor é alterado (entre 0 e 1), para que outras partes, statistics_proc,
 // do programa possam ter uma referencia de tempo
@@ -25,14 +27,20 @@
 // intervalo de atualização do programa, não alterar
 #define T_REFRESH 1.0
 
-void
+static void
 clear_exit ( void );
 
-void
+static void
 sig_handler ( int );
 
+static void
+parse_options ( int, const char ** );
+
+static inline void
+usage ( void );
+
 // options default
-bool udp = true;          // mode TCP
+bool udp = false;         // mode TCP
 bool view_si = false;     // view in prefix IEC "Kib, Mib, ..."
 bool view_bytes = false;  // view in bits
 char *iface = NULL;       // sniff all interfaces
@@ -43,8 +51,10 @@ static uint32_t tot_process_act = 0;
 uint8_t tic_tac = 0;
 
 int
-main ( void )
+main ( int argc, const char **argv )
 {
+  parse_options ( argc, argv );
+
   create_socket ();
 
   setup_terminal ();
@@ -57,7 +67,11 @@ main ( void )
   sigaction ( SIGINT, &sigact, NULL );
   sigaction ( SIGTERM, &sigact, NULL );
 
-  tot_process_act = get_process_active_con ( &processes, tot_process_act );
+  // enquanto não encontrar processos com conexões ativas
+  // testar isso...
+  while ( 0 == ( tot_process_act = get_process_active_con (
+                         &processes, tot_process_act ) ) )
+    printf("\r Nenhum processo com conexão ativa encontrado, procurando...")
 
   buff_pkt = calloc ( IP_MAXPACKET, 1 );
   if ( !buff_pkt )
@@ -70,6 +84,7 @@ main ( void )
   ssize_t bytes;
 
   atexit ( clear_exit );
+
   // main loop
   while ( 1 )
     {
@@ -114,7 +129,54 @@ main ( void )
   return EXIT_SUCCESS;
 }
 
-void
+static void
+parse_options ( int argc, const char **argv )
+{
+  // parse options
+  while ( --argc )
+    {
+      if ( *++argv && **argv == '-' )
+        {
+          switch ( *( *argv + 1 ) )
+            {
+              case 'u':
+                udp = true;
+                break;
+              case 'i':
+                iface = ( char * ) *++argv;
+                break;
+              case 'B':
+                view_bytes = true;
+                break;
+              case 's':
+                if ( *( *argv + 2 ) && *( *argv + 2 ) == 'i' )
+                  view_si = true;
+                break;
+              case 'h':
+                usage ();
+                exit ( EXIT_SUCCESS );
+              default:
+                usage ();
+                exit ( EXIT_FAILURE );
+            }
+        }
+    }
+}
+
+static inline void
+usage ( void )
+{
+  printf ( "%s [options]\n"
+           "-u            rastreia trafego udp, padrão é tcp\n"
+           "-i <iface>    seleciona a interface, padrão é todas\n"
+           "-B            visualização em bytes, padrão em bits\n"
+           "-si           visualização com formato SI, com potências de 1000\n"
+           "              padrão é IEC, com potências de 1024\n"
+           "-h            exibe essa mensagem\n",
+           PROG_NAME );
+}
+
+static void
 clear_exit ( void )
 {
   close_socket ();
@@ -125,10 +187,10 @@ clear_exit ( void )
   if ( tot_process_act )
     free_process ( processes, tot_process_act );
 
-  tputs ( cursor_normal, 1, putchar );
+  restore_terminal ();
 }
 
-void
+static void
 sig_handler ( int sig )
 {
   // The return value of a simple command is its exit status,
