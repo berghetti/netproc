@@ -55,9 +55,11 @@ main ( int argc, const char **argv )
 {
   parse_options ( argc, argv );
 
-  create_socket ();
+  atexit ( clear_exit );
 
   setup_terminal ();
+
+  create_socket ();
 
   define_sufix ();
 
@@ -71,7 +73,7 @@ main ( int argc, const char **argv )
   // testar isso...
   while ( 0 == ( tot_process_act = get_process_active_con (
                          &processes, tot_process_act ) ) )
-    printf("\r Nenhum processo com conexão ativa encontrado, procurando...")
+    printf ( "\rNenhum processo com conexão ativa encontrado, procurando..." );
 
   buff_pkt = calloc ( IP_MAXPACKET, 1 );
   if ( !buff_pkt )
@@ -82,8 +84,6 @@ main ( int argc, const char **argv )
 
   double m_timer = start_timer ();
   ssize_t bytes;
-
-  atexit ( clear_exit );
 
   // main loop
   while ( 1 )

@@ -4,11 +4,21 @@
 #include <stdarg.h>  // va_*
 #include <stdio.h>
 #include <stdlib.h>
+#include <term.h>
+#include <unistd.h>
 
 #include "m_error.h"
 
 // based in source code of program t50
-// https://gitlab.com/fredericopissarra/t50/
+// https://gitlab.com/fredericopissarra/t50/-/blob/master/src/errors.c
+
+#define RED 1
+#define YELLOW 3
+
+static int istty;
+
+static int
+puterr ( const int c );
 
 static void
 print_error ( const char *msg, va_list args );
@@ -18,7 +28,19 @@ error ( const char *msg, ... )
 {
   va_list args;
 
+  // imprime caracteres de escape para cores apenas se for para um terminal
+  if ((istty = isatty(STDERR_FILENO)))
+    {
+      tputs ( exit_attribute_mode, 1, puterr );
+      tputs ( tparm ( set_a_foreground, YELLOW ), 1, puterr );
+      tputs ( enter_bold_mode, 1, puterr );
+    }
+
   fprintf ( stderr, ERROR " " );
+
+  if (istty)
+    tputs ( exit_attribute_mode, 1, puterr );
+
   va_start ( args, msg );
 
   print_error ( msg, args );
@@ -31,7 +53,19 @@ fatal_error ( const char *msg, ... )
 {
   va_list args;
 
+  // imprime caracteres de escape para cores apenas se for para um terminal
+  if ((istty = isatty(STDERR_FILENO)))
+    {
+      tputs ( exit_attribute_mode, 1, puterr );
+      tputs ( tparm ( set_a_foreground, RED ), 1, puterr );
+      tputs ( enter_bold_mode, 1, puterr );
+    }
+
   fprintf ( stderr, FATAL " " );
+
+  if (istty)
+    tputs ( exit_attribute_mode, 1, puterr );
+
   va_start ( args, msg );
 
   print_error ( msg, args );
@@ -62,4 +96,10 @@ print_error ( const char *msg, va_list args )
   // exibe a mensagem
   vfprintf ( stderr, msg_formated, args );
   free ( msg_formated );
+}
+
+static int
+puterr ( const int c )
+{
+  return fputc ( c, stderr );
 }
