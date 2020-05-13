@@ -4,7 +4,7 @@
 #include <stdarg.h>  // va_*
 #include <stdio.h>
 #include <stdlib.h>
-#include <term.h>
+#include <term.h>   // tputs
 #include <unistd.h>
 
 #include "m_error.h"
