@@ -16,8 +16,7 @@
 #include "sufix.h"
 #include "terminal.h"
 #include "timer.h"
-
-#define PROG_NAME "netproc"
+#include "usage.h"
 
 // a cada vez que o tempo de T_REFRESH segundo(s) é atingido
 // esse valor é alterado (entre 0 e 1), para que outras partes, statistics_proc,
@@ -35,9 +34,6 @@ sig_handler ( int );
 
 static void
 parse_options ( int, const char ** );
-
-static inline void
-usage ( void );
 
 // options default
 bool udp = false;         // mode TCP
@@ -155,25 +151,15 @@ parse_options ( int argc, const char **argv )
               case 'h':
                 usage ();
                 exit ( EXIT_SUCCESS );
+              case 'v':
+                show_version();
+                exit ( EXIT_SUCCESS );
               default:
                 usage ();
                 exit ( EXIT_FAILURE );
             }
         }
     }
-}
-
-static inline void
-usage ( void )
-{
-  printf ( "%s [options]\n"
-           "-u            rastreia trafego udp, padrão é tcp\n"
-           "-i <iface>    seleciona a interface, padrão é todas\n"
-           "-B            visualização em bytes, padrão em bits\n"
-           "-si           visualização com formato SI, com potências de 1000\n"
-           "              padrão é IEC, com potências de 1024\n"
-           "-h            exibe essa mensagem\n",
-           PROG_NAME );
 }
 
 static void

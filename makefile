@@ -6,7 +6,7 @@
 # CPPFLAGS	opções para o preprocessador (-DDEBUG ou -I $(DIR_INCLUDES))
 # CFLAGS		opções para o compilador (-std=c99)
 # LDFLAGS		opções para o ligador (-static -L/opt/opencv/lib)
-# LDLIBS		bibliotecas a ligar ao código gerado (-lpthreads -lm)
+# LDLIBS		bibliotecas a ligar ao código gerado (-lpthreads -lmath)
 
 
 # $@ - representa o alvo
@@ -16,7 +16,7 @@
 # alvo: dependencia
 # <tab>regra
 
-PROGNAME=netproc
+PROG_NAME=netproc
 
 CC=gcc
 
@@ -44,14 +44,14 @@ C_SOURCE=$(wildcard *.c)
 OBJECTS=$(C_SOURCE:.c=.o)
 
 # alvos fake, não são arquivos
-.PHONY: all clean distclean run
+.PHONY: all clean distclean run install
 
-all: $(PROGNAME)
+all: $(PROG_NAME)
 
 # linka os arquivos ojetos para o executavel
 # regra ja é implitica dessa forma,
 # adicionado apenas para 'clareza'
-$(PROGNAME): $(OBJECTS)
+$(PROG_NAME): $(OBJECTS)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 # caso especial do main que não possui .h
@@ -71,10 +71,13 @@ clean:
 
 distclean: clean
 	@ echo "apagando binario $(PROGNAME)"
-	@ find . -name $(PROGNAME) -delete
+	@ find . -name $(PROG_NAME) -delete
 
 run:
-	sudo ./$(PROGNAME)
+	sudo ./$(PROG_NAME)
+
+install:
+	echo "trabalhando nisso..."
 
 format:
 	@ echo "formatando codigo"
