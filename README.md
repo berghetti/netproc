@@ -3,6 +3,9 @@
 tool to monitor network traffic based on processes
 
 
+![Alt Text](img/print.png)
+
+
 #### [Dependences]
 ##### Normally these packages are already installed, but if not ...
     [Debian based]
@@ -31,6 +34,3 @@ tool to monitor network traffic based on processes
     
 #### [uninstall]
     $ sudo make uninstall
-    
-    
-![Alt Text](img/print.png)
