@@ -7,9 +7,8 @@ tool to monitor network traffic based on processes
 
 
 #### [Dependences]
-##### Normally these packages are already installed, but if not ...
     [Debian based]
-    $ sudo apt install libaa1-dev liblua5.2-dev libncurses5-dev libncursesw5-dev libreadline-dev libtinfo-dev
+    $ sudo apt install libncurses5-dev
 
 #### [Install]
     $ git clone https://github.com/berghetti/netproc.git
