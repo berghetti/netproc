@@ -66,14 +66,14 @@ struct net_stat
   nstats_t Bps_tx[LEN_BUF_CIRC_RATE];
   nstats_t avg_Bps_rx;  // média de bytes/bits por segundos
   nstats_t avg_Bps_tx;
-  nstats_t avg_pps_rx;  // média pacotes por segundos
+  nstats_t avg_pps_rx;  // média de pacotes por segundos
   nstats_t avg_pps_tx;
 };
 
 typedef struct
 {
   struct net_stat net_stat;   // estatisticas de rede
-  conection_t *conection;     // conexoes do processo
+  conection_t *conection;     // array de conexoes do processo
   char *name;                 // nome processo
   pid_t pid;                  // pid do processo
   uint32_t total_fd;          // totalal de fd no processo

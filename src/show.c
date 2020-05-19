@@ -17,7 +17,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <arpa/inet.h>   // inet_ntoa
+#include <netinet/in.h>  // inet_ntoa
 #include <stdio.h>
+#include <sys/socket.h>  // inet_ntoa
 
 #include "process.h"
 #include "terminal.h"  // clear_cmd
@@ -30,6 +33,9 @@
 
 // maximo de caracteres que sera exibido no nome de um processo
 #define LEN_NAME_PROGRAM 44
+
+static void
+print_conections ( const process_t *const processes );
 
 void
 show_process ( const process_t *const processes, const size_t tot_process )
@@ -71,6 +77,31 @@ show_process ( const process_t *const processes, const size_t tot_process )
                    RATE,
                    processes[i].net_stat.tx_rate,
                    processes[i].net_stat.rx_rate );
+
+          print_conections ( &processes[i] );
         }
+    }
+}
+
+static void
+print_conections ( const process_t *const processes )
+{
+  struct in_addr l_addr;
+  struct in_addr r_addr;
+
+  for ( int i = 0; i < processes->total_conections; i++ )
+    {
+      l_addr.s_addr = processes->conection[i].local_address;
+      r_addr.s_addr = processes->conection[i].remote_address;
+
+      printf ( "%-*s %s:%u <-> ",
+                PID,
+               "|__",
+               inet_ntoa ( l_addr ),
+               processes->conection[i].local_port );
+
+      printf ( "%s:%u\n",
+               inet_ntoa ( r_addr ),
+               processes->conection[i].remote_port );
     }
 }

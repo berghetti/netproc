@@ -149,7 +149,7 @@ get_process_active_con ( process_t **cur_proc, const size_t tot_cur_proc_act )
       // passa por todos file descriptors do processo
       for ( int id_fd = 0; id_fd < total_fd_process; id_fd++ )
         {
-          // isola um fd por vez do processo
+          // monta o path do file descriptor
           snprintf ( path_fd,
                      MAX_PATH_FD,
                      "/proc/%d/fd/%d",
@@ -269,7 +269,7 @@ get_process_active_con ( process_t **cur_proc, const size_t tot_cur_proc_act )
 
   alloc_memory_process ( cur_proc, tot_process_active_con );
 
-  // free processes que nao tem mais conexoes ativas
+  // libera processos que nao tem mais conexoes ativas
   if ( tot_cur_proc_act )
     free_dead_process (
             *cur_proc, tot_cur_proc_act, processos, tot_process_active_con );

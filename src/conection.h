@@ -26,7 +26,7 @@
 
 // FIXME: ... value is ideal???
 // tamanho do buffer para identificar as conexões do sistema
-#define MAX_CONECTIONS 1024
+#define MAX_CONECTIONS 10240
 
 // caminho do arquivo onde o kernel
 // fornece as conexoes TCP e UDP
@@ -35,6 +35,7 @@
 
 typedef struct
 {
+  // struct net_stat stat_con;
   uint32_t inode;
   uint32_t local_address;
   uint32_t remote_address;
