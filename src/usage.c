@@ -30,16 +30,16 @@ void
 usage ( void )
 {
   show_version ();
-
-  puts ( "Usage: " PROG_NAME
-         " [options]\n"
+  // clang-format off
+  puts ( "Usage: " PROG_NAME " [options]\n"
          "\n"
          "Options:\n"
-         "-u            rastreia trafego udp, padrão é tcp\n"
-         "-i <iface>    seleciona a interface, padrão é todas\n"
-         "-B            visualização em bytes, padrão em bits\n"
-         "-si           visualização com formato SI, com potências de 1000\n"
-         "              padrão é IEC, com potências de 1024\n"
-         "-h            exibe essa mensagem\n"
-         "-v            exibe a versão" );
+         "-u            tracks udp traffic, default is tcp\n"
+         "-i <iface>    specifies an interface, default is all\n"
+         "-B            view in bytes, default in bits\n"
+         "-si           SI format display, with powers of 1000, default is IEC,"
+                        " with powers of 1024\n"
+         "-h            show this message\n"
+         "-v            show version" );
+  // clang-format on
 }

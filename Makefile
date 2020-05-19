@@ -48,7 +48,7 @@ C_SOURCE=$(wildcard $(SRC)/*.c)
 OBJECTS=$(C_SOURCE:.c=.o)
 
 # alvos fake, não são arquivos
-.PHONY: all clean distclean run install
+.PHONY: all clean distclean run install uninstall format
 
 all: $(BIN)/$(PROG_NAME)
 
@@ -58,8 +58,8 @@ all: $(BIN)/$(PROG_NAME)
 $(BIN)/$(PROG_NAME): $(OBJECTS)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-# caso especial do main que não possui .h
-main.o: $(SRC)/main.c
+# caso especial do main.c que não possui .h
+$(SRC)/main.o: $(SRC)/main.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 # mascara generica para compilar arquivos .o
@@ -67,7 +67,6 @@ main.o: $(SRC)/main.c
 # não sei porque...
 %.o: %.c %.h
 	 $(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
-
 
 clean:
 	@ find . -type f -name '*.o' -delete

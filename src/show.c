@@ -28,6 +28,9 @@
 #define PPS -8
 #define RATE -14
 
+// maximo de caracteres que sera exibido no nome de um processo
+#define LEN_NAME_PROGRAM 44
+
 void
 show_process ( const process_t *const processes, const size_t tot_process )
 {
@@ -55,10 +58,11 @@ show_process ( const process_t *const processes, const size_t tot_process )
            processes[i].net_stat.avg_pps_rx ||
            processes[i].net_stat.avg_pps_tx )
         {
-          printf ( "%*d %*s %*ld %*ld %*s %s\n",
+          printf ( "%*d %*.*s %*ld %*ld %*s %s\n",
                    PID,
                    processes[i].pid,
                    PROGRAM,
+                   LEN_NAME_PROGRAM,
                    processes[i].name,
                    PPS,
                    processes[i].net_stat.avg_pps_tx,

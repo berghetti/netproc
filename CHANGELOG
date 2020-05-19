@@ -1,0 +1,12 @@
+Legend:
++ Added feature
+* Improved/changed feature
+- Bug fixed
+! Known issue / missing feature
+
+
+0.1.6 - 2020-05-18
+  - limited the maximum size to be displayed for the process name.
+  * translated into english the help message
+  ! IPv6 support
+  ! individual statistics by connections
