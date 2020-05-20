@@ -28,6 +28,7 @@
 
 // defined in main.c
 extern uint8_t tic_tac;
+extern bool view_conections;
 
 bool
 add_statistics_in_processes ( process_t *restrict processes,
@@ -53,6 +54,18 @@ add_statistics_in_processes ( process_t *restrict processes,
           processes[i].net_stat.Bps_tx[id_buff_circ] = 0;
           processes[i].net_stat.pps_rx[id_buff_circ] = 0;
           processes[i].net_stat.pps_tx[id_buff_circ] = 0;
+
+          // zera estatisticas da conexões tambem
+          if (view_conections)
+            {
+              for (size_t c = 0; c < processes[i].total_conections; c++)
+                {
+                  processes[i].conection[c].net_stat.Bps_rx[id_buff_circ] = 0;
+                  processes[i].conection[c].net_stat.Bps_tx[id_buff_circ] = 0;
+                  processes[i].conection[c].net_stat.pps_rx[id_buff_circ] = 0;
+                  processes[i].conection[c].net_stat.pps_tx[id_buff_circ] = 0;
+                }
+            }
         }
 
       // caso o pacote<->processo ja tenha sido localizado e/ou não tenha
@@ -80,14 +93,24 @@ add_statistics_in_processes ( process_t *restrict processes,
               locate = true;
 
               if ( pkt->direction == PKT_DOWN )
-                {
+                {  // estatisticas total do processo
                   processes[i].net_stat.pps_rx[id_buff_circ]++;
                   processes[i].net_stat.Bps_rx[id_buff_circ] += pkt->lenght;
+
+                  // adicionado estatisticas exclusica da conexão
+                  processes[i].conection[j].net_stat.pps_rx[id_buff_circ]++;
+                  processes[i].conection[j].net_stat.Bps_rx[id_buff_circ] +=
+                          pkt->lenght;
                 }
               else
-                {
+                {  // estatisticas total do processo
                   processes[i].net_stat.pps_tx[id_buff_circ]++;
                   processes[i].net_stat.Bps_tx[id_buff_circ] += pkt->lenght;
+
+                  // adicionado estatisticas exclusica da conexão
+                  processes[i].conection[j].net_stat.pps_tx[id_buff_circ]++;
+                  processes[i].conection[j].net_stat.Bps_tx[id_buff_circ] +=
+                          pkt->lenght;
                 }
 
               break;

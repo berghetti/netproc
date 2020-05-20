@@ -17,13 +17,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <arpa/inet.h>   // inet_ntoa
-#include <netinet/in.h>  // inet_ntoa
 #include <stdio.h>
-#include <sys/socket.h>  // inet_ntoa
+#include <arpa/inet.h>  // inet_ntop
 
 #include "process.h"
 #include "terminal.h"  // clear_cmd
+
+// tamanho representação textual porta da camada de transporte
+#define PORTLEN 6  // 65535 + '\0'
+
+// "ddd.ddd.ddd.ddd:ppppp <-> ddd.ddd.ddd.ddd:ppppp"
+#define LEN_TUPLE ( ( INET_ADDRSTRLEN + PORTLEN ) * 2 ) + 7
 
 // espaçamento entre as colunas
 #define PID -5
@@ -35,7 +39,7 @@
 #define LEN_NAME_PROGRAM 44
 
 static void
-print_conections ( const process_t *const processes );
+print_conections ( const process_t *const process );
 
 void
 show_process ( const process_t *const processes, const size_t tot_process )
@@ -79,29 +83,60 @@ show_process ( const process_t *const processes, const size_t tot_process )
                    processes[i].net_stat.rx_rate );
 
           print_conections ( &processes[i] );
+          putchar ( '\n' );
         }
     }
 }
 
 static void
-print_conections ( const process_t *const processes )
+print_conections ( const process_t *const process )
 {
-  struct in_addr l_addr;
-  struct in_addr r_addr;
+  // tuple ip:port <-> ip:port
+  char tuple[LEN_TUPLE] = {0};
+  char l_ip[INET_ADDRSTRLEN] = {0};  // ip local
+  char r_ip[INET_ADDRSTRLEN] = {0};  // ip remote
 
-  for ( int i = 0; i < processes->total_conections; i++ )
+  for ( size_t i = 0; i < process->total_conections; i++ )
     {
-      l_addr.s_addr = processes->conection[i].local_address;
-      r_addr.s_addr = processes->conection[i].remote_address;
+      // exibi somente as conexões que estão ativas, com pacotes trafegando
+      // na rede
+      // if ( process->conection[i].net_stat.avg_Bps_tx ||
+      //      process->conection[i].net_stat.avg_Bps_rx ||
+      //      process->conection[i].net_stat.avg_pps_tx ||
+      //      process->conection[i].net_stat.avg_pps_rx )
+      //   {
+          // copia o ip binario em texto
+          inet_ntop ( AF_INET,
+                      &process->conection[i].local_address,
+                      l_ip,
+                      INET_ADDRSTRLEN );
 
-      printf ( "%-*s %s:%u <-> ",
-                PID,
-               "|__",
-               inet_ntoa ( l_addr ),
-               processes->conection[i].local_port );
+          inet_ntop ( AF_INET,
+                      &process->conection[i].remote_address,
+                      r_ip,
+                      INET_ADDRSTRLEN );
+          // tupla da conexao em um unico array variavel
+          // para facilitar esbição
+          snprintf ( tuple,
+                     LEN_TUPLE,
+                     "%s:%u <-> %s:%u",
+                     l_ip,
+                     process->conection[i].local_port,
+                     r_ip,
+                     process->conection[i].remote_port );
 
-      printf ( "%s:%u\n",
-               inet_ntoa ( r_addr ),
-               processes->conection[i].remote_port );
+          printf ( "%*s %*s %*ld %*ld %*s %s\n",
+                   PID,
+                   "|__",
+                   PROGRAM,
+                   tuple,
+                   PPS,
+                   process->conection[i].net_stat.avg_pps_tx,
+                   PPS,
+                   process->conection[i].net_stat.avg_pps_rx,
+                   RATE,
+                   process->conection[i].net_stat.tx_rate,
+                   process->conection[i].net_stat.rx_rate );
+        // }
     }
 }

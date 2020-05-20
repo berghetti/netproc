@@ -26,11 +26,11 @@
 
 #include "m_error.h"
 #include "network.h"
-#include "proc_rate.h"
+#include "rate.h"
 #include "process.h"
 #include "show.h"
 #include "sock.h"
-#include "statistics_proc.h"
+#include "statistics.h"
 #include "sufix.h"
 #include "terminal.h"
 #include "timer.h"
@@ -54,10 +54,11 @@ static void
 parse_options ( int, const char ** );
 
 // options default
-bool udp = false;         // mode TCP
-bool view_si = false;     // view in prefix IEC "Kib, Mib, ..."
-bool view_bytes = false;  // view in bits
-char *iface = NULL;       // sniff all interfaces
+bool udp = false;             // mode TCP
+bool view_si = false;         // view in prefix IEC "Kib, Mib, ..."
+bool view_bytes = false;      // view in bits
+bool view_conections = true;  // show process conections
+char *iface = NULL;           // sniff all interfaces
 
 uint8_t *buff_pkt = NULL;
 process_t *processes = NULL;
