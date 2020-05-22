@@ -18,7 +18,6 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>  // PROVISORIO
 
 #include "human_readable.h"
 #include "process.h"
@@ -111,8 +110,6 @@ calc_avg_rate_conection ( process_t *process )
       sum_bytes_tx = 0;
       sum_pps_rx = 0;
       sum_pps_tx = 0;
-
-      // printf("calculando rate con - %ld\n", i);
 
       for ( size_t j = 0; j < LEN_BUF_CIRC_RATE; j++ )
         {

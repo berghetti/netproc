@@ -22,7 +22,6 @@
 #include <stdio.h>   // putchar
 #include <stdlib.h>  // exit
 #include <string.h>  // strerror
-#include <term.h>    // tputs
 
 #include "m_error.h"
 #include "network.h"

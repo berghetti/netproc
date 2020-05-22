@@ -247,6 +247,7 @@ get_process_active_con ( process_t **cur_proc, const size_t tot_cur_proc_act )
 
     }  // for process
 
+  // FIXME: checar o resultado dessa decisão
   // sem processos com conexao ativa
   if ( tot_process_active_con == 0 )
     {
@@ -537,7 +538,8 @@ get_name_process ( char **buffer, const pid_t pid )
     }
 
   // tamanho até null byte ou primeiro espaço
-  size_t len = strlen_space ( line );
+  // size_t len = strlen_space ( line );
+  size_t len = strlen (line);
 
   line[len] = '\0';
 

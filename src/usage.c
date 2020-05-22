@@ -36,7 +36,7 @@ usage ( void )
          "Options:\n"
          "-u            tracks udp traffic, default is tcp\n"
          "-i <iface>    specifies an interface, default is all\n"
-         "-c            visualizes each active connection in the process\n"
+         "-c            visualization each active connection of the process\n"
          "-B            view in bytes, default in bits\n"
          "-si           SI format display, with powers of 1000, default is IEC,"
                         " with powers of 1024\n"
