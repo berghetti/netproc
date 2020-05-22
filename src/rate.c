@@ -18,6 +18,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>  // PROVISORIO
 
 #include "human_readable.h"
 #include "process.h"
@@ -26,6 +27,7 @@
 
 // defined in main.c
 extern bool view_bytes;
+extern bool view_conections;
 
 static void
 calc_avg_rate_conection ( process_t *process );
@@ -93,7 +95,8 @@ calc_avg_rate ( process_t *proc, const size_t tot_proc )
                        proc[i].net_stat.avg_Bps_tx );
 
       // calcula taxa individual de cada conexão
-      calc_avg_rate_conection ( &proc[i] );
+      if ( view_conections )
+        calc_avg_rate_conection ( &proc[i] );
     }
 }
 
@@ -108,6 +111,8 @@ calc_avg_rate_conection ( process_t *process )
       sum_bytes_tx = 0;
       sum_pps_rx = 0;
       sum_pps_tx = 0;
+
+      // printf("calculando rate con - %ld\n", i);
 
       for ( size_t j = 0; j < LEN_BUF_CIRC_RATE; j++ )
         {
