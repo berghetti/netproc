@@ -51,7 +51,7 @@ error ( const char *msg, ... )
     {
       tputs ( exit_attribute_mode, 1, puterr );
       tputs ( tparm ( set_a_foreground, YELLOW ), 1, puterr );
-      tputs ( enter_bold_mode, 1, puterr );
+      // tputs ( enter_bold_mode, 1, puterr );
     }
 
   fprintf ( stderr, ERROR " " );

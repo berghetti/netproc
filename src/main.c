@@ -22,15 +22,14 @@
 #include <stdio.h>   // putchar
 #include <stdlib.h>  // exit
 #include <string.h>  // strerror
-#include <term.h>    // tputs
 
 #include "m_error.h"
 #include "network.h"
-#include "proc_rate.h"
+#include "rate.h"
 #include "process.h"
 #include "show.h"
 #include "sock.h"
-#include "statistics_proc.h"
+#include "statistics.h"
 #include "sufix.h"
 #include "terminal.h"
 #include "timer.h"
@@ -54,10 +53,11 @@ static void
 parse_options ( int, const char ** );
 
 // options default
-bool udp = false;         // mode TCP
-bool view_si = false;     // view in prefix IEC "Kib, Mib, ..."
-bool view_bytes = false;  // view in bits
-char *iface = NULL;       // sniff all interfaces
+bool udp = false;              // mode TCP
+bool view_si = false;          // view in prefix IEC "Kib, Mib, ..."
+bool view_bytes = false;       // view in bits
+bool view_conections = false;  // show process conections
+char *iface = NULL;            // sniff all interfaces
 
 uint8_t *buff_pkt = NULL;
 process_t *processes = NULL;
@@ -67,11 +67,11 @@ uint8_t tic_tac = 0;
 int
 main ( int argc, const char **argv )
 {
-  parse_options ( argc, argv );
-
   atexit ( clear_exit );
 
   setup_terminal ();
+
+  parse_options ( argc, argv );
 
   create_socket ();
 
@@ -117,8 +117,9 @@ main ( int argc, const char **argv )
       packet.lenght = bytes;
 
       // se não for possivel identificar de qual processo o trafego pertence
-      // é sinal que existe um novo processo que ainda não foi mapeado,
-      // então atualizamos a lista de processos com conexões ativas.
+      // é sinal que existe um novo processo, ou nova conexão de um processo
+      // existente, que ainda não foi mapeado, então atualizamos a lista
+      // de processos com conexões ativas.
 
       // mesmo que não tenha dados para atualizar(bytes == 0), chamamos a
       // função para que possa contabilizar na média.
@@ -162,10 +163,16 @@ parse_options ( int argc, const char **argv )
               case 'B':
                 view_bytes = true;
                 break;
+              case 'c':
+                view_conections = true;
+                break;
               case 's':
                 if ( *( *argv + 2 ) && *( *argv + 2 ) == 'i' )
-                  view_si = true;
-                break;
+                  {
+                    view_si = true;
+                    break;
+                  }
+                goto ERR;
               case 'h':
                 usage ();
                 exit ( EXIT_SUCCESS );
@@ -173,6 +180,8 @@ parse_options ( int argc, const char **argv )
                 show_version ();
                 exit ( EXIT_SUCCESS );
               default:
+              ERR:
+                error ( "Invalid argument '%s'", *argv );
                 usage ();
                 exit ( EXIT_FAILURE );
             }
@@ -197,8 +206,8 @@ clear_exit ( void )
 static void
 sig_handler ( int sig )
 {
-  // The return value of a simple command is its exit status,
-  // or 128+n if the command is terminated by signal n
+  // "The return value of a simple command is its exit status,
+  //  or 128+n if the command is terminated by signal n"
   // by man bash
   exit ( 128 + sig );
 }

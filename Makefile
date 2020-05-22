@@ -29,9 +29,9 @@ CC=gcc
 
 CFLAGS=
 ifdef DEBUG
-	CFLAGS+=-Wall -Wextra -pedantic -pedantic-errors -O0 -g
+	CFLAGS+=-Wall -Wextra -Werror -pedantic -pedantic-errors -O0 -g
 else
-	CFLAGS+= -O2 -march=native
+	CFLAGS+= -O2 -march=native -Wall -Wextra
 endif
 
 # biblioteca terminfo

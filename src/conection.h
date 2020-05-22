@@ -24,17 +24,22 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "rate.h"  // struct net_stat
+
 // FIXME: ... value is ideal???
 // tamanho do buffer para identificar as conexões do sistema
-#define MAX_CONECTIONS 1024
+#define MAX_CONECTIONS 8000
 
 // caminho do arquivo onde o kernel
 // fornece as conexoes TCP e UDP
 #define PATH_TCP "/proc/net/tcp"
 #define PATH_UDP "/proc/net/udp"
 
-typedef struct
+// struct net_stat;
+
+typedef struct conection
 {
+  struct net_stat net_stat;  // armazena statisticas de rede
   uint32_t inode;
   uint32_t local_address;
   uint32_t remote_address;

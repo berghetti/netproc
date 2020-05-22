@@ -18,18 +18,34 @@
  */
 
 #include <stdio.h>
+#include <stdbool.h>
+#include <term.h>       // variable columns
+#include <unistd.h>     // STDOUT_FILENO
+#include <arpa/inet.h>  // inet_ntop
 
 #include "process.h"
 #include "terminal.h"  // clear_cmd
 
+// defined in main.c
+extern bool view_conections;
+
+// tamanho representação textual porta da camada de transporte
+#define PORTLEN 6  // 65535 + '\0'
+
+// "ddd.ddd.ddd.ddd:ppppp <-> ddd.ddd.ddd.ddd:ppppp"
+#define LEN_TUPLE ( ( INET_ADDRSTRLEN + PORTLEN ) * 2 ) + 7
+
 // espaçamento entre as colunas
 #define PID -5
-#define PROGRAM -45
 #define PPS -8
 #define RATE -14
+#define PROGRAM 54  // tamanho fixo de caracteres até a coluna program
 
 // maximo de caracteres que sera exibido no nome de um processo
 #define LEN_NAME_PROGRAM 44
+
+static void
+print_conections ( const process_t *const process );
 
 void
 show_process ( const process_t *const processes, const size_t tot_process )
@@ -37,18 +53,19 @@ show_process ( const process_t *const processes, const size_t tot_process )
   // limpa a tela e o scrollback
   clear_cmd ();
 
-  printf ( "%*s %*s %*s %*s %*s %s\n",
+  printf ( "%*s %*s %*s %*s %*s %.*s\n",
            PID,
            "PID",
-           PROGRAM,
-           "PROGRAM",
            PPS,
            "PPS TX",
            PPS,
            "PPS RX",
            RATE,
            "RATE UP",
-           "RATE DOWN" );
+           RATE,
+           "RATE DOWN",
+           columns - PROGRAM,
+           "PROGRAM");
 
   for ( size_t i = 0; i < tot_process; i++ )
     {
@@ -58,19 +75,77 @@ show_process ( const process_t *const processes, const size_t tot_process )
            processes[i].net_stat.avg_pps_rx ||
            processes[i].net_stat.avg_pps_tx )
         {
-          printf ( "%*d %*.*s %*ld %*ld %*s %s\n",
+          printf ( "%*d %*ld %*ld %*s %*s %.*s\n",
                    PID,
                    processes[i].pid,
-                   PROGRAM,
-                   LEN_NAME_PROGRAM,
-                   processes[i].name,
                    PPS,
                    processes[i].net_stat.avg_pps_tx,
                    PPS,
                    processes[i].net_stat.avg_pps_rx,
                    RATE,
                    processes[i].net_stat.tx_rate,
-                   processes[i].net_stat.rx_rate );
+                   RATE,
+                   processes[i].net_stat.rx_rate,
+                   columns - PROGRAM,
+                   processes[i].name );
+
+          if ( view_conections )
+            print_conections ( &processes[i] );
         }
     }
+}
+
+static void
+print_conections ( const process_t *const process )
+{
+  // tuple ip:port <-> ip:port
+  char tuple[LEN_TUPLE] = {0};
+  char l_ip[INET_ADDRSTRLEN] = {0};  // ip local
+  char r_ip[INET_ADDRSTRLEN] = {0};  // ip remote
+
+  for ( size_t i = 0; i < process->total_conections; i++ )
+    {
+      // exibi somente as conexões que estão ativas, com pacotes trafegando
+      // na rede
+      if ( process->conection[i].net_stat.avg_Bps_tx ||
+           process->conection[i].net_stat.avg_Bps_rx ||
+           process->conection[i].net_stat.avg_pps_tx ||
+           process->conection[i].net_stat.avg_pps_rx )
+        {
+          // copia o ip em texto
+          inet_ntop ( AF_INET,
+                      &process->conection[i].local_address,
+                      l_ip,
+                      INET_ADDRSTRLEN );
+
+          inet_ntop ( AF_INET,
+                      &process->conection[i].remote_address,
+                      r_ip,
+                      INET_ADDRSTRLEN );
+          // tupla da conexao em um unico array variavel
+          // para facilitar exibição
+          snprintf ( tuple,
+                     LEN_TUPLE,
+                     "%s:%u <-> %s:%u",
+                     l_ip,
+                     process->conection[i].local_port,
+                     r_ip,
+                     process->conection[i].remote_port );
+          printf ( "%*s %*ld %*ld %*s %*s %s %.*s\n",
+                   PID,
+                   "",
+                   PPS,
+                   process->conection[i].net_stat.avg_pps_tx,
+                   PPS,
+                   process->conection[i].net_stat.avg_pps_rx,
+                   RATE,
+                   process->conection[i].net_stat.tx_rate,
+                   RATE,
+                   process->conection[i].net_stat.rx_rate,
+                   " |_",
+                   columns - PROGRAM - 4, // 4 = strlen (" |_")
+                   tuple );
+        }
+    }
+  putchar ( '\n' );
 }
