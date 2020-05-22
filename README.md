@@ -3,7 +3,7 @@
 tool to monitor network traffic based on processes
 
 
-![Alt Text](img/print.png)
+![Alt Text](img/0.2.0.png)
 
 
 #### [Dependences]
