@@ -84,7 +84,7 @@ main ( int argc, const char **argv )
   sigaction ( SIGTERM, &sigact, NULL );
 
   // enquanto não encontrar processos com conexões ativas
-  // testar isso...
+  // FIXME: testar isso...
   while ( 0 == ( tot_process_act = get_process_active_con (
                          &processes, tot_process_act ) ) )
     printf ( "\rNenhum processo com conexão ativa encontrado, procurando..." );
@@ -159,6 +159,7 @@ parse_options ( int argc, const char **argv )
                 break;
               case 'i':
                 iface = ( char * ) *++argv;
+                argc--;
                 break;
               case 'B':
                 view_bytes = true;
@@ -180,13 +181,20 @@ parse_options ( int argc, const char **argv )
                 show_version ();
                 exit ( EXIT_SUCCESS );
               default:
-              ERR:
-                error ( "Invalid argument '%s'", *argv );
-                usage ();
-                exit ( EXIT_FAILURE );
+                goto ERR;
+
             }
         }
+      else
+        goto ERR;
     }
+
+    return;
+
+    ERR:
+    error ( "Invalid argument '%s'", *argv );
+    usage ();
+    exit ( EXIT_FAILURE );
 }
 
 static void

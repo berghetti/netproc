@@ -31,8 +31,8 @@ extern bool view_conections;
 
 // calcula o tamanho da string até null bytes ou espaco
 // oque ocorrer primeiro
-static size_t
-strlen_space ( const char *string );
+// static size_t
+// strlen_space ( const char *string );
 
 static int
 get_name_process ( char **buffer, const pid_t pid );
@@ -344,13 +344,14 @@ copy_conections ( process_t *proc,
                   const size_t tot_con )
 {
   conection_t temp;
+  size_t b = tot_con;
 
   // faz backup das estatisticas das conexoes atuais antes de
   // sobrescrever
   // only if view_conections is true
   for ( size_t c = 0; c < tot_con && view_conections; c++ )
     {
-      for ( size_t a = 0, b = tot_con; a < b; a++ )
+      for ( size_t a = 0; a < b; a++ )
         {
           // se for a mesma conexão...
           if ( proc->conection[c].inode == con[index_con[a]].inode )
@@ -562,12 +563,12 @@ get_name_process ( char **buffer, const pid_t pid )
 
 // retorna o tamanho da string até null byte ou espaço
 // oque ocorrer primeiro
-static size_t
-strlen_space ( const char *string )
-{
-  size_t n = 0;
-  while ( *string && *string++ != ' ' )
-    n++;
-
-  return n;
-}
+// static size_t
+// strlen_space ( const char *string )
+// {
+//   size_t n = 0;
+//   while ( *string && *string++ != ' ' )
+//     n++;
+//
+//   return n;
+// }

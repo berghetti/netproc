@@ -4,6 +4,11 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
+0.2.1 - 2020-05-25
+  * improved parse of options, now is more readble and checking of parameters is best
+  * updated [options] of README with 'netproc -h' currently
+  - minor change of function copy_conections in process.c  
+
 0.2.0 - 2020-05-22
   + individual statistics by connections, option '-c'
   * show a error when invalid argument was passed, function parte_options in main.c
