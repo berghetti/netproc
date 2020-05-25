@@ -53,11 +53,13 @@ static void
 parse_options ( int, const char ** );
 
 // options default
-bool udp = false;              // mode TCP
-bool view_si = false;          // view in prefix IEC "Kib, Mib, ..."
-bool view_bytes = false;       // view in bits
-bool view_conections = false;  // show process conections
-char *iface = NULL;            // sniff all interfaces
+bool udp = false;               // mode TCP
+bool view_si = false;           // view in prefix IEC "Kib, Mib, ..."
+bool view_bytes = false;        // view in bits
+bool view_conections = false;   // show process conections
+bool translate_host = true;     // translate ip in name using DNS
+bool translate_service = true;  // translate service, ex 443 -> https
+char *iface = NULL;             // sniff all interfaces
 
 uint8_t *buff_pkt = NULL;
 process_t *processes = NULL;
@@ -174,6 +176,24 @@ parse_options ( int argc, const char **argv )
                     break;
                   }
                 goto ERR;
+              case 'n':
+                view_conections = true;
+                
+                if ( *( *argv + 2 ) && *( *argv + 2 ) == 'h' )
+                  {
+                    translate_host = false;
+                    break;
+                  }
+                else if ( *( *argv + 2 ) && *( *argv + 2 ) == 'p' )
+                  {
+                    translate_service = false;
+                    break;
+                  }
+                else if ( ( *( *argv + 2 )) )
+                  goto ERR;
+
+                translate_host = translate_service = false;
+                break;
               case 'h':
                 usage ();
                 exit ( EXIT_SUCCESS );
@@ -182,19 +202,18 @@ parse_options ( int argc, const char **argv )
                 exit ( EXIT_SUCCESS );
               default:
                 goto ERR;
-
             }
         }
       else
         goto ERR;
     }
 
-    return;
+  return;
 
-    ERR:
-    error ( "Invalid argument '%s'", *argv );
-    usage ();
-    exit ( EXIT_FAILURE );
+ERR:
+  error ( "Invalid argument '%s'", *argv );
+  usage ();
+  exit ( EXIT_FAILURE );
 }
 
 static void

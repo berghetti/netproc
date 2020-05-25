@@ -19,12 +19,12 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>     // strlen
 #include <term.h>       // variable columns
-#include <unistd.h>     // STDOUT_FILENO
-#include <arpa/inet.h>  // inet_ntop
 
 #include "process.h"
 #include "terminal.h"  // clear_cmd
+#include "translate.h"
 
 // defined in main.c
 extern bool view_conections;
@@ -65,7 +65,7 @@ show_process ( const process_t *const processes, const size_t tot_process )
            RATE,
            "RATE DOWN",
            columns - PROGRAM,
-           "PROGRAM");
+           "PROGRAM" );
 
   for ( size_t i = 0; i < tot_process; i++ )
     {
@@ -99,9 +99,7 @@ static void
 print_conections ( const process_t *const process )
 {
   // tuple ip:port <-> ip:port
-  char tuple[LEN_TUPLE] = {0};
-  char l_ip[INET_ADDRSTRLEN] = {0};  // ip local
-  char r_ip[INET_ADDRSTRLEN] = {0};  // ip remote
+  char *tuple;
 
   for ( size_t i = 0; i < process->total_conections; i++ )
     {
@@ -112,25 +110,9 @@ print_conections ( const process_t *const process )
            process->conection[i].net_stat.avg_pps_tx ||
            process->conection[i].net_stat.avg_pps_rx )
         {
-          // copia o ip em texto
-          inet_ntop ( AF_INET,
-                      &process->conection[i].local_address,
-                      l_ip,
-                      INET_ADDRSTRLEN );
+          // faz a tradução de ip:porta para nome:serviço
+          tuple = translate ( &process->conection[i] );
 
-          inet_ntop ( AF_INET,
-                      &process->conection[i].remote_address,
-                      r_ip,
-                      INET_ADDRSTRLEN );
-          // tupla da conexao em um unico array variavel
-          // para facilitar exibição
-          snprintf ( tuple,
-                     LEN_TUPLE,
-                     "%s:%u <-> %s:%u",
-                     l_ip,
-                     process->conection[i].local_port,
-                     r_ip,
-                     process->conection[i].remote_port );
           printf ( "%*s %*ld %*ld %*s %*s %s %.*s\n",
                    PID,
                    "",
@@ -143,7 +125,7 @@ print_conections ( const process_t *const process )
                    RATE,
                    process->conection[i].net_stat.rx_rate,
                    " |_",
-                   columns - PROGRAM - 4, // 4 = strlen (" |_")
+                   columns - PROGRAM - 4,  // 4 = strlen (" |_")
                    tuple );
         }
     }

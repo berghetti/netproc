@@ -34,13 +34,14 @@ usage ( void )
   puts ( "Usage: " PROG_NAME " [options]\n"
          "\n"
          "Options:\n"
-         "-u            tracks udp traffic, default is tcp\n"
-         "-i <iface>    specifies an interface, default is all\n"
-         "-c            visualization each active connection of the process\n"
          "-B            view in bytes, default in bits\n"
-         "-si           SI format display, with powers of 1000, default is IEC,"
-                        " with powers of 1024\n"
+         "-c            visualization each active connection of the process\n"
          "-h            show this message\n"
+         "-i <iface>    specifies an interface, default is all\n"
+         "-n            not translate host and service, implicit '-c',\n"
+         "              try '-nh' to no translate only host or '-np' to not translate only service\n"
+         "-si           SI format display, with powers of 1000, default is IEC, with powers of 1024\n"
+         "-u            tracks udp traffic, default is tcp\n"
          "-v            show version" );
   // clang-format on
 }

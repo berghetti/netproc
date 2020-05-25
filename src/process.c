@@ -540,7 +540,7 @@ get_name_process ( char **buffer, const pid_t pid )
 
   // tamanho até null byte ou primeiro espaço
   // size_t len = strlen_space ( line );
-  size_t len = strlen (line);
+  size_t len = strlen ( line );
 
   line[len] = '\0';
 
