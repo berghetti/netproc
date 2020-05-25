@@ -3,7 +3,7 @@
 tool to monitor network traffic based on processes
 
 
-![Alt Text](img/0.2.0.png)
+![Alt Text](img/0.3.1.png)
 
 
 #### [Dependences]
@@ -20,16 +20,19 @@ tool to monitor network traffic based on processes
     $ git clone https://github.com/berghetti/netproc.git; cd netproc; make; sudo make install
     
 #### [Options / usage]
-    netproc - 0.2.0
+    netproc - 0.3.1
     Usage: netproc [options]
 
     Options:
-    -u            tracks udp traffic, default is tcp
-    -i <iface>    specifies an interface, default is all
-    -c            visualization each active connection of the process
     -B            view in bytes, default in bits
-    -si           SI format display, with powers of 1000, default is IEC, with powers of 1024
+    -c            visualization each active connection of the process
     -h            show this message
-    -v            show version    
+    -i <iface>    specifies an interface, default is all
+    -n            not translate host and service, implicit '-c',
+                  try '-nh' to no translate only host or '-np' to not translate only service
+    -si           SI format display, with powers of 1000, default is IEC, with powers of 1024
+    -u            tracks udp traffic, default is tcp
+    -v            show version
+
 #### [uninstall]
     $ sudo make uninstall

@@ -4,9 +4,10 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
-0.2.1 - 2020-05-25
-  * improved parse of options, now is more readble and checking of parameters is best
-  * updated [options] of README with 'netproc -h' currently
+0.3.1 - 2020-05-25
+  + translate of host and service 
+  * improved parse of options, now code is more readble and checking of parameters is best
+  * updated [options] of README
   - minor change of function copy_conections in process.c  
 
 0.2.0 - 2020-05-22
