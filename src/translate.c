@@ -1,5 +1,5 @@
 
-#include <stdio.h>       // snprintf
+#include <stdio.h>  // snprintf
 #include <stdbool.h>
 #include <sys/socket.h>  // getnameinfo
 #include <netdb.h>       // getnameinfo

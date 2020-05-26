@@ -19,8 +19,8 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-#include <string.h>     // strlen
-#include <term.h>       // variable columns
+#include <string.h>  // strlen
+#include <term.h>    // variable columns
 
 #include "process.h"
 #include "terminal.h"  // clear_cmd
@@ -110,24 +110,24 @@ print_conections ( const process_t *const process )
            process->conection[i].net_stat.avg_pps_tx ||
            process->conection[i].net_stat.avg_pps_rx )
         {
-          // faz a tradução de ip:porta para nome:serviço
-          tuple = translate ( &process->conection[i] );
+      // faz a tradução de ip:porta para nome:serviço
+      tuple = translate ( &process->conection[i] );
 
-          printf ( "%*s %*ld %*ld %*s %*s %s %.*s\n",
-                   PID,
-                   "",
-                   PPS,
-                   process->conection[i].net_stat.avg_pps_tx,
-                   PPS,
-                   process->conection[i].net_stat.avg_pps_rx,
-                   RATE,
-                   process->conection[i].net_stat.tx_rate,
-                   RATE,
-                   process->conection[i].net_stat.rx_rate,
-                   " |_",
-                   columns - PROGRAM - 4,  // 4 = strlen (" |_")
-                   tuple );
-        }
+      printf ( "%*s %*ld %*ld %*s %*s %s %.*s\n",
+               PID,
+               "",
+               PPS,
+               process->conection[i].net_stat.avg_pps_tx,
+               PPS,
+               process->conection[i].net_stat.avg_pps_rx,
+               RATE,
+               process->conection[i].net_stat.tx_rate,
+               RATE,
+               process->conection[i].net_stat.rx_rate,
+               " |_",
+               columns - PROGRAM - 4,  // 4 = strlen (" |_")
+               tuple );
+      }
     }
   putchar ( '\n' );
 }

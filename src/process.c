@@ -58,7 +58,7 @@ alloc_memory_process ( process_t **proc, const size_t len );
 
 static void
 process_copy ( process_t *restrict proc,
-               const size_t cur_tot_proc,
+               size_t cur_tot_proc,
                process_t *restrict new_procs,
                const size_t new_tot_proc );
 
@@ -290,10 +290,11 @@ free_process ( process_t *proc, const size_t qtd_proc )
 // dos processos que não são novos e possem
 static void
 process_copy ( process_t *restrict proc,
-               const size_t cur_tot_proc,
+               size_t cur_tot_proc,
                process_t *restrict new_procs,
                const size_t new_tot_proc )
 {
+
   for ( size_t i = 0; i < new_tot_proc; i++ )
     {
       // na primeira vez valor sera cur_tot_proc sera 0, não tem oque testar
@@ -302,8 +303,8 @@ process_copy ( process_t *restrict proc,
           // se for o mesmo processo e tiver atividade de rede
           // copia as estatisticas de rede
           if ( ( proc[j].pid == new_procs[i].pid ) &&
-               ( proc[j].net_stat.avg_Bps_rx > 0 ||
-                 proc[j].net_stat.avg_Bps_tx > 0 ) )
+               ( proc[j].net_stat.avg_Bps_rx || proc[j].net_stat.avg_Bps_tx ||
+                 proc[j].net_stat.avg_pps_rx || proc[j].net_stat.avg_pps_tx ) )
             {
               // estatistica geral, média dos periodos
               new_procs[i].net_stat.avg_Bps_rx = proc[j].net_stat.avg_Bps_rx;
@@ -344,34 +345,41 @@ copy_conections ( process_t *proc,
                   const size_t tot_con )
 {
   conection_t temp;
-  size_t b = tot_con;
+  int b = 0;
 
   // faz backup das estatisticas das conexoes atuais antes de
   // sobrescrever
   // only if view_conections is true
   for ( size_t c = 0; c < tot_con && view_conections; c++ )
     {
-      for ( size_t a = 0; a < b; a++ )
+      // loop "inverso" para tentar deixar as conexões mais ativas nas
+      // primeiras posições
+      for ( int a = ( int ) tot_con - 1; a >= b; a-- )
         {
-          // se for a mesma conexão...
-          if ( proc->conection[c].inode == con[index_con[a]].inode )
+          // se for a mesma conexão e tiver estatisticas de rede...
+          if ( proc->conection[c].inode == con[index_con[a]].inode &&
+               ( proc->conection[c].net_stat.avg_Bps_rx ||
+                 proc->conection[c].net_stat.avg_Bps_tx ||
+                 proc->conection[c].net_stat.avg_pps_tx ||
+                 proc->conection[c].net_stat.avg_pps_rx ) )
             {
               // ...copia toda a estrutura salvando junto com as
               // estatisticas de rede
               con[index_con[a]] = proc->conection[c];
 
-              // se não for a ultima conexão do array interno, troca o conteudo
-              // da posição atual pelo conteudo da ultimo, se for a ultima
-              // não precisa trocar apenas diminiu o tamanho do laço interno
-              if ( a != ( b - 1 ) )
+              // se não for a primeira conexão do array interno, troca o
+              // conteudo da posição atual pelo conteudo da primeira,
+              // assim retiramos a posição do indice a ser testado nos demais
+              // loops externos
+              if ( a != b )
                 {
                   temp = con[index_con[a]];
-                  con[index_con[a]] = con[index_con[b - 1]];
-                  con[index_con[b - 1]] = temp;
+                  con[index_con[a]] = con[index_con[b]];
+                  con[index_con[b]] = temp;
                 }
 
               // diminiu o tamanho do laço interno (para performance)
-              b--;
+              b++;
 
               break;
             }

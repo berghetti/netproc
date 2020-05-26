@@ -178,7 +178,7 @@ parse_options ( int argc, const char **argv )
                 goto ERR;
               case 'n':
                 view_conections = true;
-                
+
                 if ( *( *argv + 2 ) && *( *argv + 2 ) == 'h' )
                   {
                     translate_host = false;
@@ -189,7 +189,7 @@ parse_options ( int argc, const char **argv )
                     translate_service = false;
                     break;
                   }
-                else if ( ( *( *argv + 2 )) )
+                else if ( ( *( *argv + 2 ) ) )
                   goto ERR;
 
                 translate_host = translate_service = false;
