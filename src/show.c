@@ -17,12 +17,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
+// #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>  // strlen
-#include <term.h>    // variable columns
+// #include <term.h>    // variable columns
+#include <ncurses.h>
 
 #include "process.h"
+#include "conection.h"
 #include "terminal.h"  // clear_cmd
 #include "translate.h"
 
@@ -45,7 +47,7 @@ extern bool view_conections;
 #define LEN_NAME_PROGRAM 44
 
 static void
-print_conections ( const process_t *const process );
+print_conections ( const process_t *process );
 
 void
 show_process ( const process_t *const processes, const size_t tot_process )
@@ -53,7 +55,7 @@ show_process ( const process_t *const processes, const size_t tot_process )
   // limpa a tela e o scrollback
   clear_cmd ();
 
-  printf ( "%*s %*s %*s %*s %*s %.*s\n",
+  printw ( "%*s %*s %*s %*s %*s %.*s\n",
            PID,
            "PID",
            PPS,
@@ -64,7 +66,7 @@ show_process ( const process_t *const processes, const size_t tot_process )
            "RATE UP",
            RATE,
            "RATE DOWN",
-           columns - PROGRAM,
+           COLS - PROGRAM,
            "PROGRAM" );
 
   for ( size_t i = 0; i < tot_process; i++ )
@@ -75,7 +77,7 @@ show_process ( const process_t *const processes, const size_t tot_process )
            processes[i].net_stat.avg_pps_rx ||
            processes[i].net_stat.avg_pps_tx )
         {
-          printf ( "%*d %*ld %*ld %*s %*s %.*s\n",
+          printw ( "%*d %*ld %*ld %*s %*s %.*s\n",
                    PID,
                    processes[i].pid,
                    PPS,
@@ -86,48 +88,59 @@ show_process ( const process_t *const processes, const size_t tot_process )
                    processes[i].net_stat.tx_rate,
                    RATE,
                    processes[i].net_stat.rx_rate,
-                   columns - PROGRAM,
+                   COLS - PROGRAM - 1,
                    processes[i].name );
 
           if ( view_conections )
             print_conections ( &processes[i] );
         }
     }
+  refresh ();
 }
 
 static void
-print_conections ( const process_t *const process )
+print_conections ( const process_t *process )
 {
   // tuple ip:port <-> ip:port
   char *tuple;
 
-  for ( size_t i = 0; i < process->total_conections; i++ )
-    {
-      // exibi somente as conexões que estão ativas, com pacotes trafegando
-      // na rede
-      if ( process->conection[i].net_stat.avg_Bps_tx ||
-           process->conection[i].net_stat.avg_Bps_rx ||
-           process->conection[i].net_stat.avg_pps_tx ||
-           process->conection[i].net_stat.avg_pps_rx )
-        {
-      // faz a tradução de ip:porta para nome:serviço
-      tuple = translate ( &process->conection[i] );
+  size_t index_act[process->total_conections];
+  size_t tot_con_act;
+  // pega o total de conexões no processo que estão ativas, e seus respectivos
+  // indices
+  tot_con_act = get_con_active_in_process (index_act,
+                          process->conection, process->total_conections );
 
-      printf ( "%*s %*ld %*ld %*s %*s %s %.*s\n",
+  for ( size_t i = 0; i < tot_con_act; i++ )
+    {
+      // faz a tradução de ip:porta para nome:serviço
+      tuple = translate ( &process->conection[index_act[i]] );
+
+      printw ( "%*s %*ld %*ld %*s %*s  ",
                PID,
                "",
                PPS,
-               process->conection[i].net_stat.avg_pps_tx,
+               process->conection[index_act[i]].net_stat.avg_pps_tx,
                PPS,
-               process->conection[i].net_stat.avg_pps_rx,
+               process->conection[index_act[i]].net_stat.avg_pps_rx,
                RATE,
-               process->conection[i].net_stat.tx_rate,
+               process->conection[index_act[i]].net_stat.tx_rate,
                RATE,
-               process->conection[i].net_stat.rx_rate,
-               " |_",
-               columns - PROGRAM - 4,  // 4 = strlen (" |_")
-               tuple );
-      }
+               process->conection[index_act[i]].net_stat.rx_rate );
+      attron(A_BOLD | COLOR_PAIR(1));
+      if ( i + 1 != tot_con_act )
+        {
+          addch ( ACS_LTEE );   // ├
+          addch ( ACS_HLINE );  // ─
+        }
+      else
+        {                          // ultima conexão
+          addch ( ACS_LLCORNER );  // └
+          addch ( ACS_HLINE );     // ─
+        }
+      attroff(A_BOLD | COLOR_PAIR(1));
+
+      printw ( " %s\n", tuple );
     }
-  putchar ( '\n' );
+  addch ( '\n' );
 }

@@ -294,7 +294,6 @@ process_copy ( process_t *restrict proc,
                process_t *restrict new_procs,
                const size_t new_tot_proc )
 {
-
   for ( size_t i = 0; i < new_tot_proc; i++ )
     {
       // na primeira vez valor sera cur_tot_proc sera 0, não tem oque testar

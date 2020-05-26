@@ -17,18 +17,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>   // putchar
+// #include <stdio.h>   // putchar
 #include <term.h>    // setupterm, tputs, tigetstr
 #include <unistd.h>  // STDOUT_FILENO
+#include <ncurses.h>
 
 #include "m_error.h"
 
-static char *E3;
+// static char *E3;
 
 // carrega informações do terminal a associa a stdout
 void
 setup_terminal ( void )
 {
+  // ainda necessario para exibir correr em mensagens de erro
   int err;
   if ( setupterm ( NULL, STDOUT_FILENO, &err ) == -1 )
     {
@@ -45,17 +47,30 @@ setup_terminal ( void )
         }
     }
 
+  // maneira terminfo
   // codigo de escape para limpar scrollback
-  E3 = tigetstr ( "E3" );
+  // E3 = tigetstr ( "E3" );
+  //
+  // tputs ( cursor_invisible, 1, putchar );
+}
 
-  tputs ( cursor_invisible, 1, putchar );
+void
+init_ui ()
+{
+  initscr ();
+  curs_set(0); // cursor invisible
+  start_color();
+  use_default_colors();
+  init_pair(1, COLOR_CYAN, -1);
 }
 
 void
 restore_terminal ( void )
 {
-  tputs ( cursor_normal, 1, putchar );
-  tputs ( exit_attribute_mode, 1, putchar );
+  // maneira terminfo
+  // tputs ( cursor_normal, 1, putchar );
+  // tputs ( exit_attribute_mode, 1, putchar );
+  endwin ();
 }
 
 // limpa a tela, podendo tambem limpar o buffer do scroll se disponivel
@@ -63,10 +78,11 @@ restore_terminal ( void )
 void
 clear_cmd ( void )
 {
-  // limpa a tela
-  tputs ( clear_screen, lines > 0 ? lines : 1, putchar );
-
-  // se recurso para limpar scroll estiver disponivel
-  if ( E3 )
-    tputs ( E3, lines > 0 ? lines : 1, putchar );
+  clear ();
+  // limpa a tela modo terminfo
+  // tputs ( clear_screen, lines > 0 ? lines : 1, putchar );
+  //
+  // // se recurso para limpar scroll estiver disponivel
+  // if ( E3 )
+  //   tputs ( E3, lines > 0 ? lines : 1, putchar );
 }

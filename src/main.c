@@ -22,6 +22,7 @@
 #include <stdio.h>   // putchar
 #include <stdlib.h>  // exit
 #include <string.h>  // strerror
+// #include <locale.h>  // setlocale
 
 #include "m_error.h"
 #include "network.h"
@@ -85,6 +86,8 @@ main ( int argc, const char **argv )
   sigaction ( SIGINT, &sigact, NULL );
   sigaction ( SIGTERM, &sigact, NULL );
 
+  // setlocale ( LC_ALL, "" );
+
   // enquanto não encontrar processos com conexões ativas
   // FIXME: testar isso...
   while ( 0 == ( tot_process_act = get_process_active_con (
@@ -101,6 +104,7 @@ main ( int argc, const char **argv )
   double m_timer = start_timer ();
   ssize_t bytes;
 
+  init_ui ();
   // main loop
   while ( 1 )
     {

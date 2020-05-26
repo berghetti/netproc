@@ -28,6 +28,10 @@ setup_terminal ( void );
 void
 restore_terminal ( void );
 
+// start ncurses
+void
+init_ui ();
+
 // limpa a tela, podendo tambem limpar o buffer do scroll se disponivel
 void
 clear_cmd ( void );

@@ -47,7 +47,18 @@ typedef struct conection
   uint16_t remote_port;
 } conection_t;
 
+// get conections of system in "/proc/net/tcp or udp"
 int
 get_info_conections ( conection_t *conection, const size_t lenght );
+
+// preenche o buffer com indices apenas das conexões que estão ativas
+// @param size *buffer - armazena os indices correspondentes do array
+// conection_t * que contem as conexões ativas
+// @param conection *con - o array de conexões para checar
+// @param size_t tot_con - tamanho do array para checar
+size_t
+get_con_active_in_process ( size_t *buffer,
+                            const conection_t *con,
+                            const size_t tot_con);
 
 #endif  // CONECTION_H
