@@ -113,7 +113,7 @@ get_info_conections ( conection_t *conection, const size_t lenght )
 size_t
 get_con_active_in_process ( size_t *buffer,
                             const conection_t *con,
-                            const size_t tot_con)
+                            const size_t tot_con )
 {
   size_t id = 0;
 

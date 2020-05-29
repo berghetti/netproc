@@ -38,37 +38,54 @@ extern bool view_conections;
 #define LEN_TUPLE ( ( INET_ADDRSTRLEN + PORTLEN ) * 2 ) + 7
 
 // espaçamento entre as colunas
-#define PID -5
-#define PPS -8
-#define RATE -14
-#define PROGRAM 54  // tamanho fixo de caracteres até a coluna program
+#define PID -5  // negativo alinhado a esquerda
+#define PPS 6
+#define RATE 13
+#define PROGRAM 49  // tamanho fixo de caracteres até a coluna program
+
+// total de espaço até inicio da coluna
+// #define START_COL_PROG 49
 
 // maximo de caracteres que sera exibido no nome de um processo
-#define LEN_NAME_PROGRAM 44
+// #define LEN_NAME_PROGRAM 44
 
 static void
 print_conections ( const process_t *process );
 
+int
+find_last_char(const char *str, const char ch, size_t len);
+
 void
 show_process ( const process_t *const processes, const size_t tot_process )
 {
+  int y, x;
+  int len_prog, len_last;
+
+  WINDOW *my_pad;
+
+  my_pad = newpad(120,120);
+
+
   // limpa a tela e o scrollback
   clear_cmd ();
 
-  printw ( "%*s %*s %*s %*s %*s %.*s\n",
+  // attron ( A_REVERSE | COLOR_PAIR ( 2 ) );
+  printw (" %*s %*s %*s     %s       %s   %s\n",
            PID,
            "PID",
            PPS,
            "PPS TX",
            PPS,
            "PPS RX",
-           RATE,
-           "RATE UP",
-           RATE,
-           "RATE DOWN",
-           COLS - PROGRAM,
+           "RATE TX",
+           "RATE RX",
            "PROGRAM" );
+  // attroff ( A_REVERSE | COLOR_PAIR ( 2 ) );
+  getyx(stdscr, y, x);
+  mvchgat(0, 0, -1, A_REVERSE, 2, NULL);
+  move(y, x);
 
+  attron ( A_BOLD );
   for ( size_t i = 0; i < tot_process; i++ )
     {
       // só exibe o processo se tiver fluxo de rede
@@ -77,24 +94,41 @@ show_process ( const process_t *const processes, const size_t tot_process )
            processes[i].net_stat.avg_pps_rx ||
            processes[i].net_stat.avg_pps_tx )
         {
-          printw ( "%*d %*ld %*ld %*s %*s %.*s\n",
+
+          printw ( " %*d %*ld %*ld ",
                    PID,
                    processes[i].pid,
                    PPS,
                    processes[i].net_stat.avg_pps_tx,
                    PPS,
-                   processes[i].net_stat.avg_pps_rx,
+                   processes[i].net_stat.avg_pps_rx );
+
+          printw ( "%*s %*s ",
                    RATE,
+                   // "1023.69 kib/s",
                    processes[i].net_stat.tx_rate,
                    RATE,
-                   processes[i].net_stat.rx_rate,
-                   COLS - PROGRAM - 1,
-                   processes[i].name );
+                   // "1023.69 kib/s");
+                   processes[i].net_stat.rx_rate );
+
+          // attron (COLOR_PAIR(1));
+          printw ( "%*.*s\n", -(COLS - PROGRAM -1), COLS - PROGRAM - 1, processes[i].name );
+          // attroff (COLOR_PAIR(1));
+          len_prog = strlen_space(processes[i].name);
+          len_last = find_last_char(processes[i].name, '/', len_prog );
+
+          getyx(stdscr, y, x);
+          mvchgat(y - 1, PROGRAM, -1, A_NORMAL, 1, NULL); // pinta nome do programa até a ultima '/'
+          mvchgat(y - 1, PROGRAM + len_last + 1, len_prog - len_last - 1, A_BOLD, 1, NULL); // pinta o nome final do programa
+          move(y, x);
 
           if ( view_conections )
             print_conections ( &processes[i] );
         }
+
     }
+  attroff ( A_BOLD );
+  prefresh (my_pad, 0,0,0,0,20,30);
   refresh ();
 }
 
@@ -108,15 +142,16 @@ print_conections ( const process_t *process )
   size_t tot_con_act;
   // pega o total de conexões no processo que estão ativas, e seus respectivos
   // indices
-  tot_con_act = get_con_active_in_process (index_act,
-                          process->conection, process->total_conections );
+  tot_con_act = get_con_active_in_process (
+          index_act, process->conection, process->total_conections );
 
+  attron ( A_DIM );
   for ( size_t i = 0; i < tot_con_act; i++ )
     {
       // faz a tradução de ip:porta para nome:serviço
       tuple = translate ( &process->conection[index_act[i]] );
 
-      printw ( "%*s %*ld %*ld %*s %*s  ",
+      printw ( " %*s %*ld %*ld %*s %*s ",
                PID,
                "",
                PPS,
@@ -127,7 +162,8 @@ print_conections ( const process_t *process )
                process->conection[index_act[i]].net_stat.tx_rate,
                RATE,
                process->conection[index_act[i]].net_stat.rx_rate );
-      attron(A_BOLD | COLOR_PAIR(1));
+
+      attron ( COLOR_PAIR ( 1 ) );
       if ( i + 1 != tot_con_act )
         {
           addch ( ACS_LTEE );   // ├
@@ -138,9 +174,28 @@ print_conections ( const process_t *process )
           addch ( ACS_LLCORNER );  // └
           addch ( ACS_HLINE );     // ─
         }
-      attroff(A_BOLD | COLOR_PAIR(1));
+      attroff ( COLOR_PAIR ( 1 ) );
 
       printw ( " %s\n", tuple );
     }
   addch ( '\n' );
+  attroff (A_DIM );
+}
+
+// retorna a posição do ultimo caracter pesquisado
+int
+find_last_char(const char *str, const char ch, size_t len)
+{
+  size_t i = (len) ? len : strlen_space(str);
+
+  while(i)
+    {
+      if (str[i] == ch)
+        return i;
+
+      i--;
+    }
+
+  // not found
+  return -1;
 }

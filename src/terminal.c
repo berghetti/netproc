@@ -58,10 +58,20 @@ void
 init_ui ()
 {
   initscr ();
-  curs_set(0); // cursor invisible
-  start_color();
-  use_default_colors();
-  init_pair(1, COLOR_CYAN, -1);
+  cbreak();
+  keypad(stdscr, TRUE);
+  idlok(stdscr, TRUE);
+  scrollok(stdscr ,TRUE);
+
+
+  curs_set ( 0 );  // cursor invisible
+  start_color ();
+  use_default_colors ();
+
+  // color foreground, background
+  init_pair ( 1, COLOR_CYAN, -1 );   // color tree, name program
+  init_pair ( 2, COLOR_GREEN, -1 );  // color header
+  init_pair ( 3, -1, COLOR_BLACK );
 }
 
 void
@@ -70,6 +80,7 @@ restore_terminal ( void )
   // maneira terminfo
   // tputs ( cursor_normal, 1, putchar );
   // tputs ( exit_attribute_mode, 1, putchar );
+  curs_set(1);  // restore cursor
   endwin ();
 }
 

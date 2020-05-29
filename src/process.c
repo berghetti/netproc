@@ -570,12 +570,12 @@ get_name_process ( char **buffer, const pid_t pid )
 
 // retorna o tamanho da string até null byte ou espaço
 // oque ocorrer primeiro
-// static size_t
-// strlen_space ( const char *string )
-// {
-//   size_t n = 0;
-//   while ( *string && *string++ != ' ' )
-//     n++;
-//
-//   return n;
-// }
+size_t
+strlen_space ( const char *string )
+{
+  size_t n = 0;
+  while ( *string && *string++ != ' ' )
+    n++;
+
+  return n;
+}
