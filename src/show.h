@@ -20,10 +20,18 @@
 #ifndef SHOW_H
 #define SHOW_H
 
-#include "process.h"
+#include "process.h" // type process_t, MAX_NAME
+
+// tamanho fixo de caracteres até a coluna program
+#define PROGRAM 49
+
+#define COLS_PAD PROGRAM + MAX_NAME
 
 // exibe os processos e suas estatisticas de rede
 void
 show_process ( const process_t *const processes, const size_t tot_process );
+
+void
+ui_tick ();
 
 #endif  // SHOW_H

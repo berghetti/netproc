@@ -23,16 +23,22 @@
 // #include <term.h>    // variable columns
 #include <ncurses.h>
 
+#include "str.h"
 #include "process.h"
 #include "conection.h"
 #include "terminal.h"  // clear_cmd
 #include "translate.h"
+#include "show.h"
 
 // defined in main.c
 extern bool view_conections;
+extern process_t *processes;
+extern uint32_t tot_process_act;
+
+extern WINDOW *pad;
 
 // tamanho representação textual porta da camada de transporte
-#define PORTLEN 6  // 65535 + '\0'
+#define PORTLEN 5  // 65535
 
 // "ddd.ddd.ddd.ddd:ppppp <-> ddd.ddd.ddd.ddd:ppppp"
 #define LEN_TUPLE ( ( INET_ADDRSTRLEN + PORTLEN ) * 2 ) + 7
@@ -41,51 +47,46 @@ extern bool view_conections;
 #define PID -5  // negativo alinhado a esquerda
 #define PPS 6
 #define RATE 13
-#define PROGRAM 49  // tamanho fixo de caracteres até a coluna program
 
-// total de espaço até inicio da coluna
-// #define START_COL_PROG 49
+// // tamanho fixo de caracteres até a coluna program
+// #define PROGRAM 49
 
-// maximo de caracteres que sera exibido no nome de um processo
-// #define LEN_NAME_PROGRAM 44
+static int scroll_x = 0;
+static int scroll_y = 1;
+static int selected = 1;  // posição de linha do item selecionado
+static int tot_rows;      // total linhas exibidas
 
 static void
 print_conections ( const process_t *process );
-
-int
-find_last_char(const char *str, const char ch, size_t len);
 
 void
 show_process ( const process_t *const processes, const size_t tot_process )
 {
   int y, x;
-  int len_prog, len_last;
-
-  WINDOW *my_pad;
-
-  my_pad = newpad(120,120);
-
+  int base_name, name;
 
   // limpa a tela e o scrollback
-  clear_cmd ();
+  wclear ( pad );
 
-  // attron ( A_REVERSE | COLOR_PAIR ( 2 ) );
-  printw (" %*s %*s %*s     %s       %s   %s\n",
-           PID,
-           "PID",
-           PPS,
-           "PPS TX",
-           PPS,
-           "PPS RX",
-           "RATE TX",
-           "RATE RX",
-           "PROGRAM" );
-  // attroff ( A_REVERSE | COLOR_PAIR ( 2 ) );
-  getyx(stdscr, y, x);
-  mvchgat(0, 0, -1, A_REVERSE, 2, NULL);
-  move(y, x);
+  wprintw ( pad,
+            " %*s %*s %*s     %s       %s   %s\n",
+            PID,
+            "PID",
+            PPS,
+            "PPS TX",
+            PPS,
+            "PPS RX",
+            "RATE TX",
+            "RATE RX",
+            "PROGRAM" );
+  // paint line header
+  getyx ( pad, y, x );
+  mvwchgat ( pad, 0, 0, -1, A_REVERSE, 2, NULL );
+  wmove ( pad, y, x );
 
-  attron ( A_BOLD );
+  tot_rows = 0;
+
+  wattron ( pad, A_BOLD );
   for ( size_t i = 0; i < tot_process; i++ )
     {
       // só exibe o processo se tiver fluxo de rede
@@ -94,42 +95,67 @@ show_process ( const process_t *const processes, const size_t tot_process )
            processes[i].net_stat.avg_pps_rx ||
            processes[i].net_stat.avg_pps_tx )
         {
+          tot_rows++;
+          wprintw ( pad,
+                    " %*d %*ld %*ld ",
+                    PID,
+                    processes[i].pid,
+                    PPS,
+                    processes[i].net_stat.avg_pps_tx,
+                    PPS,
+                    processes[i].net_stat.avg_pps_rx );
 
-          printw ( " %*d %*ld %*ld ",
-                   PID,
-                   processes[i].pid,
-                   PPS,
-                   processes[i].net_stat.avg_pps_tx,
-                   PPS,
-                   processes[i].net_stat.avg_pps_rx );
+          wprintw ( pad,
+                    "%*s %*s ",
+                    RATE,
+                    // "1023.69 kib/s",
+                    processes[i].net_stat.tx_rate,
+                    RATE,
+                    // "1023.69 kib/s");
+                    processes[i].net_stat.rx_rate );
 
-          printw ( "%*s %*s ",
-                   RATE,
-                   // "1023.69 kib/s",
-                   processes[i].net_stat.tx_rate,
-                   RATE,
-                   // "1023.69 kib/s");
-                   processes[i].net_stat.rx_rate );
+          wprintw ( pad, "%s\n", processes[i].name );
 
-          // attron (COLOR_PAIR(1));
-          printw ( "%*.*s\n", -(COLS - PROGRAM -1), COLS - PROGRAM - 1, processes[i].name );
-          // attroff (COLOR_PAIR(1));
-          len_prog = strlen_space(processes[i].name);
-          len_last = find_last_char(processes[i].name, '/', len_prog );
+          base_name = strlen_space ( processes[i].name );
+          name = find_last_char ( processes[i].name, base_name, '/' ) + 1;
 
-          getyx(stdscr, y, x);
-          mvchgat(y - 1, PROGRAM, -1, A_NORMAL, 1, NULL); // pinta nome do programa até a ultima '/'
-          mvchgat(y - 1, PROGRAM + len_last + 1, len_prog - len_last - 1, A_BOLD, 1, NULL); // pinta o nome final do programa
-          move(y, x);
+          getyx ( pad, y, x );
+          mvwchgat ( pad,
+                     y - 1,
+                     PROGRAM,
+                     -1,
+                     A_NORMAL,
+                     1,
+                     NULL );  // pinta linha inteira do nome do programa
+          mvwchgat ( pad,
+                     y - 1,
+                     PROGRAM + name ,
+                     base_name - name,
+                     A_BOLD,
+                     1,
+                     NULL );  // pinta somente o nome do programa
+          wmove ( pad, y, x );
 
           if ( view_conections )
             print_conections ( &processes[i] );
         }
 
     }
-  attroff ( A_BOLD );
-  prefresh (my_pad, 0,0,0,0,20,30);
-  refresh ();
+  wattroff ( pad, A_BOLD );
+
+  // paint item selected
+  if (tot_rows)
+    {
+      if (selected > tot_rows)
+        selected = tot_rows;
+
+      getyx ( pad, y, x );
+      mvwchgat(pad, selected, 0, -1, A_REVERSE, 1, NULL);
+      wmove ( pad, y, x );
+    }
+
+  prefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 ); // atualiza cabeçalho
+  prefresh ( pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
 }
 
 static void
@@ -145,57 +171,104 @@ print_conections ( const process_t *process )
   tot_con_act = get_con_active_in_process (
           index_act, process->conection, process->total_conections );
 
-  attron ( A_DIM );
+  wattron ( pad, A_DIM );
   for ( size_t i = 0; i < tot_con_act; i++ )
     {
+      tot_rows++;
+
       // faz a tradução de ip:porta para nome:serviço
       tuple = translate ( &process->conection[index_act[i]] );
 
-      printw ( " %*s %*ld %*ld %*s %*s ",
-               PID,
-               "",
-               PPS,
-               process->conection[index_act[i]].net_stat.avg_pps_tx,
-               PPS,
-               process->conection[index_act[i]].net_stat.avg_pps_rx,
-               RATE,
-               process->conection[index_act[i]].net_stat.tx_rate,
-               RATE,
-               process->conection[index_act[i]].net_stat.rx_rate );
+      wprintw ( pad,
+                " %*s %*ld %*ld %*s %*s ",
+                PID,
+                "",
+                PPS,
+                process->conection[index_act[i]].net_stat.avg_pps_tx,
+                PPS,
+                process->conection[index_act[i]].net_stat.avg_pps_rx,
+                RATE,
+                process->conection[index_act[i]].net_stat.tx_rate,
+                RATE,
+                process->conection[index_act[i]].net_stat.rx_rate );
 
-      attron ( COLOR_PAIR ( 1 ) );
+      wattron ( pad, COLOR_PAIR ( 1 ) );
       if ( i + 1 != tot_con_act )
         {
-          addch ( ACS_LTEE );   // ├
-          addch ( ACS_HLINE );  // ─
+          waddch ( pad, ACS_LTEE );   // ├
+          waddch ( pad, ACS_HLINE );  // ─
         }
       else
-        {                          // ultima conexão
-          addch ( ACS_LLCORNER );  // └
-          addch ( ACS_HLINE );     // ─
+        {                                // ultima conexão
+          waddch ( pad, ACS_LLCORNER );  // └
+          waddch ( pad, ACS_HLINE );     // ─
         }
-      attroff ( COLOR_PAIR ( 1 ) );
+      wattroff ( pad, COLOR_PAIR ( 1 ) );
 
-      printw ( " %s\n", tuple );
+      wprintw ( pad, " %s\n", tuple );
     }
-  addch ( '\n' );
-  attroff (A_DIM );
+  waddch ( pad, '\n' );
+  wattroff ( pad, A_DIM );
 }
 
-// retorna a posição do ultimo caracter pesquisado
-int
-find_last_char(const char *str, const char ch, size_t len)
+
+
+void
+ui_tick ()
 {
-  size_t i = (len) ? len : strlen_space(str);
-
-  while(i)
+  int ch;
+  while ( (ch = wgetch(pad)) != ERR )
     {
-      if (str[i] == ch)
-        return i;
+      switch ( ch )
+        {
+          // scroll horizontal
+          case KEY_RIGHT:
+            if (scroll_x < COLS_PAD )
+              {
+                scroll_x += 5;
+                prefresh ( pad, 0, scroll_x, 0, 0, LINES - 1, COLS - 1 );
+              }
+            else
+              beep();
 
-      i--;
+            break;
+          case KEY_LEFT:
+            if (scroll_x > 0)
+              {
+                scroll_x -= 5;
+                prefresh ( pad, 0, scroll_x, 0, 0, LINES - 1, COLS - 1 );
+              }
+            else
+              beep();
+
+            break;
+          case KEY_DOWN:
+            if (selected + 1  <= tot_rows)
+              {
+                selected++;
+                if (selected >= LINES)
+                  scroll_y++;
+
+                show_process ( processes, tot_process_act );
+              }
+            else
+              beep();
+
+
+            break;
+          case KEY_UP:
+            if (selected - 1  >= 1)
+              {
+                selected--;
+                if ( scroll_y > 1 && selected <= LINES)
+                  scroll_y--;
+
+                show_process ( processes, tot_process_act );
+              }
+            else
+              beep();
+
+            break;
+        }
     }
-
-  // not found
-  return -1;
 }

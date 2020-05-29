@@ -22,7 +22,6 @@
 #include <stdio.h>   // putchar
 #include <stdlib.h>  // exit
 #include <string.h>  // strerror
-// #include <locale.h>  // setlocale
 
 #include "m_error.h"
 #include "network.h"
@@ -64,7 +63,7 @@ char *iface = NULL;             // sniff all interfaces
 
 uint8_t *buff_pkt = NULL;
 process_t *processes = NULL;
-static uint32_t tot_process_act = 0;
+uint32_t tot_process_act = 0;
 uint8_t tic_tac = 0;
 
 int
@@ -102,7 +101,7 @@ main ( int argc, const char **argv )
   struct packet packet = {0};
 
   double m_timer = start_timer ();
-  ssize_t bytes;
+  ssize_t bytes = 0;
 
   init_ui ();
   // main loop
@@ -136,9 +135,11 @@ main ( int argc, const char **argv )
                   get_process_active_con ( &processes, tot_process_act );
 
     PRINT:
+    ui_tick();
       if ( timer ( m_timer ) >= T_REFRESH )
         {
           calc_avg_rate ( processes, tot_process_act );
+
           show_process ( processes, tot_process_act );
 
           m_timer = restart_timer ();
@@ -179,7 +180,7 @@ parse_options ( int argc, const char **argv )
                     view_si = true;
                     break;
                   }
-                goto ERR;
+                goto FAIL;
               case 'n':
                 view_conections = true;
 
@@ -194,7 +195,7 @@ parse_options ( int argc, const char **argv )
                     break;
                   }
                 else if ( ( *( *argv + 2 ) ) )
-                  goto ERR;
+                  goto FAIL;
 
                 translate_host = translate_service = false;
                 break;
@@ -205,16 +206,16 @@ parse_options ( int argc, const char **argv )
                 show_version ();
                 exit ( EXIT_SUCCESS );
               default:
-                goto ERR;
+                goto FAIL;
             }
         }
       else
-        goto ERR;
+        goto FAIL;
     }
 
   return;
 
-ERR:
+FAIL:
   error ( "Invalid argument '%s'", *argv );
   usage ();
   exit ( EXIT_FAILURE );

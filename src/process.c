@@ -29,11 +29,6 @@
 // defined in main.c
 extern bool view_conections;
 
-// calcula o tamanho da string até null bytes ou espaco
-// oque ocorrer primeiro
-// static size_t
-// strlen_space ( const char *string );
-
 static int
 get_name_process ( char **buffer, const pid_t pid );
 
@@ -545,11 +540,14 @@ get_name_process ( char **buffer, const pid_t pid )
       return -1;
     }
 
+  fclose ( arq );
+
   // tamanho até null byte ou primeiro espaço
   // size_t len = strlen_space ( line );
   size_t len = strlen ( line );
 
-  line[len] = '\0';
+  // fgets ja coloca null byte
+  // line[len] = '\0';
 
   *buffer = calloc ( 1, len + 1 );
 
@@ -564,18 +562,5 @@ get_name_process ( char **buffer, const pid_t pid )
   for ( i = 0; i < len + 1; i++ )
     ( *buffer )[i] = line[i];
 
-  fclose ( arq );
   return i;
-}
-
-// retorna o tamanho da string até null byte ou espaço
-// oque ocorrer primeiro
-size_t
-strlen_space ( const char *string )
-{
-  size_t n = 0;
-  while ( *string && *string++ != ' ' )
-    n++;
-
-  return n;
 }

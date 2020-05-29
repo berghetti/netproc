@@ -22,7 +22,10 @@
 #include <unistd.h>  // STDOUT_FILENO
 #include <ncurses.h>
 
+#include "show.h"
 #include "m_error.h"
+
+WINDOW *pad;
 
 // static char *E3;
 
@@ -58,11 +61,17 @@ void
 init_ui ()
 {
   initscr ();
-  cbreak();
-  keypad(stdscr, TRUE);
-  idlok(stdscr, TRUE);
-  scrollok(stdscr ,TRUE);
+  // raw();
+  cbreak ();
+  noecho();
 
+  pad = newpad ( LINES * 2, COLS_PAD );
+
+  nodelay(pad, TRUE);
+  keypad ( pad, TRUE );
+
+  idlok ( pad, TRUE );
+  scrollok ( pad, TRUE );
 
   curs_set ( 0 );  // cursor invisible
   start_color ();
@@ -80,16 +89,20 @@ restore_terminal ( void )
   // maneira terminfo
   // tputs ( cursor_normal, 1, putchar );
   // tputs ( exit_attribute_mode, 1, putchar );
-  curs_set(1);  // restore cursor
+  delwin ( pad );
+  curs_set ( 1 );  // restore cursor
   endwin ();
 }
 
 // limpa a tela, podendo tambem limpar o buffer do scroll se disponivel
 // Obs: não alterar ordem entre limpar a tela e limpar scroll
 void
-clear_cmd ( void )
+clear_cmd ( WINDOW *screen )
 {
-  clear ();
+  if ( !screen )
+    screen = stdscr;
+
+  wclear ( screen );
   // limpa a tela modo terminfo
   // tputs ( clear_screen, lines > 0 ? lines : 1, putchar );
   //

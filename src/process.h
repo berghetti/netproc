@@ -35,7 +35,7 @@
 #define MAX_NAME_SOCKET 9 + 8 + 3
 
 // tamanho maximo do nome de um processo
-#define MAX_NAME 128
+#define MAX_NAME 255
 
 // maxpid = 2^22 = 4194304 = 7 chars
 //   6  +  7  + 4 + 7

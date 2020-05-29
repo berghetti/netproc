@@ -20,6 +20,8 @@
 #ifndef TERMINAL_H
 #define TERMINAL_H
 
+#include <ncurses.h>
+
 // carrega os parametros do terminal
 void
 setup_terminal ( void );
@@ -34,6 +36,6 @@ init_ui ();
 
 // limpa a tela, podendo tambem limpar o buffer do scroll se disponivel
 void
-clear_cmd ( void );
+clear_cmd ( WINDOW * );
 
 #endif  // TERMINAL_H
