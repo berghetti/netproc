@@ -1,5 +1,5 @@
 
-#include <stdlib.h> // type size_t
+#include <stdlib.h>  // type size_t
 
 // retorna o tamanho da string até null byte ou espaço
 // oque ocorrer primeiro

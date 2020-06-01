@@ -21,6 +21,8 @@
 
 #include "sufix.h"
 
+// sufixos RATE
+
 // sufixos padrão IEC, com potências de 2, 1024, 2048..., com bytes
 static const char *const sufix_iec_B[] = {"B/s",
                                           "KiB/s",
@@ -42,12 +44,28 @@ static const char *const sufix_si_B[] = {"B/s", "KB/s", "MB/s", "GB/s", "TB/s"};
 // sufixos padrão SI com bits
 static const char *const sufix_si_b[] = {"b/s", "Kb/s", "Mb/s", "Gb/s", "Tb/s"};
 
+// sufixos total
+
+// sufixos padrão IEC, com potências de 2, 1024, 2048..., com bytes
+static const char *const sufix_iec_B_tot[] = {"B", "KiB", "MiB", "GiB", "TiB"};
+
+// sufixos padrão IEC com bits
+// default
+static const char *const sufix_iec_b_tot[] = {"b", "Kib", "Mib", "Gib", "Tib"};
+
+// sufixos padrão SI, com potências de 10. 1000, 2000..., com bytes
+static const char *const sufix_si_B_tot[] = {"B", "KB", "MB", "GB", "TB"};
+
+// sufixos padrão SI com bits
+static const char *const sufix_si_b_tot[] = {"b", "Kb", "Mb", "Gb", "Tb"};
+
 // defined in main.c
 extern bool view_si;
 extern bool view_bytes;
 
 int chosen_base;
-const char *const *sufix;
+const char *const *sufix_rate;
+const char *const *sufix_total;
 
 void
 define_sufix ( void )
@@ -55,21 +73,25 @@ define_sufix ( void )
   if ( view_si && view_bytes )
     {
       chosen_base = BASE_SI;
-      sufix = sufix_si_B;
+      sufix_rate = sufix_si_B;
+      sufix_total = sufix_si_B_tot;
     }
   else if ( view_si )
     {
       chosen_base = BASE_SI;
-      sufix = sufix_si_b;
+      sufix_rate = sufix_si_b;
+      sufix_total = sufix_si_b_tot;
     }
   else if ( view_bytes )
     {
       chosen_base = BASE_IEC;
-      sufix = sufix_iec_B;
+      sufix_rate = sufix_iec_B;
+      sufix_total = sufix_iec_B_tot;
     }
   else
     {  // default
       chosen_base = BASE_IEC;
-      sufix = sufix_iec_b;
+      sufix_rate = sufix_iec_b;
+      sufix_total = sufix_iec_b_tot;
     }
 }

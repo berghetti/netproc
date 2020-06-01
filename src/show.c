@@ -21,7 +21,8 @@
 #include <stdbool.h>
 #include <string.h>  // strlen
 // #include <term.h>    // variable columns
-#include <ncurses.h>
+// #include <ncurses.h>
+#include <ncursesw/ncurses.h>
 
 #include "str.h"
 #include "process.h"
@@ -56,6 +57,11 @@ static int scroll_y = 1;
 static int selected = 1;  // posição de linha do item selecionado
 static int tot_rows;      // total linhas exibidas
 
+static int len_base_name, len_name;
+
+// armazina a linha selecionada com seus atributos antes de estar "selecionada"
+static chtype line_cur[COLS_PAD];  // teste
+
 static void
 print_conections ( const process_t *process );
 
@@ -63,13 +69,12 @@ void
 show_process ( const process_t *const processes, const size_t tot_process )
 {
   int y, x;
-  int base_name, name;
 
   // limpa a tela e o scrollback
   wclear ( pad );
 
   wprintw ( pad,
-            " %*s %*s %*s     %s       %s   %s\n",
+            " %*s %*s %*s     %s       %s       %s        %s     %s\n",
             PID,
             "PID",
             PPS,
@@ -78,10 +83,12 @@ show_process ( const process_t *const processes, const size_t tot_process )
             "PPS RX",
             "RATE TX",
             "RATE RX",
+            "TOT TX",
+            "TOT RX",
             "PROGRAM" );
   // paint line header
   getyx ( pad, y, x );
-  mvwchgat ( pad, 0, 0, -1, A_REVERSE, 2, NULL );
+  mvwchgat ( pad, 0, 0, -1, 0, 2, NULL );
   wmove ( pad, y, x );
 
   tot_rows = 0;
@@ -90,10 +97,8 @@ show_process ( const process_t *const processes, const size_t tot_process )
   for ( size_t i = 0; i < tot_process; i++ )
     {
       // só exibe o processo se tiver fluxo de rede
-      if ( processes[i].net_stat.avg_Bps_rx ||
-           processes[i].net_stat.avg_Bps_tx ||
-           processes[i].net_stat.avg_pps_rx ||
-           processes[i].net_stat.avg_pps_tx )
+      if ( processes[i].net_stat.tot_Bps_rx ||
+           processes[i].net_stat.tot_Bps_tx )
         {
           tot_rows++;
           wprintw ( pad,
@@ -106,56 +111,73 @@ show_process ( const process_t *const processes, const size_t tot_process )
                     processes[i].net_stat.avg_pps_rx );
 
           wprintw ( pad,
-                    "%*s %*s ",
+                    "%*s %*s %*s %*s ",
                     RATE,
                     // "1023.69 kib/s",
                     processes[i].net_stat.tx_rate,
                     RATE,
                     // "1023.69 kib/s");
-                    processes[i].net_stat.rx_rate );
+                    processes[i].net_stat.rx_rate,
+                    RATE,
+                    // "1023.69 kib/s",
+                    processes[i].net_stat.tx_tot,
+                    RATE,
+                    // "1023.69 kib/s");
+                    processes[i].net_stat.rx_tot );
 
           wprintw ( pad, "%s\n", processes[i].name );
 
-          base_name = strlen_space ( processes[i].name );
-          name = find_last_char ( processes[i].name, base_name, '/' ) + 1;
+          // /usr/bin/programa-nome
+          len_base_name = strlen_space ( processes[i].name );
+
+          // programa-nome
+          len_name =
+                  find_last_char ( processes[i].name, len_base_name, '/' ) + 1;
 
           getyx ( pad, y, x );
+          // pinta linha inteira do nome do programa
+          mvwchgat ( pad, y - 1, PROGRAM, -1, A_NORMAL, 1, NULL );
+          // pinta somente o nome do programa
           mvwchgat ( pad,
                      y - 1,
-                     PROGRAM,
-                     -1,
-                     A_NORMAL,
-                     1,
-                     NULL );  // pinta linha inteira do nome do programa
-          mvwchgat ( pad,
-                     y - 1,
-                     PROGRAM + name ,
-                     base_name - name,
+                     PROGRAM + len_name,
+                     len_base_name - len_name,
                      A_BOLD,
                      1,
-                     NULL );  // pinta somente o nome do programa
+                     NULL );
           wmove ( pad, y, x );
 
           if ( view_conections )
-            print_conections ( &processes[i] );
+            if ( processes[i].net_stat.avg_Bps_rx ||
+                 processes[i].net_stat.avg_Bps_tx )
+              print_conections ( &processes[i] );
         }
-
     }
   wattroff ( pad, A_BOLD );
 
   // paint item selected
-  if (tot_rows)
+  if ( tot_rows )
     {
-      if (selected > tot_rows)
+      if ( selected > tot_rows )
         selected = tot_rows;
 
       getyx ( pad, y, x );
-      mvwchgat(pad, selected, 0, -1, A_REVERSE, 1, NULL);
+      // salva conteudo da linha antes de pintar
+      mvwinchstr ( pad, selected, 0, line_cur );
+
+      // (re)pinta item selecionado
+      mvwchgat ( pad, selected, 0, -1, 0, 4, NULL );
       wmove ( pad, y, x );
     }
 
-  prefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 ); // atualiza cabeçalho
-  prefresh ( pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
+  // prefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );  // atualiza cabeçalho
+  pnoutrefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );  // atualiza cabeçalho
+
+  // prefresh ( pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
+  pnoutrefresh ( pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
+
+  // depois de todas as janelas verificadas, atualiza todas uma unica vez
+  doupdate ();
 }
 
 static void
@@ -176,9 +198,11 @@ print_conections ( const process_t *process )
     {
       tot_rows++;
 
-      // faz a tradução de ip:porta para nome:serviço
+      // faz a tradução de ip:porta para nome-reverso:serviço
       tuple = translate ( &process->conection[index_act[i]] );
 
+      // waddch(pad, 'C' | A_INVIS);
+      // wattron ( pad, A_DIM );
       wprintw ( pad,
                 " %*s %*ld %*ld %*s %*s ",
                 PID,
@@ -191,82 +215,116 @@ print_conections ( const process_t *process )
                 process->conection[index_act[i]].net_stat.tx_rate,
                 RATE,
                 process->conection[index_act[i]].net_stat.rx_rate );
+      wprintw ( pad, "%*s", 29, "" );
 
+      // wattroff ( pad, A_DIM );
       wattron ( pad, COLOR_PAIR ( 1 ) );
+      // wprintw(pad, "|_");
       if ( i + 1 != tot_con_act )
-        {
-          waddch ( pad, ACS_LTEE );   // ├
-          waddch ( pad, ACS_HLINE );  // ─
+        {  // bug case use A_REVERSE with addch
+          /*wprintw(pad, "\xe2\x94\x9c");*/ waddch ( pad, ACS_LTEE );   //├
+          /*wprintw(pad, "\xe2\x94\x80");*/ waddch ( pad, ACS_HLINE );  // ─
         }
       else
-        {                                // ultima conexão
-          waddch ( pad, ACS_LLCORNER );  // └
-          waddch ( pad, ACS_HLINE );     // ─
+        {  // ultima conexão
+          /*wprintw(pad, "\xe2\x94\x94");*/ waddch ( pad, ACS_LLCORNER );  //└
+          /*wprintw(pad, "\xe2\x94\x80");*/ waddch ( pad, ACS_HLINE );     //─
         }
       wattroff ( pad, COLOR_PAIR ( 1 ) );
+      // wattron ( pad, A_DIM );
 
       wprintw ( pad, " %s\n", tuple );
     }
-  waddch ( pad, '\n' );
+
+  if ( tot_con_act )
+    {
+      waddch ( pad, '\n' );
+      tot_rows++;
+    }
+
   wattroff ( pad, A_DIM );
 }
-
-
 
 void
 ui_tick ()
 {
   int ch;
-  while ( (ch = wgetch(pad)) != ERR )
+
+  while ( ( ch = wgetch ( pad ) ) != ERR )
     {
       switch ( ch )
         {
           // scroll horizontal
           case KEY_RIGHT:
-            if (scroll_x < COLS_PAD )
+            if ( scroll_x < COLS_PAD )
               {
                 scroll_x += 5;
                 prefresh ( pad, 0, scroll_x, 0, 0, LINES - 1, COLS - 1 );
               }
             else
-              beep();
+              beep ();
 
             break;
           case KEY_LEFT:
-            if (scroll_x > 0)
+            if ( scroll_x > 0 )
               {
                 scroll_x -= 5;
                 prefresh ( pad, 0, scroll_x, 0, 0, LINES - 1, COLS - 1 );
               }
             else
-              beep();
+              beep ();
 
             break;
           case KEY_DOWN:
-            if (selected + 1  <= tot_rows)
+            if ( selected + 1 <= tot_rows )
               {
                 selected++;
-                if (selected >= LINES)
+                if ( selected >= LINES )
                   scroll_y++;
 
-                show_process ( processes, tot_process_act );
+                // restaura linha atual
+                mvwaddchstr ( pad, selected - 1, 0, line_cur );
+
+                // salva linha que sera marcada/selecionada (antes de estar
+                // pintada)
+                mvwinchstr ( pad, selected, 0, line_cur );
+
+                // pinta linha selecionado
+                mvwchgat ( pad, selected, 0, -1, 0, 4, NULL );
+
+                // atualiza tela
+                pnoutrefresh (
+                        pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
+                doupdate ();
               }
             else
-              beep();
-
+              beep ();
 
             break;
           case KEY_UP:
-            if (selected - 1  >= 1)
+            if ( selected - 1 >= 1 )
               {
                 selected--;
-                if ( scroll_y > 1 && selected <= LINES)
+                if ( scroll_y > 1 && selected <= LINES )
                   scroll_y--;
 
-                show_process ( processes, tot_process_act );
+                // restaura linha atual
+                mvwaddchstr ( pad, selected + 1, 0, line_cur );
+
+                // salva linha que sera marcada/selecionada (antes de estar
+                // pintada)
+                mvwinchstr ( pad, selected, 0, line_cur );
+
+                // pinta linha selecionado
+                mvwchgat ( pad, selected, 0, -1, 0, 4, NULL );
+
+                // atualiza tela
+                pnoutrefresh (
+                        pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
+                doupdate ();
               }
             else
-              beep();
+              beep ();
 
             break;
         }

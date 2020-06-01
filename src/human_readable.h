@@ -24,7 +24,19 @@
 #include <stdint.h>   // uint*_t type
 #include <stdlib.h>   // size_t type
 
+// mode human readable define sufix utilized
+// RATE sufix/s
+// TOTAL sufix
+enum mode
+{
+  RATE,
+  TOTAL
+};
+
 bool
-human_readable ( char *buffer, const size_t len_buff, const uint64_t bytes );
+human_readable ( char *buffer,
+                 const size_t len_buff,
+                 const uint64_t bytes,
+                 int mode );
 
 #endif  // HUMAN_READABLE_H

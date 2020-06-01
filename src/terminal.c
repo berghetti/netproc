@@ -20,7 +20,8 @@
 // #include <stdio.h>   // putchar
 #include <term.h>    // setupterm, tputs, tigetstr
 #include <unistd.h>  // STDOUT_FILENO
-#include <ncurses.h>
+// #include <ncurses.h>
+#include <ncursesw/ncurses.h>
 
 #include "show.h"
 #include "m_error.h"
@@ -63,11 +64,11 @@ init_ui ()
   initscr ();
   // raw();
   cbreak ();
-  noecho();
+  noecho ();
 
   pad = newpad ( LINES * 2, COLS_PAD );
 
-  nodelay(pad, TRUE);
+  nodelay ( pad, TRUE );
   keypad ( pad, TRUE );
 
   idlok ( pad, TRUE );
@@ -78,9 +79,10 @@ init_ui ()
   use_default_colors ();
 
   // color foreground, background
-  init_pair ( 1, COLOR_CYAN, -1 );   // color tree, name program
-  init_pair ( 2, COLOR_GREEN, -1 );  // color header
+  init_pair ( 1, COLOR_CYAN, -1 );            // color tree, name program
+  init_pair ( 2, COLOR_BLACK, COLOR_GREEN );  // color header
   init_pair ( 3, -1, COLOR_BLACK );
+  init_pair ( 4, COLOR_BLACK, COLOR_CYAN );  // item seleselecionado
 }
 
 void

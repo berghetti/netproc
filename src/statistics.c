@@ -93,9 +93,11 @@ add_statistics_in_processes ( process_t *restrict processes,
               locate = true;
 
               if ( pkt->direction == PKT_DOWN )
-                {  // estatisticas total do processo
+                {  // estatisticas geral do processo
                   processes[i].net_stat.pps_rx[id_buff_circ]++;
                   processes[i].net_stat.Bps_rx[id_buff_circ] += pkt->lenght;
+
+                  processes[i].net_stat.tot_Bps_rx += pkt->lenght;
 
                   // adicionado estatisticas exclusica da conexão
                   if ( view_conections )
@@ -106,9 +108,11 @@ add_statistics_in_processes ( process_t *restrict processes,
                     }
                 }
               else
-                {  // estatisticas total do processo
+                {  // estatisticas geral do processo
                   processes[i].net_stat.pps_tx[id_buff_circ]++;
                   processes[i].net_stat.Bps_tx[id_buff_circ] += pkt->lenght;
+
+                  processes[i].net_stat.tot_Bps_tx += pkt->lenght;
 
                   // adicionado estatisticas exclusica da conexão
                   if ( view_conections )

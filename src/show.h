@@ -20,10 +20,10 @@
 #ifndef SHOW_H
 #define SHOW_H
 
-#include "process.h" // type process_t, MAX_NAME
+#include "process.h"  // type process_t, MAX_NAME
 
 // tamanho fixo de caracteres até a coluna program
-#define PROGRAM 49
+#define PROGRAM 77
 
 #define COLS_PAD PROGRAM + MAX_NAME
 

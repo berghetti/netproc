@@ -21,8 +21,10 @@
 #include <stdint.h>
 #include <stdio.h>  // snprintf()
 
+#include "human_readable.h"
 #include "integer.h"  // is_integer()
-#include "sufix.h"    // define chosen_base, sufix and LEN_ARR_SUFIX
+#include "sufix.h"    // define chosen_base, sufix, sufix_tot,
+                      // LEN_ARR_SUFIX
 
 // based in source code of program wget
 // https://github.com/mirror/wget/blob/master/src/utils.c
@@ -40,10 +42,26 @@
 #define DECIMAL_PLACES 2
 
 bool
-human_readable ( char *buffer, const size_t len_buff, const uint64_t bytes )
+human_readable ( char *buffer,
+                 const size_t len_buff,
+                 const uint64_t bytes,
+                 int mode )
 {
+  const char *const *sufix;
+  if ( mode == RATE )
+    sufix = sufix_rate;
+  else
+    sufix = sufix_total;
+
   // retorno da função snprintf
   ssize_t sn;
+
+  // se 0, não mostra sufixo
+  if ( !bytes )
+    {
+      sn = snprintf ( buffer, len_buff, "%d", ( int ) bytes );
+      return ( sn > 0 && ( size_t ) sn < len_buff );
+    }
 
   // quantidade de bytes ou bits menor que 1024 ou 1000
   if ( bytes < ( uint64_t ) chosen_base )
@@ -56,9 +74,6 @@ human_readable ( char *buffer, const size_t len_buff, const uint64_t bytes )
   // 1024) quando o valor for menor que sua base, ou ja estejamos no ultimo
   // elemento do array de sufixos, temos a melhor aproximação com o sufixo
   // apropriado.
-
-  // obs: alterado divisão por multiplicação para melhor otimização
-  // pelo compilador
 
   // pega elemento inverso da base escolhida
   const double base = INVERSE_BASE ( chosen_base );

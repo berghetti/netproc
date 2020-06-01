@@ -29,7 +29,8 @@
 #define INVERSE_BASE( n ) ( ( n ) == BASE_IEC ) ? 9.76562E-4 : 1E-3
 
 extern int chosen_base;
-extern const char *const *sufix;
+extern const char *const *sufix_rate;
+extern const char *const *sufix_total;
 
 void
 define_sufix ( void );

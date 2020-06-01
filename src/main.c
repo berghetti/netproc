@@ -22,6 +22,7 @@
 #include <stdio.h>   // putchar
 #include <stdlib.h>  // exit
 #include <string.h>  // strerror
+#include <locale.h>
 
 #include "m_error.h"
 #include "network.h"
@@ -85,7 +86,7 @@ main ( int argc, const char **argv )
   sigaction ( SIGINT, &sigact, NULL );
   sigaction ( SIGTERM, &sigact, NULL );
 
-  // setlocale ( LC_ALL, "" );
+  setlocale ( LC_CTYPE, "" );
 
   // enquanto não encontrar processos com conexões ativas
   // FIXME: testar isso...
@@ -135,7 +136,7 @@ main ( int argc, const char **argv )
                   get_process_active_con ( &processes, tot_process_act );
 
     PRINT:
-    ui_tick();
+      ui_tick ();
       if ( timer ( m_timer ) >= T_REFRESH )
         {
           calc_avg_rate ( processes, tot_process_act );

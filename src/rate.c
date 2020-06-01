@@ -83,16 +83,28 @@ calc_avg_rate ( process_t *proc, const size_t tot_proc )
                       ? m_round ( ( double ) sum_pps_tx / LEN_BUF_CIRC_RATE )
                       : 0;
 
-      // transforma o total de bytes recebidos em
+      // transforma a taxa de bytes recebidos em
       // algo legivel, como 1024 bits em 1 Kib
       human_readable ( proc[i].net_stat.rx_rate,
                        LEN_STR_RATE,
-                       proc[i].net_stat.avg_Bps_rx );
+                       proc[i].net_stat.avg_Bps_rx,
+                       RATE );
 
       human_readable ( proc[i].net_stat.tx_rate,
                        LEN_STR_RATE,
-                       proc[i].net_stat.avg_Bps_tx );
+                       proc[i].net_stat.avg_Bps_tx,
+                       RATE );
 
+      // transforma o total de bytes recebidos em algo legivel
+      human_readable ( proc[i].net_stat.rx_tot,
+                       LEN_STR_RATE,
+                       proc[i].net_stat.tot_Bps_rx,
+                       TOTAL );
+
+      human_readable ( proc[i].net_stat.tx_tot,
+                       LEN_STR_RATE,
+                       proc[i].net_stat.tot_Bps_tx,
+                       TOTAL );
       // calcula taxa individual de cada conexão
       if ( view_conections )
         calc_avg_rate_conection ( &proc[i] );
@@ -153,10 +165,12 @@ calc_avg_rate_conection ( process_t *process )
       // algo legivel, como 1024 bits em 1 Kib
       human_readable ( process->conection[i].net_stat.rx_rate,
                        LEN_STR_RATE,
-                       process->conection[i].net_stat.avg_Bps_rx );
+                       process->conection[i].net_stat.avg_Bps_rx,
+                       RATE );
 
       human_readable ( process->conection[i].net_stat.tx_rate,
                        LEN_STR_RATE,
-                       process->conection[i].net_stat.avg_Bps_tx );
+                       process->conection[i].net_stat.avg_Bps_tx,
+                       RATE );
     }
 }
