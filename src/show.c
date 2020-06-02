@@ -18,6 +18,7 @@
  */
 
 // #include <stdio.h>
+#define _GNU_SOURCE           // qsort_r
 #include <stdbool.h>
 #include <string.h>  // strlen
 // #include <term.h>    // variable columns
@@ -27,6 +28,7 @@
 #include "str.h"
 #include "process.h"
 #include "conection.h"
+// #include "rate.h"
 #include "terminal.h"  // clear_cmd
 #include "translate.h"
 #include "show.h"
@@ -65,6 +67,11 @@ static chtype line_cur[COLS_PAD];  // teste
 static void
 print_conections ( const process_t *process );
 
+int compara2(const void *restrict p1, const void *restrict p2)
+{
+  return ((process_t *)p2)->net_stat.avg_Bps_rx - ((process_t *)p1)->net_stat.avg_Bps_rx;
+}
+
 void
 show_process ( const process_t *const processes, const size_t tot_process )
 {
@@ -92,6 +99,8 @@ show_process ( const process_t *const processes, const size_t tot_process )
   wmove ( pad, y, x );
 
   tot_rows = 0;
+
+  qsort((void*)processes, tot_process, sizeof(process_t), compara2);
 
   wattron ( pad, A_BOLD );
   for ( size_t i = 0; i < tot_process; i++ )
@@ -180,6 +189,26 @@ show_process ( const process_t *const processes, const size_t tot_process )
   doupdate ();
 }
 
+enum
+{
+  RATE_RX,
+  RATE_TX,
+  TOTAL_RX,
+  TOTAL_TX
+};
+
+int compara(const void *restrict p1, const void *restrict p2, void *sort_by)
+{
+  if (*(int *)sort_by == RATE_RX)
+    return ((conection_t *)p2)->net_stat.avg_Bps_rx - ((conection_t *)p1)->net_stat.avg_Bps_rx;
+  if (*(int *)sort_by == RATE_TX)
+    return ((conection_t *)p2)->net_stat.avg_Bps_tx - ((conection_t *)p1)->net_stat.avg_Bps_tx;
+
+  return 0;
+}
+
+
+
 static void
 print_conections ( const process_t *process )
 {
@@ -188,6 +217,11 @@ print_conections ( const process_t *process )
 
   size_t index_act[process->total_conections];
   size_t tot_con_act;
+
+  int sort_by = RATE_RX;
+
+  qsort_r(process->conection, process->total_conections, sizeof(conection_t), compara, &sort_by);
+
   // pega o total de conexões no processo que estão ativas, e seus respectivos
   // indices
   tot_con_act = get_con_active_in_process (

@@ -96,13 +96,14 @@ calc_avg_rate ( process_t *proc, const size_t tot_proc )
                        RATE );
 
       // transforma o total de bytes recebidos em algo legivel
+      // LEN_STR_RATE - 2 porque não vai "/s" no final
       human_readable ( proc[i].net_stat.rx_tot,
-                       LEN_STR_RATE,
+                       LEN_STR_RATE - 2,
                        proc[i].net_stat.tot_Bps_rx,
                        TOTAL );
 
       human_readable ( proc[i].net_stat.tx_tot,
-                       LEN_STR_RATE,
+                       LEN_STR_RATE - 2,
                        proc[i].net_stat.tot_Bps_tx,
                        TOTAL );
       // calcula taxa individual de cada conexão

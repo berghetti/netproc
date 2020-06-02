@@ -25,6 +25,7 @@
 
 #include "m_error.h"  // fatal_error, error
 #include "process.h"  // process_t
+// #include "rate.h"
 
 // defined in main.c
 extern bool view_conections;
@@ -57,8 +58,11 @@ process_copy ( process_t *restrict proc,
                process_t *restrict new_procs,
                const size_t new_tot_proc );
 
+// static void
+// save_statistics ( process_t *restrict proc_dst, process_t *restrict proc_src );
+
 static void
-save_statistics ( process_t *restrict proc_dst, process_t *restrict proc_src );
+save_statistics ( struct net_stat *restrict stat_dst, struct net_stat *restrict stat_src );
 
 static void
 copy_conections ( process_t *proc,
@@ -76,6 +80,7 @@ static uint32_t max_n_proc = 0;
 static uint32_t process_pids[MAX_PROCESS] = {0};
 
 // armazena os dados apenas dos processos que possuem conexão ativa
+// FIXME: verificar migração para memoria dinamica para o buffer "processos"
 static process_t processos[MAX_PROCESS] = {0};
 
 // buffer utilziado na função get_process_active_con
@@ -234,42 +239,20 @@ get_process_active_con ( process_t **cur_proc, const size_t tot_cur_proc_act )
               alloc_memory_conections ( &processos[tot_process_active_con],
                                         &( *cur_proc )[exists_pid] );
 
-              save_statistics ( &processos[tot_process_active_con],
-                                &( *cur_proc )[exists_pid] );
-              // processos[tot_process_active_con].net_stat.tot_Bps_rx =
-              // (*cur_proc)[exists_pid].net_stat.tot_Bps_rx;
-              // processos[tot_process_active_con].net_stat.tot_Bps_tx =
-              // (*cur_proc)[exists_pid].net_stat.tot_Bps_tx;
-              //
-              // processos[tot_process_active_con].net_stat.avg_Bps_rx =
-              // (*cur_proc)[exists_pid].net_stat.avg_Bps_rx;
-              // processos[tot_process_active_con].net_stat.avg_Bps_tx =
-              // (*cur_proc)[exists_pid].net_stat.avg_Bps_tx;
-              //
-              // processos[tot_process_active_con].net_stat.avg_pps_rx =
-              // (*cur_proc)[exists_pid].net_stat.avg_pps_rx;
-              // processos[tot_process_active_con].net_stat.avg_pps_tx =
-              // (*cur_proc)[exists_pid].net_stat.avg_pps_tx;
-              //
-              // for ( size_t l = 0; l < LEN_BUF_CIRC_RATE; l++ )
-              //   {
-              //     processos[tot_process_active_con].net_stat.Bps_rx[l] =
-              //     (*cur_proc)[exists_pid].net_stat.Bps_rx[l];
-              //     processos[tot_process_active_con].net_stat.Bps_tx[l] =
-              //     (*cur_proc)[exists_pid].net_stat.Bps_tx[l];
-              //     processos[tot_process_active_con].net_stat.pps_rx[l] =
-              //     (*cur_proc)[exists_pid].net_stat.pps_rx[l];
-              //     processos[tot_process_active_con].net_stat.pps_tx[l] =
-              //     (*cur_proc)[exists_pid].net_stat.pps_tx[l];
-              //   }
+              save_statistics ( &processos[tot_process_active_con].net_stat,
+                                &( *cur_proc )[exists_pid].net_stat );
             }
           else  // processo novo
             {
+
               get_name_process ( &processos[tot_process_active_con].name,
                                  processos[tot_process_active_con].pid );
 
               alloc_memory_conections ( &processos[tot_process_active_con],
                                         NULL );
+              // zera estrutura net_stat, para evitar sujeira de processo antigo
+              // FIXME: verificar migração para memoria dinamica para o buffer "processos"
+              memset(&processos[tot_process_active_con].net_stat, 0, sizeof(struct net_stat));
             }
 
           // copia as conexões verificando se a conexão ja for existente
@@ -325,23 +308,24 @@ free_process ( process_t *proc, const size_t qtd_proc )
 }
 
 static void
-save_statistics ( process_t *restrict proc_dst, process_t *restrict proc_src )
+save_statistics ( struct net_stat *restrict stat_dst, struct net_stat *restrict stat_src )
 {
-  proc_dst->net_stat.tot_Bps_rx = proc_src->net_stat.tot_Bps_rx;
-  proc_dst->net_stat.tot_Bps_tx = proc_src->net_stat.tot_Bps_tx;
-
-  proc_dst->net_stat.avg_Bps_rx = proc_src->net_stat.avg_Bps_rx;
-  proc_dst->net_stat.avg_Bps_tx = proc_src->net_stat.avg_Bps_tx;
-
-  proc_dst->net_stat.avg_pps_rx = proc_src->net_stat.avg_pps_rx;
-  proc_dst->net_stat.avg_pps_tx = proc_src->net_stat.avg_pps_tx;
+  // stat_dst->tot_Bps_rx = stat_src->tot_Bps_rx;
+  // stat_dst->tot_Bps_tx = stat_src->tot_Bps_tx;
+  //
+  // stat_dst->avg_Bps_rx = stat_src->avg_Bps_rx;
+  // stat_dst->avg_Bps_tx = stat_src->avg_Bps_tx;
+  //
+  // stat_dst->avg_pps_rx = stat_src->avg_pps_rx;
+  // stat_dst->avg_pps_tx = stat_src->avg_pps_tx;
+  *stat_dst = *stat_src;
 
   for ( size_t i = 0; i < LEN_BUF_CIRC_RATE; i++ )
     {
-      proc_dst->net_stat.Bps_rx[i] = proc_src->net_stat.Bps_rx[i];
-      proc_dst->net_stat.Bps_tx[i] = proc_src->net_stat.Bps_tx[i];
-      proc_dst->net_stat.pps_rx[i] = proc_src->net_stat.pps_rx[i];
-      proc_dst->net_stat.pps_tx[i] = proc_src->net_stat.pps_tx[i];
+      stat_dst->Bps_rx[i] = stat_src->Bps_rx[i];
+      stat_dst->Bps_tx[i] = stat_src->Bps_tx[i];
+      stat_dst->pps_rx[i] = stat_src->pps_rx[i];
+      stat_dst->pps_tx[i] = stat_src->pps_tx[i];
     }
 }
 
@@ -354,59 +338,10 @@ process_copy ( process_t *restrict proc,
                process_t *restrict new_procs,
                const size_t new_tot_proc )
 {
+  // memset(proc, 0, new_tot_proc * sizeof(process_t));
   for ( size_t i = 0; i < new_tot_proc; i++ )
     {
-      // // na primeira vez valor sera cur_tot_proc sera 0, não tem oque testar
-      // for ( size_t j = 0; j < cur_tot_proc; j++ )
-      //   {
-      //     if ( proc[j].pid == new_procs[i].pid &&
-      //          ( proc[j].net_stat.tot_Bps_rx || proc[j].net_stat.tot_Bps_tx )
-      //          )
-      //       {
-      //         // salva estatisticas totais
-      //         // new_procs[i].net_stat.tot_Bps_rx =
-      //         proc[j].net_stat.tot_Bps_rx;
-      //         // new_procs[i].net_stat.tot_Bps_tx =
-      //         proc[j].net_stat.tot_Bps_tx;
-      //
-      //         // se for o mesmo processo e tiver atividade de rede
-      //         // copia as estatisticas de rede
-      //         if ( proc[j].net_stat.avg_Bps_rx || proc[j].net_stat.avg_Bps_tx
-      //         ||
-      //              proc[j].net_stat.avg_pps_rx || proc[j].net_stat.avg_pps_tx
-      //              )
-      //           {
-      //             // estatistica geral, média dos periodos
-      //             new_procs[i].net_stat.avg_Bps_rx =
-      //                     proc[j].net_stat.avg_Bps_rx;
-      //             new_procs[i].net_stat.avg_Bps_tx =
-      //                     proc[j].net_stat.avg_Bps_tx;
-      //
-      //             new_procs[i].net_stat.avg_pps_rx =
-      //                     proc[j].net_stat.avg_pps_rx;
-      //             new_procs[i].net_stat.avg_pps_tx =
-      //                     proc[j].net_stat.avg_pps_tx;
-      //
-      //             // estatisticas dos periodos
-      //             for ( size_t l = 0; l < LEN_BUF_CIRC_RATE; l++ )
-      //               {
-      //                 new_procs[i].net_stat.Bps_rx[l] =
-      //                         proc[j].net_stat.Bps_rx[l];
-      //                 new_procs[i].net_stat.Bps_tx[l] =
-      //                         proc[j].net_stat.Bps_tx[l];
-      //                 new_procs[i].net_stat.pps_rx[l] =
-      //                         proc[j].net_stat.pps_rx[l];
-      //                 new_procs[i].net_stat.pps_tx[l] =
-      //                         proc[j].net_stat.pps_tx[l];
-      //               }
-      //           }
-      //
-      //         break;
-      //       }
-      //   }
-
-      // copia conteudo do buffer temporario
-      // ppara buffer principal
+      // copia conteudo do buffer temporario para buffer principal
       *( proc + i ) = *( new_procs + i );
     }
 }
@@ -425,31 +360,26 @@ copy_conections ( process_t *proc,
 {
   conection_t temp;
   int b = 0;
+  bool skip;
 
-  // faz backup das estatisticas das conexoes atuais antes de
-  // sobrescrever
+  // copia apenas as conexões novas para o processo
+  // as conexões que ja estão no processo, não são tocadas
   // only if view_conections is true
   for ( size_t c = 0; c < tot_con && view_conections; c++ )
     {
-      // loop "inverso" para tentar deixar as conexões mais ativas nas
-      // primeiras posições
+      skip = false;
+
+      // loop "reverso" interno parece ter um desempenho melhor
       for ( int a = ( int ) tot_con - 1; a >= b; a-- )
         {
           // se for a mesma conexão e tiver estatisticas de rede...
-          if ( proc->conection[c].inode == con[index_con[a]].inode &&
-               ( proc->conection[c].net_stat.avg_Bps_rx ||
-                 proc->conection[c].net_stat.avg_Bps_tx ||
-                 proc->conection[c].net_stat.avg_pps_tx ||
-                 proc->conection[c].net_stat.avg_pps_rx ) )
+          if ( proc->conection[c].inode == con[index_con[a]].inode )
             {
-              // ...copia toda a estrutura salvando junto com as
-              // estatisticas de rede
-              con[index_con[a]] = proc->conection[c];
+              skip = true;
 
               // se não for a primeira conexão do array interno, troca o
               // conteudo da posição atual pelo conteudo da primeira,
-              // assim retiramos a posição do indice a ser testado nos demais
-              // loops externos
+              // assim podemos diminuir o laço interno
               if ( a != b )
                 {
                   temp = con[index_con[a]];
@@ -463,11 +393,13 @@ copy_conections ( process_t *proc,
               break;
             }
         }
+      // conexão ja esta no buffer com suas estatisticas, não precisa mecher
+      if (skip)
+        continue;
+
+      proc->conection[c] = con[index_con[c]];
     }
 
-  // copias as conexões - que ja estão tratadas - do processo
-  for ( size_t c = 0; c < tot_con; c++ )
-    proc->conection[c] = con[index_con[c]];
 }
 
 // alloca memoria para process_t com o dobro do tamanho informado
@@ -593,9 +525,7 @@ free_dead_process ( process_t *restrict cur_procs,
       if ( id == -1 )
         {
           free ( cur_procs[i].name );
-          cur_procs[i].name = NULL;
           free ( cur_procs[i].conection );
-          cur_procs[i].conection = NULL;
         }
     }
 }

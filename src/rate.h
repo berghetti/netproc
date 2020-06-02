@@ -49,11 +49,11 @@ struct net_stat
   nstats_t pps_tx[LEN_BUF_CIRC_RATE];
   nstats_t Bps_rx[LEN_BUF_CIRC_RATE];  // bytes/bits por segundos, amostras
   nstats_t Bps_tx[LEN_BUF_CIRC_RATE];
-  nstats_t avg_Bps_rx;  // média de bytes/bits por segundos
+  nstats_t avg_Bps_rx;                 // média de bytes/bits por segundos
   nstats_t avg_Bps_tx;
-  nstats_t avg_pps_rx;  // média de pacotes por segundos
+  nstats_t avg_pps_rx;                 // média de pacotes por segundos
   nstats_t avg_pps_tx;
-  nstats_t tot_Bps_rx;  // trafego total
+  nstats_t tot_Bps_rx;                 // trafego total
   nstats_t tot_Bps_tx;
 };
 
