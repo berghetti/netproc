@@ -362,10 +362,13 @@ copy_conections ( process_t *proc,
   int b = 0;
   bool skip;
 
+  if (!view_conections)
+    return;
+
   // copia apenas as conexões novas para o processo
   // as conexões que ja estão no processo, não são tocadas
   // only if view_conections is true
-  for ( size_t c = 0; c < tot_con && view_conections; c++ )
+  for ( size_t c = 0; c < tot_con; c++ )
     {
       skip = false;
 

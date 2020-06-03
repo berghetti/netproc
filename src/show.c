@@ -21,6 +21,7 @@
 #define _GNU_SOURCE           // qsort_r
 #include <stdbool.h>
 #include <string.h>  // strlen
+#include <ctype.h>   // isprint
 // #include <term.h>    // variable columns
 // #include <ncurses.h>
 #include <ncursesw/ncurses.h>
@@ -62,7 +63,10 @@ static int tot_rows;      // total linhas exibidas
 static int len_base_name, len_name;
 
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
-static chtype line_cur[COLS_PAD];  // teste
+static chtype line_original[COLS_PAD];  // teste
+static chtype line_color[COLS_PAD];  // teste
+// static char line_cur[COLS_PAD];  // teste
+
 
 static void
 print_conections ( const process_t *process );
@@ -170,13 +174,28 @@ show_process ( const process_t *const processes, const size_t tot_process )
       if ( selected > tot_rows )
         selected = tot_rows;
 
-      getyx ( pad, y, x );
+      // getyx ( pad, y, x );
       // salva conteudo da linha antes de pintar
-      mvwinchstr ( pad, selected, 0, line_cur );
+      mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD );
+      // mvwinchnstr ( pad, selected, 0, line_color, COLS_PAD );
+      // memcpy(line_color, line_original, a);
 
       // (re)pinta item selecionado
-      mvwchgat ( pad, selected, 0, -1, 0, 4, NULL );
-      wmove ( pad, y, x );
+       wmove(pad, selected, 0);
+       int i = 0;
+       while(line_original[i])
+        {
+          line_color[i] = line_original[i];
+          line_color[i] &= A_CHARTEXT | A_ALTCHARSET;
+          line_color[i] |= COLOR_PAIR(4);
+          waddch(pad, line_color[i++] );
+        }
+
+       // wattron(pad, COLOR_PAIR(4));
+       // mvwaddchnstr ( pad, selected, 0, line_color, COLS_PAD );
+       // wattroff(pad, COLOR_PAIR(4));
+      // mvwchgat ( pad, selected, 0, -1, 0, 4, NULL );
+      // wmove ( pad, y, x );
     }
 
   // prefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );  // atualiza cabeçalho
@@ -257,6 +276,8 @@ print_conections ( const process_t *process )
       if ( i + 1 != tot_con_act )
         {  // bug case use A_REVERSE with addch
           /*wprintw(pad, "\xe2\x94\x9c");*/ waddch ( pad, ACS_LTEE );   //├
+          // wprintw(pad, "\u0370");
+          // wprintw(pad, "\u02EA"
           /*wprintw(pad, "\xe2\x94\x80");*/ waddch ( pad, ACS_HLINE );  // ─
         }
       else
@@ -283,6 +304,7 @@ void
 ui_tick ()
 {
   int ch;
+  int i = 0;
 
   while ( ( ch = wgetch ( pad ) ) != ERR )
     {
@@ -317,14 +339,34 @@ ui_tick ()
                   scroll_y++;
 
                 // restaura linha atual
-                mvwaddchstr ( pad, selected - 1, 0, line_cur );
+                mvwaddchnstr ( pad, selected - 1, 0, line_original, COLS_PAD );
+
+                // mvwaddnstr ( pad, selected - 1, 0, (char *)line_cur, COLS_PAD );
+
 
                 // salva linha que sera marcada/selecionada (antes de estar
                 // pintada)
-                mvwinchstr ( pad, selected, 0, line_cur );
+                mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD );
+                // mvwinchnstr ( pad, selected, 0, line_color, COLS_PAD );
+                // memcpy(line_color, line_original, 100);
+                // mvwinnstr( pad, selected, 0, (char *)line_cur, COLS_PAD );
+
+                // pinta a linha selecionada
+                i = 0;
+                while(line_original[i])
+                 {
+                   line_color[i] = line_original[i];
+                   line_color[i] &= A_CHARTEXT | A_ALTCHARSET;
+                   line_color[i] |= COLOR_PAIR(4);
+                   waddch(pad, line_color[i++] );
+                 }
 
                 // pinta linha selecionado
-                mvwchgat ( pad, selected, 0, -1, 0, 4, NULL );
+                // wmove(pad, selected, 0);
+                // wattron(pad, A_REVERSE);
+                // mvwaddchnstr ( pad, selected, 0, line_color, COLS_PAD );
+                // wattroff(pad, A_REVERSE);
+                // mvwchgat ( pad, selected, 0, -1, 0, 4, NULL );
 
                 // atualiza tela
                 pnoutrefresh (
@@ -343,14 +385,24 @@ ui_tick ()
                   scroll_y--;
 
                 // restaura linha atual
-                mvwaddchstr ( pad, selected + 1, 0, line_cur );
+                mvwaddchstr ( pad, selected + 1, 0, line_original );
+
 
                 // salva linha que sera marcada/selecionada (antes de estar
                 // pintada)
-                mvwinchstr ( pad, selected, 0, line_cur );
+                mvwinchstr ( pad, selected, 0, line_original );
 
+                i = 0;
+                while(line_original[i])
+                 {
+                   line_color[i] = line_original[i];
+                   line_color[i] &= A_CHARTEXT | A_ALTCHARSET;
+                   line_color[i] |= COLOR_PAIR(4);
+                   waddch(pad, line_color[i++] );
+                 }
+                // mvwaddnstr( pad, selected, 0, line_cur, COLS_PAD );
                 // pinta linha selecionado
-                mvwchgat ( pad, selected, 0, -1, 0, 4, NULL );
+                // mvwchgat ( pad, selected, 0, -1, 0, 4, NULL );
 
                 // atualiza tela
                 pnoutrefresh (
