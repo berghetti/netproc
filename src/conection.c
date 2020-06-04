@@ -110,24 +110,24 @@ get_info_conections ( conection_t *conection, const size_t lenght )
   return count;
 }
 
-size_t
-get_con_active_in_process ( size_t *buffer,
-                            const conection_t *con,
-                            const size_t tot_con )
-{
-  size_t id = 0;
-
-  // passa por todas as conexões
-  for ( size_t j = 0; j < tot_con; j++ )
-    {
-      // se tiver atividade de rede
-      if ( con[j].net_stat.avg_Bps_tx || con[j].net_stat.avg_Bps_rx ||
-           con[j].net_stat.avg_pps_tx || con[j].net_stat.avg_pps_rx )
-        {
-          // anota o indice da conexão
-          buffer[id++] = j;
-        }
-    }
-
-  return id;
-}
+// size_t
+// get_con_active_in_process ( size_t *buffer,
+//                             const conection_t *con,
+//                             const size_t tot_con )
+// {
+//   size_t id = 0;
+//
+//   // passa por todas as conexões
+//   for ( size_t j = 0; j < tot_con; j++ )
+//     {
+//       // se tiver atividade de rede
+//       if ( con[j].net_stat.avg_Bps_tx || con[j].net_stat.avg_Bps_rx ||
+//            con[j].net_stat.avg_pps_tx || con[j].net_stat.avg_pps_rx )
+//         {
+//           // anota o indice da conexão
+//           buffer[id++] = j;
+//         }
+//     }
+//
+//   return id;
+// }

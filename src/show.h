@@ -29,7 +29,7 @@
 
 // exibe os processos e suas estatisticas de rede
 void
-show_process ( const process_t *const processes, const size_t tot_process );
+show_process ( const process_t *processes, const size_t tot_process );
 
 void
 ui_tick ();

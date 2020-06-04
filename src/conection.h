@@ -56,9 +56,9 @@ get_info_conections ( conection_t *conection, const size_t lenght );
 // conection_t * que contem as conexões ativas
 // @param conection *con - o array de conexões para checar
 // @param size_t tot_con - tamanho do array para checar
-size_t
-get_con_active_in_process ( size_t *buffer,
-                            const conection_t *con,
-                            const size_t tot_con );
+// size_t
+// get_con_active_in_process ( size_t *buffer,
+//                             const conection_t *con,
+//                             const size_t tot_con );
 
 #endif  // CONECTION_H

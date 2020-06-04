@@ -20,8 +20,8 @@
 // #include <stdio.h>   // putchar
 #include <term.h>    // setupterm, tputs, tigetstr
 #include <unistd.h>  // STDOUT_FILENO
-// #include <ncurses.h>
-#include <ncursesw/ncurses.h>
+#include <ncurses.h>
+// #include <ncursesw/ncurses.h>
 
 #include "show.h"
 #include "m_error.h"

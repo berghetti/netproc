@@ -35,7 +35,7 @@ else
 endif
 
 # biblioteca terminfo
-LDLIBS=-l ncursesw
+LDLIBS=-l ncurses
 
 #.c files
 C_SOURCE=$(wildcard $(SRC)/*.c)

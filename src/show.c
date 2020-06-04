@@ -17,14 +17,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// #include <stdio.h>
-#define _GNU_SOURCE           // qsort_r
+// #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>  // strlen
 #include <ctype.h>   // isprint
 // #include <term.h>    // variable columns
-// #include <ncurses.h>
-#include <ncursesw/ncurses.h>
+#include <ncurses.h>
+// #include <ncursesw/ncurses.h>
 
 #include "str.h"
 #include "process.h"
@@ -33,12 +32,14 @@
 #include "terminal.h"  // clear_cmd
 #include "translate.h"
 #include "show.h"
+#include "sort.h"
 
 // defined in main.c
 extern bool view_conections;
 extern process_t *processes;
 extern uint32_t tot_process_act;
 
+// defined un terminal.c
 extern WINDOW *pad;
 
 // tamanho representação textual porta da camada de transporte
@@ -55,56 +56,36 @@ extern WINDOW *pad;
 // // tamanho fixo de caracteres até a coluna program
 // #define PROGRAM 49
 
+static int y, x;  // line, col getyx()
 static int scroll_x = 0;
 static int scroll_y = 1;
 static int selected = 1;  // posição de linha do item selecionado
 static int tot_rows;      // total linhas exibidas
+static int sort_by = RATE_RX; // ordenação padrão
 
 static int len_base_name, len_name;
 
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
-static chtype line_original[COLS_PAD];  // teste
-static chtype line_color[COLS_PAD];  // teste
-// static char line_cur[COLS_PAD];  // teste
-
+static chtype line_original[COLS_PAD];
+// static chtype line_color[COLS_PAD];  // versão otimizada
 
 static void
-print_conections ( const process_t *process );
+show_conections ( const process_t *process );
 
-int compara2(const void *restrict p1, const void *restrict p2)
-{
-  return ((process_t *)p2)->net_stat.avg_Bps_rx - ((process_t *)p1)->net_stat.avg_Bps_rx;
-}
+static void
+show_header ();
 
 void
-show_process ( const process_t *const processes, const size_t tot_process )
+show_process ( const process_t *processes, const size_t tot_process )
 {
-  int y, x;
-
   // limpa a tela e o scrollback
   wclear ( pad );
 
-  wprintw ( pad,
-            " %*s %*s %*s     %s       %s       %s        %s     %s\n",
-            PID,
-            "PID",
-            PPS,
-            "PPS TX",
-            PPS,
-            "PPS RX",
-            "RATE TX",
-            "RATE RX",
-            "TOT TX",
-            "TOT RX",
-            "PROGRAM" );
-  // paint line header
-  getyx ( pad, y, x );
-  mvwchgat ( pad, 0, 0, -1, 0, 2, NULL );
-  wmove ( pad, y, x );
+  show_header ();
 
   tot_rows = 0;
 
-  qsort((void*)processes, tot_process, sizeof(process_t), compara2);
+  sort ( ( process_t * ) processes, tot_process, sort_by );
 
   wattron ( pad, A_BOLD );
   for ( size_t i = 0; i < tot_process; i++ )
@@ -160,10 +141,9 @@ show_process ( const process_t *const processes, const size_t tot_process )
                      NULL );
           wmove ( pad, y, x );
 
-          if ( view_conections )
-            if ( processes[i].net_stat.avg_Bps_rx ||
-                 processes[i].net_stat.avg_Bps_tx )
-              print_conections ( &processes[i] );
+          if ( view_conections & ( processes[i].net_stat.avg_Bps_rx ||
+                                   processes[i].net_stat.avg_Bps_tx ) )
+            show_conections ( &processes[i] );
         }
     }
   wattroff ( pad, A_BOLD );
@@ -174,28 +154,23 @@ show_process ( const process_t *const processes, const size_t tot_process )
       if ( selected > tot_rows )
         selected = tot_rows;
 
-      // getyx ( pad, y, x );
       // salva conteudo da linha antes de pintar
       mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD );
-      // mvwinchnstr ( pad, selected, 0, line_color, COLS_PAD );
-      // memcpy(line_color, line_original, a);
 
       // (re)pinta item selecionado
-       wmove(pad, selected, 0);
-       int i = 0;
-       while(line_original[i])
+      // wmove(pad, selected, 0);
+      int i = 0;
+      while ( line_original[i] )
         {
-          line_color[i] = line_original[i];
-          line_color[i] &= A_CHARTEXT | A_ALTCHARSET;
-          line_color[i] |= COLOR_PAIR(4);
-          waddch(pad, line_color[i++] );
+          // line_color[i] = line_original[i];
+          // line_color[i] &= A_CHARTEXT | A_ALTCHARSET;
+          // line_color[i] |= COLOR_PAIR(4);
+          // wpadch(pad, line_color[i++]);
+          // versão otimizada
+          waddch ( pad,
+                   ( line_original[i++] & ( A_CHARTEXT | A_ALTCHARSET ) ) |
+                           COLOR_PAIR ( 4 ) );
         }
-
-       // wattron(pad, COLOR_PAIR(4));
-       // mvwaddchnstr ( pad, selected, 0, line_color, COLS_PAD );
-       // wattroff(pad, COLOR_PAIR(4));
-      // mvwchgat ( pad, selected, 0, -1, 0, 4, NULL );
-      // wmove ( pad, y, x );
     }
 
   // prefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );  // atualiza cabeçalho
@@ -208,96 +183,115 @@ show_process ( const process_t *const processes, const size_t tot_process )
   doupdate ();
 }
 
-enum
-{
-  RATE_RX,
-  RATE_TX,
-  TOTAL_RX,
-  TOTAL_TX
-};
-
-int compara(const void *restrict p1, const void *restrict p2, void *sort_by)
-{
-  if (*(int *)sort_by == RATE_RX)
-    return ((conection_t *)p2)->net_stat.avg_Bps_rx - ((conection_t *)p1)->net_stat.avg_Bps_rx;
-  if (*(int *)sort_by == RATE_TX)
-    return ((conection_t *)p2)->net_stat.avg_Bps_tx - ((conection_t *)p1)->net_stat.avg_Bps_tx;
-
-  return 0;
-}
-
-
-
 static void
-print_conections ( const process_t *process )
+show_conections ( const process_t *process )
 {
   // tuple ip:port <-> ip:port
   char *tuple;
+  bool last_con = false;
+  size_t i;
 
-  size_t index_act[process->total_conections];
-  size_t tot_con_act;
-
-  int sort_by = RATE_RX;
-
-  qsort_r(process->conection, process->total_conections, sizeof(conection_t), compara, &sort_by);
+  // size_t index_act[process->total_conections];
 
   // pega o total de conexões no processo que estão ativas, e seus respectivos
   // indices
-  tot_con_act = get_con_active_in_process (
-          index_act, process->conection, process->total_conections );
+  // tot_con_act = get_con_active_in_process (
+  //         index_act, process->conection, process->total_conections );
 
   wattron ( pad, A_DIM );
-  for ( size_t i = 0; i < tot_con_act; i++ )
+  for ( i = 0; i < process->total_conections; i++ )
     {
       tot_rows++;
 
+      // se a proxima conexão estiver com estatisticas zeradas, essa é a ultima
+      // conexão, as conexões são ordenadas de forma decrescente previamente
+      if ( ( i < process->total_conections - 1 &&
+             process->conection[i + 1].net_stat.avg_Bps_rx == 0 &&
+             process->conection[i + 1].net_stat.avg_Bps_tx == 0 &&
+             process->conection[i + 1].net_stat.tot_Bps_rx == 0 &&
+             process->conection[i + 1].net_stat.tot_Bps_rx == 0 ) ||
+           i == process->total_conections - 1 )
+        last_con = true;
+
       // faz a tradução de ip:porta para nome-reverso:serviço
-      tuple = translate ( &process->conection[index_act[i]] );
+      tuple = translate ( &process->conection[i] );
 
       // waddch(pad, 'C' | A_INVIS);
-      // wattron ( pad, A_DIM );
       wprintw ( pad,
                 " %*s %*ld %*ld %*s %*s ",
                 PID,
                 "",
                 PPS,
-                process->conection[index_act[i]].net_stat.avg_pps_tx,
+                process->conection[i].net_stat.avg_pps_tx,
                 PPS,
-                process->conection[index_act[i]].net_stat.avg_pps_rx,
+                process->conection[i].net_stat.avg_pps_rx,
                 RATE,
-                process->conection[index_act[i]].net_stat.tx_rate,
+                process->conection[i].net_stat.tx_rate,
                 RATE,
-                process->conection[index_act[i]].net_stat.rx_rate );
+                process->conection[i].net_stat.rx_rate );
       wprintw ( pad, "%*s", 29, "" );
 
-      // wattroff ( pad, A_DIM );
       wattron ( pad, COLOR_PAIR ( 1 ) );
-      // wprintw(pad, "|_");
-      if ( i + 1 != tot_con_act )
-        {  // bug case use A_REVERSE with addch
-          /*wprintw(pad, "\xe2\x94\x9c");*/ waddch ( pad, ACS_LTEE );   //├
-          // wprintw(pad, "\u0370");
-          // wprintw(pad, "\u02EA"
-          /*wprintw(pad, "\xe2\x94\x80");*/ waddch ( pad, ACS_HLINE );  // ─
+      if ( !last_con )
+        {
+          waddch ( pad, ACS_LTEE );   // ├
+          waddch ( pad, ACS_HLINE );  // ─
         }
       else
-        {  // ultima conexão
-          /*wprintw(pad, "\xe2\x94\x94");*/ waddch ( pad, ACS_LLCORNER );  //└
-          /*wprintw(pad, "\xe2\x94\x80");*/ waddch ( pad, ACS_HLINE );     //─
+        {                                // ultima conexão
+          waddch ( pad, ACS_LLCORNER );  // └
+          waddch ( pad, ACS_HLINE );     // ─
         }
       wattroff ( pad, COLOR_PAIR ( 1 ) );
-      // wattron ( pad, A_DIM );
 
       wprintw ( pad, " %s\n", tuple );
-    }
 
-  if ( tot_con_act )
+      if ( last_con )
+        break;
+    }
+  // se teve conexões exibidas
+  if ( i )
     {
       waddch ( pad, '\n' );
       tot_rows++;
     }
 
   wattroff ( pad, A_DIM );
+}
+
+static void
+show_header ( void )
+{
+  // wprintw ( pad,
+  //           " %*s %*s %*s     %s     %s       %s      %s     %s\n",
+  //           PID,
+  //           "PID",
+  //           PPS,
+  //           "PPS TX",
+  //           PPS,
+  //           "PPS RX",
+  //           "RATE TX",
+  //           "RATE RX",
+  //           "TOTAL TX",
+  //           "TOTAL RX",
+  //           "PROGRAM" );
+  wprintw ( pad,
+            " %*s %*s %*s     %s     %s       %s      %s     %s\n",
+            PID,
+            "PID",
+            PPS,
+            "PPS TX",
+            PPS,
+            "PPS RX",
+            "RATE TX",
+            "RATE RX",
+            "TOTAL TX",
+            "TOTAL RX",
+            "PROGRAM" );
+  // paint line header
+  getyx ( pad, y, x );
+  mvwchgat ( pad, 0, 0, -1, 0, 2, NULL );
+  wmove ( pad, y, x );
 }
 
 void
@@ -341,32 +335,24 @@ ui_tick ()
                 // restaura linha atual
                 mvwaddchnstr ( pad, selected - 1, 0, line_original, COLS_PAD );
 
-                // mvwaddnstr ( pad, selected - 1, 0, (char *)line_cur, COLS_PAD );
-
-
                 // salva linha que sera marcada/selecionada (antes de estar
                 // pintada)
                 mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD );
-                // mvwinchnstr ( pad, selected, 0, line_color, COLS_PAD );
-                // memcpy(line_color, line_original, 100);
-                // mvwinnstr( pad, selected, 0, (char *)line_cur, COLS_PAD );
 
                 // pinta a linha selecionada
                 i = 0;
-                while(line_original[i])
-                 {
-                   line_color[i] = line_original[i];
-                   line_color[i] &= A_CHARTEXT | A_ALTCHARSET;
-                   line_color[i] |= COLOR_PAIR(4);
-                   waddch(pad, line_color[i++] );
-                 }
-
-                // pinta linha selecionado
-                // wmove(pad, selected, 0);
-                // wattron(pad, A_REVERSE);
-                // mvwaddchnstr ( pad, selected, 0, line_color, COLS_PAD );
-                // wattroff(pad, A_REVERSE);
-                // mvwchgat ( pad, selected, 0, -1, 0, 4, NULL );
+                while ( line_original[i] )
+                  {
+                    // line_color[i] = line_original[i];
+                    //  // retira atributos
+                    // line_color[i] &= A_CHARTEXT | A_ALTCHARSET;
+                    // line_color[i] |= COLOR_PAIR(4);  // adiciona atributos
+                    // novo
+                    waddch ( pad,
+                             ( line_original[i++] &
+                               ( A_CHARTEXT | A_ALTCHARSET ) ) |
+                                     COLOR_PAIR ( 4 ) );
+                  }
 
                 // atualiza tela
                 pnoutrefresh (
@@ -387,22 +373,22 @@ ui_tick ()
                 // restaura linha atual
                 mvwaddchstr ( pad, selected + 1, 0, line_original );
 
-
                 // salva linha que sera marcada/selecionada (antes de estar
                 // pintada)
                 mvwinchstr ( pad, selected, 0, line_original );
 
                 i = 0;
-                while(line_original[i])
-                 {
-                   line_color[i] = line_original[i];
-                   line_color[i] &= A_CHARTEXT | A_ALTCHARSET;
-                   line_color[i] |= COLOR_PAIR(4);
-                   waddch(pad, line_color[i++] );
-                 }
-                // mvwaddnstr( pad, selected, 0, line_cur, COLS_PAD );
-                // pinta linha selecionado
-                // mvwchgat ( pad, selected, 0, -1, 0, 4, NULL );
+                while ( line_original[i] )
+                  {
+                    // line_color[i] = line_original[i];
+                    // line_color[i] &= A_CHARTEXT | A_ALTCHARSET;
+                    // line_color[i] |= COLOR_PAIR(4);
+                    // waddch(pad, line_color[i++] );
+                    waddch ( pad,
+                             ( line_original[i++] &
+                               ( A_CHARTEXT | A_ALTCHARSET ) ) |
+                                     COLOR_PAIR ( 4 ) );
+                  }
 
                 // atualiza tela
                 pnoutrefresh (
@@ -413,6 +399,11 @@ ui_tick ()
               beep ();
 
             break;
+          case 's':
+            sort_by = (sort_by + 1 <= COLS_TO_SORT) ? sort_by + 1 : 1;
+            break;
+          case 'q':
+            exit(EXIT_SUCCESS);
         }
     }
 }

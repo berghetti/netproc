@@ -54,15 +54,16 @@ alloc_memory_process ( process_t **proc, const size_t len );
 
 static void
 process_copy ( process_t *restrict proc,
-               size_t cur_tot_proc,
                process_t *restrict new_procs,
                const size_t new_tot_proc );
 
 // static void
-// save_statistics ( process_t *restrict proc_dst, process_t *restrict proc_src );
+// save_statistics ( process_t *restrict proc_dst, process_t *restrict proc_src
+// );
 
 static void
-save_statistics ( struct net_stat *restrict stat_dst, struct net_stat *restrict stat_src );
+save_statistics ( struct net_stat *restrict stat_dst,
+                  struct net_stat *restrict stat_src );
 
 static void
 copy_conections ( process_t *proc,
@@ -244,15 +245,17 @@ get_process_active_con ( process_t **cur_proc, const size_t tot_cur_proc_act )
             }
           else  // processo novo
             {
-
               get_name_process ( &processos[tot_process_active_con].name,
                                  processos[tot_process_active_con].pid );
 
               alloc_memory_conections ( &processos[tot_process_active_con],
                                         NULL );
               // zera estrutura net_stat, para evitar sujeira de processo antigo
-              // FIXME: verificar migração para memoria dinamica para o buffer "processos"
-              memset(&processos[tot_process_active_con].net_stat, 0, sizeof(struct net_stat));
+              // FIXME: verificar migração para memoria dinamica para o buffer
+              // "processos"
+              memset ( &processos[tot_process_active_con].net_stat,
+                       0,
+                       sizeof ( struct net_stat ) );
             }
 
           // copia as conexões verificando se a conexão ja for existente
@@ -287,8 +290,7 @@ get_process_active_con ( process_t **cur_proc, const size_t tot_cur_proc_act )
   // copia os processos com conexões ativos para
   // o buffer principal struct process_t, mantendo as estatisticas de rede
   // dos processos que não são novos
-  process_copy (
-          *cur_proc, tot_cur_proc_act, processos, tot_process_active_con );
+  process_copy ( *cur_proc, processos, tot_process_active_con );
 
   // retorna o numero de processos com conexão ativa
   return tot_process_active_con;
@@ -308,7 +310,8 @@ free_process ( process_t *proc, const size_t qtd_proc )
 }
 
 static void
-save_statistics ( struct net_stat *restrict stat_dst, struct net_stat *restrict stat_src )
+save_statistics ( struct net_stat *restrict stat_dst,
+                  struct net_stat *restrict stat_src )
 {
   // stat_dst->tot_Bps_rx = stat_src->tot_Bps_rx;
   // stat_dst->tot_Bps_tx = stat_src->tot_Bps_tx;
@@ -334,7 +337,6 @@ save_statistics ( struct net_stat *restrict stat_dst, struct net_stat *restrict 
 // dos processos que não são novos e possem
 static void
 process_copy ( process_t *restrict proc,
-               size_t cur_tot_proc,
                process_t *restrict new_procs,
                const size_t new_tot_proc )
 {
@@ -362,9 +364,6 @@ copy_conections ( process_t *proc,
   int b = 0;
   bool skip;
 
-  if (!view_conections)
-    return;
-
   // copia apenas as conexões novas para o processo
   // as conexões que ja estão no processo, não são tocadas
   // only if view_conections is true
@@ -375,7 +374,7 @@ copy_conections ( process_t *proc,
       // loop "reverso" interno parece ter um desempenho melhor
       for ( int a = ( int ) tot_con - 1; a >= b; a-- )
         {
-          // se for a mesma conexão e tiver estatisticas de rede...
+          // se a conexão ja estiver mapeada no processo, pula ela
           if ( proc->conection[c].inode == con[index_con[a]].inode )
             {
               skip = true;
@@ -397,12 +396,11 @@ copy_conections ( process_t *proc,
             }
         }
       // conexão ja esta no buffer com suas estatisticas, não precisa mecher
-      if (skip)
+      if ( skip )
         continue;
 
       proc->conection[c] = con[index_con[c]];
     }
-
 }
 
 // alloca memoria para process_t com o dobro do tamanho informado
