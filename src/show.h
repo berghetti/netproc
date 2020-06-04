@@ -31,7 +31,12 @@
 void
 show_process ( const process_t *processes, const size_t tot_process );
 
+// inicia a primeira vez a interface "grafica"
 void
-ui_tick ();
+start_ui(void);
+
+// trata teclas pressionadas durante execução
+void
+running_input ();
 
 #endif  // SHOW_H

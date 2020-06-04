@@ -86,13 +86,10 @@ main ( int argc, const char **argv )
   sigaction ( SIGINT, &sigact, NULL );
   sigaction ( SIGTERM, &sigact, NULL );
 
-  setlocale ( LC_CTYPE, "" );
+  // setlocale ( LC_CTYPE, "" );
 
-  // enquanto não encontrar processos com conexões ativas
-  // FIXME: testar isso...
-  while ( 0 == ( tot_process_act = get_process_active_con (
-                         &processes, tot_process_act ) ) )
-    printf ( "\rNenhum processo com conexão ativa encontrado, procurando..." );
+  // primeira busca por processos
+  tot_process_act = get_process_active_con ( &processes, tot_process_act )
 
   buff_pkt = calloc ( IP_MAXPACKET, 1 );
   if ( !buff_pkt )
@@ -104,7 +101,8 @@ main ( int argc, const char **argv )
   double m_timer = start_timer ();
   ssize_t bytes = 0;
 
-  init_ui ();
+  init_ui (); // setup
+  start_ui();
   // main loop
   while ( 1 )
     {
@@ -136,7 +134,7 @@ main ( int argc, const char **argv )
                   get_process_active_con ( &processes, tot_process_act );
 
     PRINT:
-      ui_tick ();
+      running_input ();
       if ( timer ( m_timer ) >= T_REFRESH )
         {
           calc_avg_rate ( processes, tot_process_act );

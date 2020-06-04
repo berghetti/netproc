@@ -1,7 +1,7 @@
 
 #define _GNU_SOURCE  // qsort_r
 #include <stdlib.h>
-// #include <stdio.h>
+
 #include "process.h"
 #include "conection.h"
 #include "sort.h"

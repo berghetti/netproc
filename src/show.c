@@ -63,8 +63,6 @@ static int selected = 1;  // posição de linha do item selecionado
 static int tot_rows;      // total linhas exibidas
 static int sort_by = RATE_RX; // ordenação padrão
 
-static int len_base_name, len_name;
-
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
 static chtype line_original[COLS_PAD];
 // static chtype line_color[COLS_PAD];  // versão otimizada
@@ -75,9 +73,16 @@ show_conections ( const process_t *process );
 static void
 show_header ();
 
+void start_ui(void)
+{
+  show_header();
+  doupdate();
+}
+
 void
 show_process ( const process_t *processes, const size_t tot_process )
 {
+  int len_base_name, len_name;
   // limpa a tela e o scrollback
   wclear ( pad );
 
@@ -174,7 +179,6 @@ show_process ( const process_t *processes, const size_t tot_process )
     }
 
   // prefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );  // atualiza cabeçalho
-  pnoutrefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );  // atualiza cabeçalho
 
   // prefresh ( pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
   pnoutrefresh ( pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
@@ -190,13 +194,6 @@ show_conections ( const process_t *process )
   char *tuple;
   bool last_con = false;
   size_t i;
-
-  // size_t index_act[process->total_conections];
-
-  // pega o total de conexões no processo que estão ativas, e seus respectivos
-  // indices
-  // tot_con_act = get_con_active_in_process (
-  //         index_act, process->conection, process->total_conections );
 
   wattron ( pad, A_DIM );
   for ( i = 0; i < process->total_conections; i++ )
@@ -275,27 +272,45 @@ show_header ( void )
   //           "TOTAL TX",
   //           "TOTAL RX",
   //           "PROGRAM" );
-  wprintw ( pad,
-            " %*s %*s %*s     %s     %s       %s      %s     %s\n",
-            PID,
-            "PID",
-            PPS,
-            "PPS TX",
-            PPS,
-            "PPS RX",
-            "RATE TX",
-            "RATE RX",
-            "TOTAL TX",
-            "TOTAL RX",
-            "PROGRAM" );
-  // paint line header
+
+
+ wattrset(pad, (sort_by == S_PID) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+ wprintw ( pad, " %*s ", PID,"PID");
+
+ wattrset(pad, (sort_by == PPS_TX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+ wprintw(pad, "%*s ", PPS, "PPS TX");
+
+ wattrset(pad, (sort_by == PPS_RX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+ wprintw(pad, "%*s", PPS, "PPS RX");
+
+ wattrset(pad, (sort_by == RATE_TX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+ wprintw(pad, "    %s   ", "RATE TX");
+
+ wattrset(pad, (sort_by == RATE_RX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+ wprintw(pad, "    %s   ", "RATE RX");
+
+ wattrset(pad, (sort_by == TOT_TX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+ wprintw(pad, "    %s    ", "TOTAL TX");
+
+ wattrset(pad, (sort_by == TOT_RX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+ wprintw(pad, "  %s   ", "TOTAL RX");
+
+ wattrset(pad, A_NORMAL);
+
+ wprintw(pad,"%s\n", "PROGRAM" );
+
+  // pinta restante da linha
   getyx ( pad, y, x );
-  mvwchgat ( pad, 0, 0, -1, 0, 2, NULL );
+  mvwchgat ( pad, 0, PROGRAM, -1, 0, 2, NULL );
   wmove ( pad, y, x );
+
+  // atualiza cabeçalho
+  pnoutrefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );
+
 }
 
 void
-ui_tick ()
+running_input ()
 {
   int ch;
   int i = 0;
@@ -400,9 +415,13 @@ ui_tick ()
 
             break;
           case 's':
+          case 'S':
             sort_by = (sort_by + 1 <= COLS_TO_SORT) ? sort_by + 1 : 1;
+            show_header();
+            doupdate ();
             break;
           case 'q':
+          case 'Q':
             exit(EXIT_SUCCESS);
         }
     }

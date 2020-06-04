@@ -82,7 +82,7 @@ init_ui ()
   init_pair ( 1, COLOR_CYAN, -1 );            // color tree, name program
   init_pair ( 2, COLOR_BLACK, COLOR_GREEN );  // color header
   init_pair ( 3, -1, COLOR_BLACK );
-  init_pair ( 4, COLOR_BLACK, COLOR_CYAN );  // item seleselecionado
+  init_pair ( 4, COLOR_BLACK, COLOR_CYAN );  // line selected, column sorted
 }
 
 void
