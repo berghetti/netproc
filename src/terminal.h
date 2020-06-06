@@ -35,7 +35,7 @@ void
 init_ui ();
 
 // limpa a tela, podendo tambem limpar o buffer do scroll se disponivel
-void
-clear_cmd ( WINDOW * );
+// void
+// clear_cmd ( );
 
 #endif  // TERMINAL_H

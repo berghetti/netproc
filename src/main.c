@@ -89,7 +89,7 @@ main ( int argc, const char **argv )
   // setlocale ( LC_CTYPE, "" );
 
   // primeira busca por processos
-  tot_process_act = get_process_active_con ( &processes, tot_process_act )
+  tot_process_act = get_process_active_con ( &processes, tot_process_act );
 
   buff_pkt = calloc ( IP_MAXPACKET, 1 );
   if ( !buff_pkt )
@@ -116,7 +116,8 @@ main ( int argc, const char **argv )
       // deve ser trafego de protocolo não suportado
       if ( bytes > 0 )
         if ( !parse_packet ( &packet, buff_pkt, &link_level ) )
-          goto PRINT;
+          bytes = 0;
+          // goto PRINT;
 
       packet.lenght = bytes;
 
@@ -133,7 +134,7 @@ main ( int argc, const char **argv )
           tot_process_act =
                   get_process_active_con ( &processes, tot_process_act );
 
-    PRINT:
+    // PRINT:
       running_input ();
       if ( timer ( m_timer ) >= T_REFRESH )
         {

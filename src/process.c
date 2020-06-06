@@ -163,7 +163,7 @@ get_process_active_con ( process_t **cur_proc, const size_t tot_cur_proc_act )
           process_have_conection_history = true;
 
       index_conection = 0;
-      // memset ( index_history_con, 0, total_conections * sizeof ( int ) );
+      // memset ( index_history_con, 0, MAX_CONECTIONS * sizeof ( int ) );
 
       snprintf ( path_fd, MAX_PATH_FD, "/proc/%d/fd/", process_pids[index_pd] );
 
@@ -313,15 +313,14 @@ static void
 save_statistics ( struct net_stat *restrict stat_dst,
                   struct net_stat *restrict stat_src )
 {
-  // stat_dst->tot_Bps_rx = stat_src->tot_Bps_rx;
-  // stat_dst->tot_Bps_tx = stat_src->tot_Bps_tx;
-  //
-  // stat_dst->avg_Bps_rx = stat_src->avg_Bps_rx;
-  // stat_dst->avg_Bps_tx = stat_src->avg_Bps_tx;
-  //
-  // stat_dst->avg_pps_rx = stat_src->avg_pps_rx;
-  // stat_dst->avg_pps_tx = stat_src->avg_pps_tx;
-  *stat_dst = *stat_src;
+  stat_dst->tot_Bps_rx = stat_src->tot_Bps_rx;
+  stat_dst->tot_Bps_tx = stat_src->tot_Bps_tx;
+
+  stat_dst->avg_Bps_rx = stat_src->avg_Bps_rx;
+  stat_dst->avg_Bps_tx = stat_src->avg_Bps_tx;
+
+  stat_dst->avg_pps_rx = stat_src->avg_pps_rx;
+  stat_dst->avg_pps_tx = stat_src->avg_pps_tx;
 
   for ( size_t i = 0; i < LEN_BUF_CIRC_RATE; i++ )
     {
@@ -360,13 +359,12 @@ copy_conections ( process_t *proc,
                   int *index_con,
                   const size_t tot_con )
 {
-  conection_t temp;
+  // conection_t temp;
   int b = 0;
   bool skip;
 
   // copia apenas as conexões novas para o processo
   // as conexões que ja estão no processo, não são tocadas
-  // only if view_conections is true
   for ( size_t c = 0; c < tot_con; c++ )
     {
       skip = false;
@@ -384,12 +382,12 @@ copy_conections ( process_t *proc,
               // assim podemos diminuir o laço interno
               if ( a != b )
                 {
-                  temp = con[index_con[a]];
+                  // temp = con[index_con[a]];
                   con[index_con[a]] = con[index_con[b]];
-                  con[index_con[b]] = temp;
+                  // con[index_con[b]] = temp;
                 }
-
-              // diminiu o tamanho do laço interno (para performance)
+              //
+              // // diminiu o tamanho do laço interno (para performance)
               b++;
 
               break;

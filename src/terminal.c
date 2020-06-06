@@ -17,7 +17,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// #include <stdio.h>   // putchar
 #include <term.h>    // setupterm, tputs, tigetstr
 #include <unistd.h>  // STDOUT_FILENO
 #include <ncurses.h>
@@ -62,13 +61,12 @@ void
 init_ui ()
 {
   initscr ();
-  // raw();
-  cbreak ();
+  cbreak (); // get key arrow
   noecho ();
 
   pad = newpad ( LINES * 2, COLS_PAD );
 
-  nodelay ( pad, TRUE );
+  nodelay ( pad, TRUE );  // no gelay getch()
   keypad ( pad, TRUE );
 
   idlok ( pad, TRUE );
@@ -98,17 +96,13 @@ restore_terminal ( void )
 
 // limpa a tela, podendo tambem limpar o buffer do scroll se disponivel
 // Obs: não alterar ordem entre limpar a tela e limpar scroll
-void
-clear_cmd ( WINDOW *screen )
-{
-  if ( !screen )
-    screen = stdscr;
-
-  wclear ( screen );
-  // limpa a tela modo terminfo
-  // tputs ( clear_screen, lines > 0 ? lines : 1, putchar );
-  //
-  // // se recurso para limpar scroll estiver disponivel
-  // if ( E3 )
-  //   tputs ( E3, lines > 0 ? lines : 1, putchar );
-}
+// void
+// clear_cmd ( )
+// {
+//   // limpa a tela modo terminfo
+//   // tputs ( clear_screen, lines > 0 ? lines : 1, putchar );
+//   //
+//   // // se recurso para limpar scroll estiver disponivel
+//   // if ( E3 )
+//   //   tputs ( E3, lines > 0 ? lines : 1, putchar );
+// }

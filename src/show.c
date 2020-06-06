@@ -1,3 +1,4 @@
+// important: compile with flag -O2 in gcc
 
 /*
  *  Copyright (C) 2020 Mayco S. Berghetti
@@ -17,19 +18,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>  // strlen
 #include <ctype.h>   // isprint
-// #include <term.h>    // variable columns
 #include <ncurses.h>
 // #include <ncursesw/ncurses.h>
 
 #include "str.h"
 #include "process.h"
 #include "conection.h"
-// #include "rate.h"
-#include "terminal.h"  // clear_cmd
+// #include "terminal.h"
 #include "translate.h"
 #include "show.h"
 #include "sort.h"
@@ -65,7 +63,7 @@ static int sort_by = RATE_RX; // ordenação padrão
 
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
 static chtype line_original[COLS_PAD];
-// static chtype line_color[COLS_PAD];  // versão otimizada
+// static chtype line_color[COLS_PAD];  // versão otimizada não precisa
 
 static void
 show_conections ( const process_t *process );
@@ -184,6 +182,7 @@ show_process ( const process_t *processes, const size_t tot_process )
   pnoutrefresh ( pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
 
   // depois de todas as janelas verificadas, atualiza todas uma unica vez
+
   doupdate ();
 }
 
@@ -259,45 +258,30 @@ show_conections ( const process_t *process )
 static void
 show_header ( void )
 {
-  // wprintw ( pad,
-  //           " %*s %*s %*s     %s     %s       %s      %s     %s\n",
-  //           PID,
-  //           "PID",
-  //           PPS,
-  //           "PPS TX",
-  //           PPS,
-  //           "PPS RX",
-  //           "RATE TX",
-  //           "RATE RX",
-  //           "TOTAL TX",
-  //           "TOTAL RX",
-  //           "PROGRAM" );
+  wattrset(pad, (sort_by == S_PID) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+  wprintw ( pad, " %*s ", PID,"PID");
 
+  wattrset(pad, (sort_by == PPS_TX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+  wprintw(pad, "%*s ", PPS, "PPS TX");
 
- wattrset(pad, (sort_by == S_PID) ? COLOR_PAIR(4) : COLOR_PAIR(2));
- wprintw ( pad, " %*s ", PID,"PID");
+  wattrset(pad, (sort_by == PPS_RX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+  wprintw(pad, "%*s", PPS, "PPS RX");
 
- wattrset(pad, (sort_by == PPS_TX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
- wprintw(pad, "%*s ", PPS, "PPS TX");
+  wattrset(pad, (sort_by == RATE_TX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+  wprintw(pad, "    %s   ", "RATE TX");
 
- wattrset(pad, (sort_by == PPS_RX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
- wprintw(pad, "%*s", PPS, "PPS RX");
+  wattrset(pad, (sort_by == RATE_RX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+  wprintw(pad, "    %s   ", "RATE RX");
 
- wattrset(pad, (sort_by == RATE_TX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
- wprintw(pad, "    %s   ", "RATE TX");
+  wattrset(pad, (sort_by == TOT_TX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+  wprintw(pad, "    %s    ", "TOTAL TX");
 
- wattrset(pad, (sort_by == RATE_RX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
- wprintw(pad, "    %s   ", "RATE RX");
+  wattrset(pad, (sort_by == TOT_RX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
+  wprintw(pad, "  %s   ", "TOTAL RX");
 
- wattrset(pad, (sort_by == TOT_TX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
- wprintw(pad, "    %s    ", "TOTAL TX");
+  wattrset(pad, A_NORMAL);
 
- wattrset(pad, (sort_by == TOT_RX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
- wprintw(pad, "  %s   ", "TOTAL RX");
-
- wattrset(pad, A_NORMAL);
-
- wprintw(pad,"%s\n", "PROGRAM" );
+  wprintw(pad,"%s\n", "PROGRAM" );
 
   // pinta restante da linha
   getyx ( pad, y, x );
@@ -313,7 +297,7 @@ void
 running_input ()
 {
   int ch;
-  int i = 0;
+  int i;
 
   while ( ( ch = wgetch ( pad ) ) != ERR )
     {
@@ -416,7 +400,7 @@ running_input ()
             break;
           case 's':
           case 'S':
-            sort_by = (sort_by + 1 <= COLS_TO_SORT) ? sort_by + 1 : 1;
+            sort_by = (sort_by + 1 < COLS_TO_SORT) ? sort_by + 1 : 0;
             show_header();
             doupdate ();
             break;
