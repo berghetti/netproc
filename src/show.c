@@ -1,4 +1,3 @@
-// important: compile with flag -O2 in gcc
 
 /*
  *  Copyright (C) 2020 Mayco S. Berghetti
@@ -28,6 +27,7 @@
 #include "process.h"
 #include "conection.h"
 // #include "terminal.h"
+#include "color.h"
 #include "translate.h"
 #include "show.h"
 #include "sort.h"
@@ -51,18 +51,15 @@ extern WINDOW *pad;
 #define PPS 6
 #define RATE 13
 
-// // tamanho fixo de caracteres até a coluna program
-// #define PROGRAM 49
+// armazina a linha selecionada com seus atributos antes de estar "selecionada"
+static chtype line_original[COLS_PAD] = {0};
 
-static int y, x;  // line, col getyx()
+static int sort_by = RATE_RX;  // ordenação padrão
 static int scroll_x = 0;
 static int scroll_y = 1;
-static int selected = 1;  // posição de linha do item selecionado
-static int tot_rows;      // total linhas exibidas
-static int sort_by = RATE_RX; // ordenação padrão
+static int selected = 1;       // posição de linha do item selecionado
+static int tot_rows;           // total linhas exibidas
 
-// armazina a linha selecionada com seus atributos antes de estar "selecionada"
-static chtype line_original[COLS_PAD];
 // static chtype line_color[COLS_PAD];  // versão otimizada não precisa
 
 static void
@@ -71,10 +68,14 @@ show_conections ( const process_t *process );
 static void
 show_header ();
 
-void start_ui(void)
+static void
+paint_selected();
+
+void
+start_ui ( void )
 {
-  show_header();
-  doupdate();
+  show_header ();
+  doupdate ();
 }
 
 void
@@ -82,15 +83,15 @@ show_process ( const process_t *processes, const size_t tot_process )
 {
   int len_base_name, len_name;
   // limpa a tela e o scrollback
-  wclear ( pad );
+  // wclear ( pad );
 
-  show_header ();
+  // show_header ();
 
   tot_rows = 0;
 
   sort ( ( process_t * ) processes, tot_process, sort_by );
 
-  wattron ( pad, A_BOLD );
+  wmove(pad, 1, 0); // move second line
   for ( size_t i = 0; i < tot_process; i++ )
     {
       // só exibe o processo se tiver fluxo de rede
@@ -110,19 +111,15 @@ show_process ( const process_t *processes, const size_t tot_process )
           wprintw ( pad,
                     "%*s %*s %*s %*s ",
                     RATE,
-                    // "1023.69 kib/s",
                     processes[i].net_stat.tx_rate,
                     RATE,
-                    // "1023.69 kib/s");
                     processes[i].net_stat.rx_rate,
                     RATE,
-                    // "1023.69 kib/s",
                     processes[i].net_stat.tx_tot,
                     RATE,
-                    // "1023.69 kib/s");
                     processes[i].net_stat.rx_tot );
 
-          wprintw ( pad, "%s\n", processes[i].name );
+          // wprintw ( pad, "%s", processes[i].name );
 
           // /usr/bin/programa-nome
           len_base_name = strlen_space ( processes[i].name );
@@ -131,25 +128,41 @@ show_process ( const process_t *processes, const size_t tot_process )
           len_name =
                   find_last_char ( processes[i].name, len_base_name, '/' ) + 1;
 
-          getyx ( pad, y, x );
+          for (int j = 0; processes[i].name[j]; j++)
+            {
+              if (j >= len_name && j < len_base_name)
+                // pinta somente o nome do programa
+                waddch(pad, processes[i].name[j] | color_scheme[NAME_PROG_BOLD]);
+              else
+               // pinta todo o caminho do programa e parametros
+                waddch(pad, processes[i].name[j] | color_scheme[NAME_PROG]);
+            }
+
+          waddch(pad, '\n');
+
+
+          // getyx ( pad, y, x );
           // pinta linha inteira do nome do programa
-          mvwchgat ( pad, y - 1, PROGRAM, -1, A_NORMAL, 1, NULL );
+          // mvwchgat ( pad, y - 1, PROGRAM, -1, A_NORMAL, 1, NULL );
           // pinta somente o nome do programa
-          mvwchgat ( pad,
-                     y - 1,
-                     PROGRAM + len_name,
-                     len_base_name - len_name,
-                     A_BOLD,
-                     1,
-                     NULL );
-          wmove ( pad, y, x );
+          // mvwchgat ( pad,
+          //            y - 1,
+          //            PROGRAM + len_name,
+          //            len_base_name - len_name,
+          //            A_BOLD,
+          //            1,
+          //            NULL );
+          // wmove ( pad, y, x );
 
           if ( view_conections & ( processes[i].net_stat.avg_Bps_rx ||
                                    processes[i].net_stat.avg_Bps_tx ) )
             show_conections ( &processes[i] );
         }
+
     }
-  wattroff ( pad, A_BOLD );
+
+  // clear lines begin cursor end screen
+  wclrtobot(pad);
 
   // paint item selected
   if ( tot_rows )
@@ -158,31 +171,20 @@ show_process ( const process_t *processes, const size_t tot_process )
         selected = tot_rows;
 
       // salva conteudo da linha antes de pintar
-      mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD );
-
+      mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD - 1 );
+      // wprintw(pad, "vamo ve 2 \n%d\n%d\n", tot_rows, selected);
       // (re)pinta item selecionado
-      // wmove(pad, selected, 0);
-      int i = 0;
-      while ( line_original[i] )
-        {
-          // line_color[i] = line_original[i];
-          // line_color[i] &= A_CHARTEXT | A_ALTCHARSET;
-          // line_color[i] |= COLOR_PAIR(4);
-          // wpadch(pad, line_color[i++]);
-          // versão otimizada
-          waddch ( pad,
-                   ( line_original[i++] & ( A_CHARTEXT | A_ALTCHARSET ) ) |
-                           COLOR_PAIR ( 4 ) );
-        }
+      paint_selected();
+
     }
 
-  // prefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );  // atualiza cabeçalho
+  // pnoutrefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );  // atualiza cabeçalho
 
   // prefresh ( pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
+  // pnoutrefresh ( pad, 0, 0, 1, 0, LINES - 1, COLS - 1 );
   pnoutrefresh ( pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
 
   // depois de todas as janelas verificadas, atualiza todas uma unica vez
-
   doupdate ();
 }
 
@@ -246,7 +248,7 @@ show_conections ( const process_t *process )
         break;
     }
   // se teve conexões exibidas
-  if ( i )
+  if ( last_con )
     {
       waddch ( pad, '\n' );
       tot_rows++;
@@ -258,46 +260,44 @@ show_conections ( const process_t *process )
 static void
 show_header ( void )
 {
-  wattrset(pad, (sort_by == S_PID) ? COLOR_PAIR(4) : COLOR_PAIR(2));
-  wprintw ( pad, " %*s ", PID,"PID");
+  wmove(pad, 0, 0); // move first line
 
-  wattrset(pad, (sort_by == PPS_TX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
-  wprintw(pad, "%*s ", PPS, "PPS TX");
+  wattrset ( pad, ( sort_by == S_PID ) ? color_scheme[SELECTED] : color_scheme[HEADER] );
+  wprintw ( pad, " %*s ", PID, "PID" );
 
-  wattrset(pad, (sort_by == PPS_RX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
-  wprintw(pad, "%*s", PPS, "PPS RX");
+  wattrset ( pad, ( sort_by == PPS_TX ) ? color_scheme[SELECTED] : color_scheme[HEADER] );
+  wprintw ( pad, "%*s ", PPS, "PPS TX" );
 
-  wattrset(pad, (sort_by == RATE_TX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
-  wprintw(pad, "    %s   ", "RATE TX");
+  wattrset ( pad, ( sort_by == PPS_RX ) ? color_scheme[SELECTED] : color_scheme[HEADER] );
+  wprintw ( pad, "%*s", PPS, "PPS RX" );
 
-  wattrset(pad, (sort_by == RATE_RX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
-  wprintw(pad, "    %s   ", "RATE RX");
+  wattrset ( pad,
+             ( sort_by == RATE_TX ) ? color_scheme[SELECTED] : color_scheme[HEADER] );
+  wprintw ( pad, "    %s   ", "RATE TX" );
 
-  wattrset(pad, (sort_by == TOT_TX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
-  wprintw(pad, "    %s    ", "TOTAL TX");
+  wattrset ( pad,
+             ( sort_by == RATE_RX ) ? color_scheme[SELECTED] : color_scheme[HEADER] );
+  wprintw ( pad, "    %s   ", "RATE RX" );
 
-  wattrset(pad, (sort_by == TOT_RX) ? COLOR_PAIR(4) : COLOR_PAIR(2));
-  wprintw(pad, "  %s   ", "TOTAL RX");
+  wattrset ( pad, ( sort_by == TOT_TX ) ? color_scheme[SELECTED] : color_scheme[HEADER] );
+  wprintw ( pad, "    %s    ", "TOTAL TX" );
 
-  wattrset(pad, A_NORMAL);
+  wattrset ( pad, ( sort_by == TOT_RX ) ? color_scheme[SELECTED] : color_scheme[HEADER] );
+  wprintw ( pad, "  %s   ", "TOTAL RX" );
 
-  wprintw(pad,"%s\n", "PROGRAM" );
+  wattrset ( pad, color_scheme[HEADER] );
+  wprintw ( pad, "%*s", -(COLS_PAD - PROGRAM -1) , "PROGRAM" );
 
-  // pinta restante da linha
-  getyx ( pad, y, x );
-  mvwchgat ( pad, 0, PROGRAM, -1, 0, 2, NULL );
-  wmove ( pad, y, x );
+  wattrset (pad, color_scheme[RESET]);
 
   // atualiza cabeçalho
   pnoutrefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );
-
 }
 
 void
 running_input ()
 {
   int ch;
-  int i;
 
   while ( ( ch = wgetch ( pad ) ) != ERR )
     {
@@ -305,10 +305,11 @@ running_input ()
         {
           // scroll horizontal
           case KEY_RIGHT:
-            if ( scroll_x < COLS_PAD )
+            if ( scroll_x + 5 < COLS_PAD - COLS )
               {
-                scroll_x += 5;
-                prefresh ( pad, 0, scroll_x, 0, 0, LINES - 1, COLS - 1 );
+                scroll_x = (scroll_x + 5 <= COLS_PAD - COLS) ? scroll_x + 5 : COLS_PAD - COLS;
+
+                prefresh ( pad, 0, scroll_x, 0, 0, LINES - 1, COLS -1 );
               }
             else
               beep ();
@@ -317,7 +318,8 @@ running_input ()
           case KEY_LEFT:
             if ( scroll_x > 0 )
               {
-                scroll_x -= 5;
+                scroll_x = (scroll_x - 5 >= 0) ? scroll_x - 5 : 0;
+
                 prefresh ( pad, 0, scroll_x, 0, 0, LINES - 1, COLS - 1 );
               }
             else
@@ -336,24 +338,13 @@ running_input ()
 
                 // salva linha que sera marcada/selecionada (antes de estar
                 // pintada)
-                mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD );
+                mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD - 1 );
 
                 // pinta a linha selecionada
-                i = 0;
-                while ( line_original[i] )
-                  {
-                    // line_color[i] = line_original[i];
-                    //  // retira atributos
-                    // line_color[i] &= A_CHARTEXT | A_ALTCHARSET;
-                    // line_color[i] |= COLOR_PAIR(4);  // adiciona atributos
-                    // novo
-                    waddch ( pad,
-                             ( line_original[i++] &
-                               ( A_CHARTEXT | A_ALTCHARSET ) ) |
-                                     COLOR_PAIR ( 4 ) );
-                  }
+                paint_selected();
 
                 // atualiza tela
+                // getyx(pad, y, x);
                 pnoutrefresh (
                         pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
                 doupdate ();
@@ -370,24 +361,13 @@ running_input ()
                   scroll_y--;
 
                 // restaura linha atual
-                mvwaddchstr ( pad, selected + 1, 0, line_original );
+                mvwaddchnstr ( pad, selected + 1, 0, line_original, COLS_PAD );
 
                 // salva linha que sera marcada/selecionada (antes de estar
                 // pintada)
-                mvwinchstr ( pad, selected, 0, line_original );
+                mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD - 1 );
 
-                i = 0;
-                while ( line_original[i] )
-                  {
-                    // line_color[i] = line_original[i];
-                    // line_color[i] &= A_CHARTEXT | A_ALTCHARSET;
-                    // line_color[i] |= COLOR_PAIR(4);
-                    // waddch(pad, line_color[i++] );
-                    waddch ( pad,
-                             ( line_original[i++] &
-                               ( A_CHARTEXT | A_ALTCHARSET ) ) |
-                                     COLOR_PAIR ( 4 ) );
-                  }
+                paint_selected();
 
                 // atualiza tela
                 pnoutrefresh (
@@ -400,13 +380,43 @@ running_input ()
             break;
           case 's':
           case 'S':
-            sort_by = (sort_by + 1 < COLS_TO_SORT) ? sort_by + 1 : 0;
-            show_header();
+            sort_by = ( sort_by + 1 < COLS_TO_SORT ) ? sort_by + 1 : 0;
+            show_header ();
             doupdate ();
             break;
           case 'q':
           case 'Q':
-            exit(EXIT_SUCCESS);
+            exit ( EXIT_SUCCESS );
         }
+    }
+}
+
+static void
+paint_selected()
+{
+  int i = 0;
+  bool skip = false;
+
+  while ( i < COLS_PAD )
+    {
+      // line_color[i] = line_original[i];
+      //  // retira atributos
+      // line_color[i] &= A_CHARTEXT | A_ALTCHARSET;
+      // line_color[i] |= COLOR_PAIR(4);  // adiciona atributos
+      // novo
+      if (skip)
+        goto SKIP;
+
+      if (line_original[i])
+        waddch ( pad, ( line_original[i] & ( A_CHARTEXT | A_ALTCHARSET ) ) |
+                                                     color_scheme[SELECTED] );
+      else
+        skip = true;
+
+      SKIP:
+      if (skip)
+        waddch( pad, ' ' | color_scheme[SELECTED] );
+
+      i++;
     }
 }

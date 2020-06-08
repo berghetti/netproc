@@ -22,6 +22,7 @@
 #include <ncurses.h>
 // #include <ncursesw/ncurses.h>
 
+#include "color.h"
 #include "show.h"
 #include "m_error.h"
 
@@ -61,26 +62,28 @@ void
 init_ui ()
 {
   initscr ();
-  cbreak (); // get key arrow
+  cbreak ();  // disable buffering to get keypad
   noecho ();
 
   pad = newpad ( LINES * 2, COLS_PAD );
 
   nodelay ( pad, TRUE );  // no gelay getch()
-  keypad ( pad, TRUE );
+  keypad ( pad, TRUE );   // get arrow key
 
   idlok ( pad, TRUE );
   scrollok ( pad, TRUE );
 
   curs_set ( 0 );  // cursor invisible
-  start_color ();
-  use_default_colors ();
+
+  define_color_scheme();
+  // start_color ();
+  // use_default_colors ();
 
   // color foreground, background
-  init_pair ( 1, COLOR_CYAN, -1 );            // color tree, name program
-  init_pair ( 2, COLOR_BLACK, COLOR_GREEN );  // color header
-  init_pair ( 3, -1, COLOR_BLACK );
-  init_pair ( 4, COLOR_BLACK, COLOR_CYAN );  // line selected, column sorted
+  // init_pair ( 1, COLOR_CYAN, -1 );            // color tree, name program
+  // init_pair ( 2, COLOR_BLACK, COLOR_GREEN );  // color header
+  // init_pair ( 3, -1, COLOR_BLACK );
+  // init_pair ( 4, COLOR_BLACK, COLOR_CYAN );  // line selected, column sorted
 }
 
 void

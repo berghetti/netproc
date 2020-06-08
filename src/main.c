@@ -63,8 +63,8 @@ bool translate_service = true;  // translate service, ex 443 -> https
 char *iface = NULL;             // sniff all interfaces
 
 uint8_t *buff_pkt = NULL;
-process_t *processes = NULL;
-uint32_t tot_process_act = 0;
+static process_t *processes = NULL;
+static uint32_t tot_process_act = 0;
 uint8_t tic_tac = 0;
 
 int
@@ -101,8 +101,8 @@ main ( int argc, const char **argv )
   double m_timer = start_timer ();
   ssize_t bytes = 0;
 
-  init_ui (); // setup
-  start_ui();
+  init_ui ();  // setup
+  start_ui ();
   // main loop
   while ( 1 )
     {
@@ -117,7 +117,7 @@ main ( int argc, const char **argv )
       if ( bytes > 0 )
         if ( !parse_packet ( &packet, buff_pkt, &link_level ) )
           bytes = 0;
-          // goto PRINT;
+      // goto PRINT;
 
       packet.lenght = bytes;
 
@@ -134,7 +134,7 @@ main ( int argc, const char **argv )
           tot_process_act =
                   get_process_active_con ( &processes, tot_process_act );
 
-    // PRINT:
+      // PRINT:
       running_input ();
       if ( timer ( m_timer ) >= T_REFRESH )
         {

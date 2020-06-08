@@ -41,9 +41,7 @@ compara_processo ( const void *restrict p1,
 
       default:
         // ordena menor para maior
-        return ( ( process_t * ) p1 )->pid -
-               ( ( process_t * ) p2 )->pid;
-
+        return ( ( process_t * ) p1 )->pid - ( ( process_t * ) p2 )->pid;
     }
 }
 

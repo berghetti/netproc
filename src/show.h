@@ -33,7 +33,7 @@ show_process ( const process_t *processes, const size_t tot_process );
 
 // inicia a primeira vez a interface "grafica"
 void
-start_ui(void);
+start_ui ( void );
 
 // trata teclas pressionadas durante execução
 void
