@@ -27,6 +27,8 @@
 #include <sys/socket.h>       // recvfrom
 #include <sys/types.h>        // recvfrom
 
+#include <stdio.h>
+
 #include "m_error.h"
 #include "network.h"
 #include "sock.h"  // defined sock
@@ -44,12 +46,12 @@
 // máximo de pacotes IP que podem estar fragmentados simultaneamente,
 // os pacotes que chegarem alem desse limite não serão calculados
 // e um erro informado
-#define MAX_REASSEMBLIES 16
+#define MAX_REASSEMBLIES 32
 
 // maximo de fragmentos que um pacote IP pode ter,
 // acima disso um erro sera emitido, e os demais fragmentos desse pacote
 // não serão computados
-#define MAX_FRAGMENTS 32
+#define MAX_FRAGMENTS 64
 
 // tempo de vida maximo de um pacote fragmentado em segundos,
 // cada pacote possui um contador unico, independente da atualização
@@ -138,8 +140,10 @@ get_packet ( struct sockaddr_ll *restrict link_level,
        ( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ) )
     return 0;
 
+#ifdef DEBUG
   if ( bytes_received == -1 )
     error ( "Error get packets %s", strerror ( errno ) );
+#endif
 
   return -1;
 }
@@ -153,6 +157,20 @@ parse_packet ( struct packet *restrict pkt,
   struct ethhdr *l2;
   struct iphdr *l3;
   struct tcp_udp_h *l4;
+
+  bool loopback = true;
+  // discard traffic loopback, mac address is zero
+  for ( int i = 0; i < ll->sll_halen; i++ )
+    {
+      if ( ll->sll_addr[i] )
+        {
+          loopback = false;
+          break;
+        }
+    }
+
+  if ( loopback )
+    goto END;
 
   l2 = ( struct ethhdr * ) buf;
 
@@ -205,7 +223,7 @@ parse_packet ( struct packet *restrict pkt,
 
       return 1;
     }
-  else
+  else if ( ll->sll_pkttype == PACKET_HOST )
     {  // download
       if ( id == -1 )
         // não é um fragmento, assumi que isso é maioria dos casos
@@ -265,9 +283,11 @@ is_first_frag ( const struct iphdr *const restrict l3,
     {
       if ( ++count_reassemblies > MAX_REASSEMBLIES )
         {
+#ifdef DEBUG
           error ( "Maximum number of %d fragmented packets reached, "
                   "packets surpluses are not calculated.",
                   MAX_REASSEMBLIES );
+#endif
 
           count_reassemblies = MAX_REASSEMBLIES;
           return -1;
@@ -318,10 +338,11 @@ is_frag ( const struct iphdr *const l3 )
               // se o total de fragmentos de um pacote for atingido
               if ( ++pkt_ip_frag[i].c_frag > MAX_FRAGMENTS )
                 {
+#ifdef DEBUG
                   error ( "Maximum number of %d fragments in a "
                           "package reached",
                           MAX_FRAGMENTS );
-
+#endif
                   pkt_ip_frag[i].c_frag = MAX_FRAGMENTS;
                   return ER_MAX_FRAGMENTS;
                 }
@@ -364,7 +385,7 @@ clear_frag ( void )
     }
 }
 
-static void
+static inline void
 insert_data_packet ( struct packet *pkt,
                      const uint8_t direction,
                      const uint32_t local_address,

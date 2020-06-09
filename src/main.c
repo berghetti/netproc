@@ -22,7 +22,8 @@
 #include <stdio.h>   // putchar
 #include <stdlib.h>  // exit
 #include <string.h>  // strerror
-#include <locale.h>
+
+#include <poll.h>
 
 #include "m_error.h"
 #include "network.h"
@@ -85,6 +86,11 @@ main ( int argc, const char **argv )
 
   sigaction ( SIGINT, &sigact, NULL );
   sigaction ( SIGTERM, &sigact, NULL );
+  // sigaction ( SIGALRM, &sigact, NULL );
+
+  struct pollfd poll_sock;
+  poll_sock.fd = sock;
+  poll_sock.events = POLLIN | POLLPRI;
 
   // setlocale ( LC_CTYPE, "" );
 
@@ -106,10 +112,14 @@ main ( int argc, const char **argv )
   // main loop
   while ( 1 )
     {
-      bytes = get_packet ( &link_level, buff_pkt, IP_MAXPACKET );
-
-      if ( bytes == -1 )
-        fatal_error ( "sniffer packets" );
+      if ( ( poll ( &poll_sock, 1, 500 ) ) > 0 )
+        {
+          if ( ( bytes = get_packet ( &link_level, buff_pkt, IP_MAXPACKET ) ) ==
+               -1 )
+            fatal_error ( "sniffer packets" );
+        }
+      else
+        bytes = 0;
 
       // se houver dados porem não foi possivel identificar o trafego,
       // não tem estatisticas para ser adicionada aos processos.
@@ -117,7 +127,6 @@ main ( int argc, const char **argv )
       if ( bytes > 0 )
         if ( !parse_packet ( &packet, buff_pkt, &link_level ) )
           bytes = 0;
-      // goto PRINT;
 
       packet.lenght = bytes;
 
@@ -129,12 +138,11 @@ main ( int argc, const char **argv )
       // mesmo que não tenha dados para atualizar(bytes == 0), chamamos a
       // função para que possa contabilizar na média.
       if ( !add_statistics_in_processes (
-                   processes, tot_process_act, &packet ) )
-        if ( bytes > 0 )
-          tot_process_act =
-                  get_process_active_con ( &processes, tot_process_act );
+                   processes, tot_process_act, &packet ) &&
+           bytes > 0 )
+        tot_process_act =
+                get_process_active_con ( &processes, tot_process_act );
 
-      // PRINT:
       running_input ();
       if ( timer ( m_timer ) >= T_REFRESH )
         {

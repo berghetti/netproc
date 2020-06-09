@@ -75,7 +75,7 @@ init_ui ()
 
   curs_set ( 0 );  // cursor invisible
 
-  define_color_scheme();
+  define_color_scheme ();
   // start_color ();
   // use_default_colors ();
 

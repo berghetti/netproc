@@ -22,7 +22,6 @@
 
 #define ERROR "[ERROR]"
 #define FATAL "[FATAL]"
-#define DEBUG "[DEBUG]"
 
 // exibe mensagem na saida de erro padrão
 void

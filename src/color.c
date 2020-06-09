@@ -18,38 +18,47 @@
 // };
 
 int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
-  [DEFAULT] = {
-    [RESET] = A_NORMAL | COLOR_PAIR(6),
-    [HEADER] = COLOR_PAIR ( 2 ),
-    [SELECTED] = COLOR_PAIR ( 4 ),
-    [NAME_PROG] = COLOR_PAIR ( 1 ),
-    [NAME_PROG_BOLD] = A_BOLD | COLOR_PAIR ( 1 ),
-  },
-  [MONO] = {
-    [HEADER] = COLOR_PAIR(5),
-    [SELECTED] = COLOR_PAIR(5),
-    [NAME_PROG] = COLOR_PAIR(6),
-    [NAME_PROG_BOLD] = A_BOLD | COLOR_PAIR ( 6 ),
-  }
-};
+        [DEFAULT] =
+                {
+                        [RESET] = A_NORMAL | COLOR_PAIR ( 4 ),
+                        [HEADER] = COLOR_PAIR ( 2 ),
+                        [SELECTED_H] = COLOR_PAIR ( 3 ),
+                        [SELECTED_L] = COLOR_PAIR ( 3 ),
+                        [NAME_PROG] = COLOR_PAIR ( 1 ),
+                        [NAME_PROG_BOLD] = A_BOLD | COLOR_PAIR ( 1 ),
+                        [CONECTIONS] = A_DIM | COLOR_PAIR ( 4 ),
+                        [TREE] = A_BOLD | COLOR_PAIR ( 1 ),
+                },
+        [MONO] = {
+                [RESET] = A_NORMAL,
+                [HEADER] = A_BOLD,
+                [SELECTED_H] = A_DIM,
+                [SELECTED_L] = A_BOLD,
+                [NAME_PROG] = A_DIM,
+                [NAME_PROG_BOLD] = A_BOLD,
+                [CONECTIONS] = A_DIM,
+                [TREE] = A_BOLD,
+        }};
 
 int *color_scheme;
 
-void define_color_scheme(void)
+void
+define_color_scheme ( void )
 {
-  start_color ();
-  use_default_colors ();
+  if ( !has_colors () )
+    color_scheme = color_schemes[MONO];
+  else
+    {
+      start_color ();
 
-  init_pair ( 1, COLOR_CYAN, -1 );            // color tree, name program
-  init_pair ( 2, COLOR_BLACK, COLOR_GREEN );  // color header
-  init_pair ( 3, -1, COLOR_BLACK );
-  init_pair ( 4, COLOR_BLACK, COLOR_CYAN );  // line selected, column sorted
+      if ( use_default_colors () == ERR )
+        assume_default_colors ( COLOR_WHITE, COLOR_BLACK );
 
-  //mono
-  init_pair ( 5, COLOR_BLACK, COLOR_WHITE);
-  init_pair ( 6, COLOR_WHITE, -1);
+      init_pair ( 1, COLOR_CYAN, -1 );            // color tree, name program
+      init_pair ( 2, COLOR_BLACK, COLOR_GREEN );  // color header
+      init_pair ( 3, COLOR_BLACK, COLOR_CYAN );  // line selected, column sorted
+      init_pair ( 4, COLOR_WHITE, -1 );
 
-  color_scheme = color_schemes[DEFAULT];
-  // init_pair ( 7, COLOR_BLACK, COLOR_WHITE);
-  // init_pair ( 8, COLOR_BLACK, COLOR_WHITE);
+      color_scheme = color_schemes[DEFAULT];
+    }
 }

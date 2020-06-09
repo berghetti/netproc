@@ -12,16 +12,18 @@ enum elements_in_schemes
 {
   RESET,
   HEADER,
-  SELECTED,
+  SELECTED_H,
+  SELECTED_L,
   NAME_PROG,
   NAME_PROG_BOLD,
+  CONECTIONS,
+  TREE,
   TOT_ELEMENTS
 };
 
-extern int * color_scheme;
+extern int *color_scheme;
 
 void
-define_color_scheme( void );
+define_color_scheme ( void );
 
-
-#endif // COLOR_H
+#endif  // COLOR_H

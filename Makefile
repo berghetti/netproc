@@ -23,12 +23,12 @@ SRC=./src
 BIN=./bin
 
 CC=gcc
-
-# enable macro DEBUG for pre-processor
-# CPPFLAGS=-DDEBUG2
-
+CPPFLAGS=
 CFLAGS=
+
+# environment var
 ifdef DEBUG
+	CPPFLAGS=-DDEBUG
 	CFLAGS+=-Wall -Wextra -pedantic -pedantic-errors -O0 -g
 else
 	CFLAGS+= -O2 -march=native -Wall -Wextra
@@ -79,8 +79,7 @@ distclean: clean
 run:
 	sudo $(BIN)/$(PROG_NAME)
 
-# Shortcut to check if user has root privileges.
-# from https://gitlab.com/fredericopissarra/t50/-/blob/master/Makefile
+# check if user has root privileges.
 define checkifroot
   if [ `id -u` -ne 0 ]; then \
     echo 'Need root privileges!'; \
