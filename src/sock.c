@@ -88,7 +88,7 @@ bind_interface ( const char *iface )
   my_sock.sll_family = AF_PACKET;
   my_sock.sll_protocol = htons ( ETH_P_ALL );
 
-  // 0 equal all interfaces
+  // 0 match all interfaces
   if ( !iface )
     my_sock.sll_ifindex = 0;
   else

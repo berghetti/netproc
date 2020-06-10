@@ -19,7 +19,8 @@
 
 #include <stdbool.h>
 #include <string.h>  // strlen
-#include <ctype.h>   // isprint
+// #include <ctype.h>   // isprint
+// #include <unistd.h>   // STDOUT_FILENO
 #include <ncurses.h>
 // #include <ncursesw/ncurses.h>
 

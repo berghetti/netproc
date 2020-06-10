@@ -22,8 +22,8 @@
 #include <stdio.h>   // putchar
 #include <stdlib.h>  // exit
 #include <string.h>  // strerror
-
-#include <poll.h>
+#include <unistd.h>  // STDIN_FILENO
+#include <poll.h>    // poll
 
 #include "m_error.h"
 #include "network.h"
@@ -88,9 +88,17 @@ main ( int argc, const char **argv )
   sigaction ( SIGTERM, &sigact, NULL );
   // sigaction ( SIGALRM, &sigact, NULL );
 
-  struct pollfd poll_sock;
-  poll_sock.fd = sock;
-  poll_sock.events = POLLIN | POLLPRI;
+  int pc;
+  const nfds_t nfds = 2;
+  struct pollfd fds[2];
+
+  fds[0].fd = STDIN_FILENO;
+  fds[0].events = POLLIN;
+  fds[0].revents = 0;
+
+  fds[1].fd = sock;
+  fds[1].events = POLLIN | POLLPRI;
+  fds[1].revents = 0;
 
   // setlocale ( LC_CTYPE, "" );
 
@@ -112,14 +120,26 @@ main ( int argc, const char **argv )
   // main loop
   while ( 1 )
     {
-      if ( ( poll ( &poll_sock, 1, 500 ) ) > 0 )
+      bytes = 0;
+
+      pc = poll ( fds, nfds, 1000 );
+      if ( pc > 0 )
         {
-          if ( ( bytes = get_packet ( &link_level, buff_pkt, IP_MAXPACKET ) ) ==
-               -1 )
-            fatal_error ( "sniffer packets" );
+          for ( size_t i = 0; i < nfds; i++ )
+            {
+              if ( fds[i].revents == 0 )
+                continue;
+
+              if ( fds[i].fd == STDIN_FILENO )
+                running_input ();
+              else if ( fds[i].fd == sock )
+                {
+                  if ( ( bytes = get_packet (
+                                 &link_level, buff_pkt, IP_MAXPACKET ) ) == -1 )
+                    fatal_error ( "sniffer packets" );
+                }
+            }
         }
-      else
-        bytes = 0;
 
       // se houver dados porem não foi possivel identificar o trafego,
       // não tem estatisticas para ser adicionada aos processos.
@@ -143,7 +163,6 @@ main ( int argc, const char **argv )
         tot_process_act =
                 get_process_active_con ( &processes, tot_process_act );
 
-      running_input ();
       if ( timer ( m_timer ) >= T_REFRESH )
         {
           calc_avg_rate ( processes, tot_process_act );
