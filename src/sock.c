@@ -24,10 +24,12 @@
 #include <net/if.h>           // if_nametoindex
 #include <string.h>           // strerror
 #include <sys/socket.h>       // socket
+#include <sys/mman.h>         // mmap
 #include <sys/types.h>        // socket
 #include <unistd.h>           // close
 
 #include "m_error.h"
+
 
 // socket timeout default in microseconds
 // 1 second          <--> 1E+6 microseconds
@@ -35,15 +37,36 @@
 #define TIMEOUT 1E+5
 
 int sock;
+char *frame_ptr;
+
+static struct tpacket_req req = {0};
+static char *rx_ring;
+static size_t frames_per_buffer;
+static size_t frame_idx = 0;
 
 // defined in main.c
 extern char *iface;
 
 static void
-bind_interface ( const char *iface );
+create_buff(void );
 
 static void
-set_timeout ( void );
+map_buff(void);
+
+static void
+bind_interface ( const char *iface );
+
+// static void
+// set_timeout ( void );
+
+void rotation_buffer(void)
+{
+  frame_idx = (frame_idx + 1) % req.tp_frame_nr;
+  int buffer_idx = frame_idx / frames_per_buffer;
+  char* buffer_ptr = rx_ring + buffer_idx * req.tp_block_size;
+  int frame_idx_diff = frame_idx % frames_per_buffer;
+  frame_ptr = buffer_ptr + frame_idx_diff * req.tp_frame_size;
+}
 
 int
 create_socket ( void )
@@ -51,8 +74,10 @@ create_socket ( void )
   if ( ( sock = socket ( AF_PACKET, SOCK_RAW, htons ( ETH_P_ALL ) ) ) == -1 )
     fatal_error ( "Error create socket: %s", strerror ( errno ) );
 
-  set_timeout ();
+  create_buff();
 
+  map_buff();
+  // set_timeout ();
   bind_interface ( iface );
 
   return sock;
@@ -63,6 +88,49 @@ close_socket ( void )
 {
   if ( sock > 0 )
     close ( sock );
+}
+
+static void
+create_buff(void )
+{
+  // struct tpacket_req req = {0};
+  // req.tp_frame_size = TPACKET_ALIGN(TPACKET_HDRLEN + ETH_HLEN) + TPACKET_ALIGN(1500);
+  // req.tp_block_size = sysconf(_SC_PAGESIZE);
+  // while (req.tp_block_size < req.tp_frame_size) {
+  //     req.tp_block_size <<= 1;
+  // }
+  // req.tp_block_nr = sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE) / (2 * req.tp_block_size);
+  // frames_per_buffer = req.tp_block_size / req.tp_frame_size;
+  // req.tp_frame_nr = req.tp_block_nr * frames_per_buffer;
+
+  req.tp_frame_size = TPACKET_ALIGN(TPACKET_HDRLEN + ETH_HLEN) + TPACKET_ALIGN(2000);
+  req.tp_block_size = sysconf(_SC_PAGESIZE);
+  while (req.tp_block_size < req.tp_frame_size) {
+    req.tp_block_size <<= 1;
+   }
+  req.tp_block_nr = 10;
+  frames_per_buffer = req.tp_block_size / req.tp_frame_size;
+  req.tp_frame_nr = req.tp_block_nr * frames_per_buffer;
+
+  // set version TPACKET
+  int version = TPACKET_V1;
+  if (setsockopt(sock, SOL_PACKET, PACKET_VERSION, &version, sizeof(version)) == -1)
+    fatal_error("setsockopt version: %s", strerror ( errno ));
+
+  // set conf buffer tpacket
+  if (setsockopt(sock, SOL_PACKET, PACKET_RX_RING, &req, sizeof(req)) == -1 )
+    fatal_error("setsockopt: %s", strerror ( errno ));
+}
+
+static void
+map_buff(void)
+{
+  size_t rx_ring_size = req.tp_block_nr * req.tp_block_size;
+  rx_ring = mmap(0, rx_ring_size, PROT_READ|PROT_WRITE, MAP_SHARED, sock, 0);
+  if (rx_ring == MAP_FAILED)
+    fatal_error("mmap: %s", strerror ( errno ));
+
+  frame_ptr = rx_ring;
 }
 
 static void

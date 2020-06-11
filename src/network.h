@@ -54,8 +54,8 @@ get_packet ( struct sockaddr_ll *restrict link_level,
 // tambem verifica se é um pacote de download(entrada) ou upload(saida).
 // então insere os dados na estrutura packet
 int
-parse_packet ( struct packet *restrict pkt,
-               const uint8_t *restrict buf,
-               const struct sockaddr_ll *restrict ll );
+parse_packet ( struct packet *restrict pkt, struct tpacket_hdr *tphdr );//,
+               // const uint8_t *restrict buf,
+               // const struct sockaddr_ll *restrict ll );
 
 #endif  // NETWORK_H

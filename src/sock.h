@@ -21,10 +21,13 @@
 #define SOCK_SNIFF_H
 
 extern int sock;
+extern char *frame_ptr;
 
 // inicializa o socket para escutar conexões
 int
 create_socket ( void );
+
+void rotation_buffer(void);
 
 void
 close_socket ( void );

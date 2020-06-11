@@ -16,7 +16,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include <errno.h>   // variable errno
 #include <signal.h>  // sigaction
 #include <stdio.h>   // putchar
@@ -89,16 +88,16 @@ main ( int argc, const char **argv )
   // sigaction ( SIGALRM, &sigact, NULL );
 
   int pc;
-  const nfds_t nfds = 2;
-  struct pollfd fds[2];
+  const nfds_t nfds = 1;
+  struct pollfd fds[1] = {0};
 
-  fds[0].fd = STDIN_FILENO;
-  fds[0].events = POLLIN;
-  fds[0].revents = 0;
+  // fds[0].fd = STDIN_FILENO;
+  // fds[0].events = POLLIN;
+  // fds[0].revents = 0;
 
-  fds[1].fd = sock;
-  fds[1].events = POLLIN | POLLPRI;
-  fds[1].revents = 0;
+  // fds[0].fd = sock;
+  // fds[0].events = POLLIN | POLLPRI;
+  // fds[0].revents = 0;
 
   // setlocale ( LC_CTYPE, "" );
 
@@ -109,7 +108,7 @@ main ( int argc, const char **argv )
   if ( !buff_pkt )
     fatal_error ( "Error alloc buff_pkt packets: %s", strerror ( errno ) );
 
-  struct sockaddr_ll link_level = {0};
+  struct sockaddr_ll *link_level;
   struct packet packet = {0};
 
   double m_timer = start_timer ();
@@ -120,35 +119,67 @@ main ( int argc, const char **argv )
   // main loop
   while ( 1 )
     {
-      bytes = 0;
+      struct tpacket_hdr *tphdr = (struct tpacket_hdr *) frame_ptr;
 
-      pc = poll ( fds, nfds, 1000 );
-      if ( pc > 0 )
-        {
-          for ( size_t i = 0; i < nfds; i++ )
-            {
-              if ( fds[i].revents == 0 )
-                continue;
-
-              if ( fds[i].fd == STDIN_FILENO )
-                running_input ();
-              else if ( fds[i].fd == sock )
-                {
-                  if ( ( bytes = get_packet (
-                                 &link_level, buff_pkt, IP_MAXPACKET ) ) == -1 )
-                    fatal_error ( "sniffer packets" );
-                }
-            }
+      while (!(tphdr->tp_status & TP_STATUS_USER)) {
+        fds[0].fd = sock;
+        fds[0].events = POLLIN | POLLPRI;
+        fds[0].revents = 0;
+        if (poll(fds, nfds, 500) == -1) {
+          fatal_error("poll");
         }
+      }
+
+
+      packet.lenght = 0;
+      parse_packet ( &packet, tphdr );
+
+
+
+
+      // fprintf(stderr, "packet len - %d\n", packet.lenght);
+
+
+
+      // link_level = (struct sockaddr_ll*)(frame_ptr + TPACKET_HDRLEN - sizeof(struct sockaddr_ll));
+      // char* l2content = frame_ptr + tphdr->tp_mac;
+      // char* l3content = frame_ptr + tphdr->tp_net;
+      // handle_frame(tphdr, addr, l2content, l3content);
+
+      // pc = poll ( fds, nfds, 1000 );
+      // if ( pc > 0 )
+      //   {
+      //     for ( size_t i = 0; i < nfds; i++ )
+      //       {
+      //         if ( fds[i].revents == 0 )
+      //           continue;
+      //
+      //         if ( fds[i].fd == STDIN_FILENO )
+      //           running_input ();
+      //         else if ( fds[i].fd == sock )
+      //           {
+      //             if ( ( bytes = get_packet (
+      //                            &link_level, buff_pkt, IP_MAXPACKET ) ) == -1 )
+      //               fatal_error ( "sniffer packets" );
+      //           }
+      //       }
+      //   }
 
       // se houver dados porem não foi possivel identificar o trafego,
       // não tem estatisticas para ser adicionada aos processos.
       // deve ser trafego de protocolo não suportado
-      if ( bytes > 0 )
-        if ( !parse_packet ( &packet, buff_pkt, &link_level ) )
-          bytes = 0;
+      // if ( bytes > 0 )
+        // parse_packet ( &packet, tphdr);
+        // if ( !parse_packet ( &packet, tphdr))//, buff_pkt))//, &link_level ) )
+        //   fprintf(stderr, "parse deu ruim\n");
+        // else
+        //   fprintf(stderr, "parse deu BOOMM\n");
+          // bytes = 0;
 
-      packet.lenght = bytes;
+      // packet.lenght = bytes;
+
+      // fprintf(stderr, "packet - len = %d\n", packet.lenght);
+      // fprintf(stderr, "packet - rem_port = %d\n", packet.remote_port);
 
       // se não for possivel identificar de qual processo o trafego pertence
       // é sinal que existe um novo processo, ou nova conexão de um processo
@@ -158,10 +189,12 @@ main ( int argc, const char **argv )
       // mesmo que não tenha dados para atualizar(bytes == 0), chamamos a
       // função para que possa contabilizar na média.
       if ( !add_statistics_in_processes (
-                   processes, tot_process_act, &packet ) &&
-           bytes > 0 )
-        tot_process_act =
-                get_process_active_con ( &processes, tot_process_act );
+                   processes, tot_process_act, &packet ) && packet.lenght > 0)
+           {
+             // fprintf(stderr, "add stat deu ruim\n");
+             tot_process_act =
+                     get_process_active_con ( &processes, tot_process_act );
+           }
 
       if ( timer ( m_timer ) >= T_REFRESH )
         {
@@ -173,6 +206,14 @@ main ( int argc, const char **argv )
 
           TIC_TAC ( tic_tac );
         }
+
+      tphdr->tp_status = TP_STATUS_KERNEL;
+      rotation_buffer();
+
+      // if (!packet.lenght)
+      //   if (poll(fds, nfds, 1000) == -1)
+      //     fatal_error("poll");
+
     }
 
   return EXIT_SUCCESS;

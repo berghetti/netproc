@@ -17,6 +17,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>    // provisorio
 #include <stdbool.h>
 
 #include "network.h"
@@ -41,6 +42,8 @@ add_statistics_in_processes ( process_t *restrict processes,
 
   if ( last_tic != tic_tac )
     UPDATE_ID_BUFF ( id_buff_circ );
+
+  // fprintf(stderr, "stat packet - rem_port = %d\n", pkt->remote_port);
 
   for ( size_t i = 0; i < tot_proc; i++ )
     {
