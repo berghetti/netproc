@@ -87,7 +87,6 @@ main ( int argc, const char **argv )
   sigaction ( SIGTERM, &sigact, NULL );
   // sigaction ( SIGALRM, &sigact, NULL );
 
-  int pc;
   const nfds_t nfds = 1;
   struct pollfd fds[1] = {0};
 
@@ -95,9 +94,9 @@ main ( int argc, const char **argv )
   // fds[0].events = POLLIN;
   // fds[0].revents = 0;
 
-  // fds[0].fd = sock;
-  // fds[0].events = POLLIN | POLLPRI;
-  // fds[0].revents = 0;
+  fds[0].fd = sock;
+  fds[0].events = POLLIN | POLLPRI;
+  fds[0].revents = 0;
 
   // setlocale ( LC_CTYPE, "" );
 
@@ -116,30 +115,50 @@ main ( int argc, const char **argv )
 
   init_ui ();  // setup
   start_ui ();
+
+  int packtes_reads;
+  struct tpacket_hdr *tphdr = (struct tpacket_hdr *) frame_ptr;
   // main loop
   while ( 1 )
     {
-      struct tpacket_hdr *tphdr = (struct tpacket_hdr *) frame_ptr;
+      // while (!(tphdr->tp_status & TP_STATUS_USER)) {
+      //   // fprintf(stderr, "cime\n");
+      //   if (poll(fds, nfds, -1) == -1) {
+      //     fatal_error("poll");
+      //   }
+      // }
 
-      while (!(tphdr->tp_status & TP_STATUS_USER)) {
-        fds[0].fd = sock;
-        fds[0].events = POLLIN | POLLPRI;
-        fds[0].revents = 0;
-        if (poll(fds, nfds, 500) == -1) {
-          fatal_error("poll");
+      packtes_reads = 0;
+      while ( tphdr->tp_status & TP_STATUS_USER )
+        {
+
+          // fprintf(stderr, "baixo\n");
+
+          if (!parse_packet ( &packet, tphdr ) )
+            packet.lenght = 0;
+            // fprintf(stderr, "parse ruim\n");
+          // else
+            // fprintf(stderr, "parse BOM\n");
+
+          if ( !add_statistics_in_processes (
+                       processes, tot_process_act, &packet ) && packet.lenght > 0)
+               {
+                 // fprintf(stderr, "add stat deu ruim\n");
+                 tot_process_act =
+                         get_process_active_con ( &processes, tot_process_act );
+               }
+
+          tphdr->tp_status = TP_STATUS_KERNEL;
+          rotation_buffer();
+
+          tphdr = (struct tpacket_hdr *) frame_ptr;
+
+          if (packet.lenght > 0)
+            packtes_reads = 1;
         }
-      }
-
-
-      packet.lenght = 0;
-      parse_packet ( &packet, tphdr );
-
-
 
 
       // fprintf(stderr, "packet len - %d\n", packet.lenght);
-
-
 
       // link_level = (struct sockaddr_ll*)(frame_ptr + TPACKET_HDRLEN - sizeof(struct sockaddr_ll));
       // char* l2content = frame_ptr + tphdr->tp_mac;
@@ -188,13 +207,13 @@ main ( int argc, const char **argv )
 
       // mesmo que não tenha dados para atualizar(bytes == 0), chamamos a
       // função para que possa contabilizar na média.
-      if ( !add_statistics_in_processes (
-                   processes, tot_process_act, &packet ) && packet.lenght > 0)
-           {
-             // fprintf(stderr, "add stat deu ruim\n");
-             tot_process_act =
-                     get_process_active_con ( &processes, tot_process_act );
-           }
+      // if ( !add_statistics_in_processes (
+      //              processes, tot_process_act, &packet ) && packet.lenght > 0)
+      //      {
+      //        // fprintf(stderr, "add stat deu ruim\n");
+      //        tot_process_act =
+      //                get_process_active_con ( &processes, tot_process_act );
+      //      }
 
       if ( timer ( m_timer ) >= T_REFRESH )
         {
@@ -207,12 +226,12 @@ main ( int argc, const char **argv )
           TIC_TAC ( tic_tac );
         }
 
-      tphdr->tp_status = TP_STATUS_KERNEL;
-      rotation_buffer();
 
-      // if (!packet.lenght)
-      //   if (poll(fds, nfds, 1000) == -1)
-      //     fatal_error("poll");
+      if (!packtes_reads)
+        {
+          if (poll(fds, nfds, 1000) == -1)
+            fatal_error("poll");
+        }
 
     }
 

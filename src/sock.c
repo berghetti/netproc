@@ -26,6 +26,7 @@
 #include <sys/socket.h>       // socket
 #include <sys/mman.h>         // mmap
 #include <sys/types.h>        // socket
+#include <fcntl.h>            // fcntl
 #include <unistd.h>           // close
 
 #include "m_error.h"
@@ -41,7 +42,7 @@ char *frame_ptr;
 
 static struct tpacket_req req = {0};
 static char *rx_ring;
-static size_t frames_per_buffer;
+static size_t frames_per_block;
 static size_t frame_idx = 0;
 
 // defined in main.c
@@ -54,6 +55,9 @@ static void
 map_buff(void);
 
 static void
+socket_setnonblocking( void );
+
+static void
 bind_interface ( const char *iface );
 
 // static void
@@ -62,9 +66,9 @@ bind_interface ( const char *iface );
 void rotation_buffer(void)
 {
   frame_idx = (frame_idx + 1) % req.tp_frame_nr;
-  int buffer_idx = frame_idx / frames_per_buffer;
+  int buffer_idx = frame_idx / frames_per_block;
   char* buffer_ptr = rx_ring + buffer_idx * req.tp_block_size;
-  int frame_idx_diff = frame_idx % frames_per_buffer;
+  int frame_idx_diff = frame_idx % frames_per_block;
   frame_ptr = buffer_ptr + frame_idx_diff * req.tp_frame_size;
 }
 
@@ -73,6 +77,8 @@ create_socket ( void )
 {
   if ( ( sock = socket ( AF_PACKET, SOCK_RAW, htons ( ETH_P_ALL ) ) ) == -1 )
     fatal_error ( "Error create socket: %s", strerror ( errno ) );
+
+  socket_setnonblocking();
 
   create_buff();
 
@@ -91,6 +97,19 @@ close_socket ( void )
 }
 
 static void
+socket_setnonblocking( void )
+{
+  int flag;
+
+  if ( ( flag = fcntl ( sock, F_GETFL ) ) == -1 )
+    fatal_error ( "Cannot get socket flags: \"%s\"", strerror ( errno ) );
+
+  if ( fcntl ( sock, F_SETFL, flag | O_NONBLOCK ) == -1 )
+    fatal_error ( "Cannot set socket to non-blocking mode: \"%s\"", strerror ( errno ) );
+}
+
+
+static void
 create_buff(void )
 {
   // struct tpacket_req req = {0};
@@ -100,17 +119,19 @@ create_buff(void )
   //     req.tp_block_size <<= 1;
   // }
   // req.tp_block_nr = sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE) / (2 * req.tp_block_size);
-  // frames_per_buffer = req.tp_block_size / req.tp_frame_size;
-  // req.tp_frame_nr = req.tp_block_nr * frames_per_buffer;
+  // frames_per_block = req.tp_block_size / req.tp_frame_size;
+  // req.tp_frame_nr = req.tp_block_nr * frames_per_block;
 
   req.tp_frame_size = TPACKET_ALIGN(TPACKET_HDRLEN + ETH_HLEN) + TPACKET_ALIGN(2000);
+  // tamanho inicial de uma pagina de memoria
   req.tp_block_size = sysconf(_SC_PAGESIZE);
+  // dobro o tamanho do bloco até que caiba um frame_size
   while (req.tp_block_size < req.tp_frame_size) {
     req.tp_block_size <<= 1;
    }
   req.tp_block_nr = 10;
-  frames_per_buffer = req.tp_block_size / req.tp_frame_size;
-  req.tp_frame_nr = req.tp_block_nr * frames_per_buffer;
+  frames_per_block = req.tp_block_size / req.tp_frame_size;
+  req.tp_frame_nr = req.tp_block_nr * frames_per_block;
 
   // set version TPACKET
   int version = TPACKET_V1;

@@ -118,51 +118,64 @@ static struct pkt_ip_fragment pkt_ip_frag[MAX_REASSEMBLIES] = {0};
 static uint8_t count_reassemblies;
 
 // pega os da rede e adicona em buffer
-ssize_t
-get_packet ( struct sockaddr_ll *restrict link_level,
-             uint8_t *restrict buffer,
-             const int lenght )
-{
-  socklen_t link_level_size = sizeof ( struct sockaddr_ll );
-
-  ssize_t bytes_received = recvfrom ( sock,
-                                      buffer,
-                                      lenght,
-                                      0,
-                                      ( struct sockaddr * ) link_level,
-                                      &link_level_size );
-
-  // retorna quantidade de bytes farejados
-  if ( bytes_received >= 0 && bytes_received != -1 )
-    return bytes_received;
-
-  // recvfrom retornou por conta do timeout definido no socket
-  if ( bytes_received == -1 &&
-       ( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ) )
-    return 0;
-
-#ifdef DEBUG
-  if ( bytes_received == -1 )
-    error ( "Error get packets %s", strerror ( errno ) );
-#endif
-
-  return -1;
-}
+// ssize_t
+// get_packet ( struct sockaddr_ll *restrict link_level,
+//              uint8_t *restrict buffer,
+//              const int lenght )
+// {
+//   socklen_t link_level_size = sizeof ( struct sockaddr_ll );
+//
+//   ssize_t bytes_received = recvfrom ( sock,
+//                                       buffer,
+//                                       lenght,
+//                                       0,
+//                                       ( struct sockaddr * ) link_level,
+//                                       &link_level_size );
+//
+//   // retorna quantidade de bytes farejados
+//   if ( bytes_received >= 0 && bytes_received != -1 )
+//     return bytes_received;
+//
+//   // recvfrom retornou por conta do timeout definido no socket
+//   if ( bytes_received == -1 &&
+//        ( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ) )
+//     return 0;
+//
+// #ifdef DEBUG
+//   if ( bytes_received == -1 )
+//     error ( "Error get packets %s", strerror ( errno ) );
+// #endif
+//
+//   return -1;
+// }
 
 // separa os dados brutos em suas camadas 2, 3 4
 int
-parse_packet ( struct packet *restrict pkt, struct tpacket_hdr *tphdr )//,
+parse_packet ( struct packet *restrict pkt, struct tpacket_hdr *restrict tphdr )//,
                // const uint8_t *restrict buf),
                //const struct sockaddr_ll *restrict ll )
 {
-    
+
   struct ethhdr *l2;
   struct iphdr *l3;
   struct tcp_udp_h *l4;
 
   struct sockaddr_ll *ll = (struct sockaddr_ll*)(frame_ptr + TPACKET_HDRLEN - sizeof(struct sockaddr_ll));
+  // struct sockaddr_ll *l = (struct sockaddr_ll*)(tphdr + TPACKET_HDRLEN - sizeof(struct sockaddr_ll));
+  //
+  // fprintf(stderr, "ll - %x\n", ll->sll_family);
+  // fprintf(stderr, "ll - %x\n", ll->sll_protocol);
+  // fprintf(stderr, "ll - %x\n", ll->sll_pkttype);
+  //
+  // fprintf(stderr, "l2 - %x\n", l->sll_family);
+  // fprintf(stderr, "l2 - %x\n", l->sll_protocol);
+  // fprintf(stderr, "l2 - %x\n", l->sll_pkttype);
   // char* l2content = frame_ptr + tphdr->tp_mac;
   // char* l3content = frame_ptr + tphdr->tp_net;
+  // for ( int i = 0; i < sizeof(struct sockaddr_ll); i++ )
+  //   fprintf(stderr, "%x:", byte[i]);
+
+  // fprintf(stderr, "\n");
 
   bool loopback = true;
   // discard traffic loopback, mac address is zero
@@ -239,7 +252,7 @@ parse_packet ( struct packet *restrict pkt, struct tpacket_hdr *tphdr )//,
 
       return 1;
     }
-  else if ( ll->sll_pkttype == PACKET_HOST )
+  else
     {  // download
       if ( id == -1 )
         // não é um fragmento, assumi que isso é maioria dos casos
