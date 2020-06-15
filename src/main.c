@@ -67,6 +67,10 @@ static process_t *processes = NULL;
 static uint32_t tot_process_act = 0;
 uint8_t tic_tac = 0;
 
+extern size_t frames_per_block;
+
+static int sock;
+
 int
 main ( int argc, const char **argv )
 {
@@ -76,7 +80,8 @@ main ( int argc, const char **argv )
 
   parse_options ( argc, argv );
 
-  create_socket ();
+  struct ring ring;
+  sock = create_socket ( &ring );
 
   define_sufix ();
 
@@ -86,6 +91,8 @@ main ( int argc, const char **argv )
   sigaction ( SIGINT, &sigact, NULL );
   sigaction ( SIGTERM, &sigact, NULL );
   // sigaction ( SIGALRM, &sigact, NULL );
+
+
 
   const nfds_t nfds = 1;
   struct pollfd fds[1] = {0};
@@ -116,47 +123,59 @@ main ( int argc, const char **argv )
   init_ui ();  // setup
   start_ui ();
 
-  int packtes_reads;
-  struct tpacket_hdr *tphdr = (struct tpacket_hdr *) frame_ptr;
+  bool packtes_reads;
+  struct block_desc *pbd;
+  struct tpacket3_hdr *ppd;
+  // struct tpacket2_hdr *tphdr = (struct tpacket2_hdr *) frame_ptr;
+
+  int block_num = 0;
+  int blocks_tot = 64;
+  pbd = (struct block_desc *) ring.rd[block_num].iov_base;
   // main loop
   while ( 1 )
     {
-      // while (!(tphdr->tp_status & TP_STATUS_USER)) {
-      //   // fprintf(stderr, "cime\n");
-      //   if (poll(fds, nfds, -1) == -1) {
-      //     fatal_error("poll");
-      //   }
-      // }
+      // pbd = (struct block_desc *) ring.rd[block_num].iov_base;
 
-      packtes_reads = 0;
-      while ( tphdr->tp_status & TP_STATUS_USER )
+      packtes_reads = false;
+      while ( pbd->h1.block_status & TP_STATUS_USER )
+      // while (packtes_reads)
         {
 
           // fprintf(stderr, "baixo\n");
+          ppd = (struct tpacket3_hdr *) ((uint8_t *) pbd + pbd->h1.offset_to_first_pkt);
 
-          if (!parse_packet ( &packet, tphdr ) )
-            packet.lenght = 0;
-            // fprintf(stderr, "parse ruim\n");
-          // else
-            // fprintf(stderr, "parse BOM\n");
+          // if (!parse_packet ( &packet, tphdr ) )
+          for (size_t i = 0; i < pbd->h1.num_pkts; i++)
+            {
 
-          if ( !add_statistics_in_processes (
-                       processes, tot_process_act, &packet ) && packet.lenght > 0)
-               {
-                 // fprintf(stderr, "add stat deu ruim\n");
-                 tot_process_act =
-                         get_process_active_con ( &processes, tot_process_act );
-               }
+              parse_packet(&packet, ppd);
+            //   fprintf(stderr, "parse ruim\n");
+            // else
+            //   fprintf(stderr, "parse BOM\n");
 
-          tphdr->tp_status = TP_STATUS_KERNEL;
-          rotation_buffer();
+            if ( !add_statistics_in_processes (
+                         processes, tot_process_act, &packet ) && packet.lenght > 0)
+                   tot_process_act =
+                           get_process_active_con ( &processes, tot_process_act );
 
-          tphdr = (struct tpacket_hdr *) frame_ptr;
+              ppd = (struct tpacket3_hdr *) ((uint8_t *) ppd +
+                                                          ppd->tp_next_offset);
+            }
+
+
+          pbd->h1.block_status = TP_STATUS_KERNEL;
+
 
           if (packet.lenght > 0)
-            packtes_reads = 1;
+          // if (!packet.lenght)
+            packtes_reads = true;
+
+          block_num = (block_num + 1) % blocks_tot;
+          pbd = (struct block_desc *) ring.rd[block_num].iov_base;
         }
 
+      packet.lenght = 0;
+      add_statistics_in_processes ( processes, tot_process_act, &packet );
 
       // fprintf(stderr, "packet len - %d\n", packet.lenght);
 
@@ -311,7 +330,7 @@ FAIL:
 static void
 clear_exit ( void )
 {
-  close_socket ();
+  close_socket ( sock );
 
   if ( buff_pkt )
     free ( buff_pkt );

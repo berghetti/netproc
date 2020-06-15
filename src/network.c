@@ -151,31 +151,28 @@ static uint8_t count_reassemblies;
 
 // separa os dados brutos em suas camadas 2, 3 4
 int
-parse_packet ( struct packet *restrict pkt, struct tpacket_hdr *restrict tphdr )//,
+parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd)//struct block_desc *pbd, const int block_num)// struct tpacket2_hdr *restrict tphdr )//,
                // const uint8_t *restrict buf),
                //const struct sockaddr_ll *restrict ll )
 {
+  // struct tpacket3_hdr *ppd;
 
+  struct sockaddr_ll *ll;
   struct ethhdr *l2;
   struct iphdr *l3;
   struct tcp_udp_h *l4;
 
-  struct sockaddr_ll *ll = (struct sockaddr_ll*)(frame_ptr + TPACKET_HDRLEN - sizeof(struct sockaddr_ll));
-  // struct sockaddr_ll *l = (struct sockaddr_ll*)(tphdr + TPACKET_HDRLEN - sizeof(struct sockaddr_ll));
-  //
-  // fprintf(stderr, "ll - %x\n", ll->sll_family);
-  // fprintf(stderr, "ll - %x\n", ll->sll_protocol);
-  // fprintf(stderr, "ll - %x\n", ll->sll_pkttype);
-  //
-  // fprintf(stderr, "l2 - %x\n", l->sll_family);
-  // fprintf(stderr, "l2 - %x\n", l->sll_protocol);
-  // fprintf(stderr, "l2 - %x\n", l->sll_pkttype);
-  // char* l2content = frame_ptr + tphdr->tp_mac;
-  // char* l3content = frame_ptr + tphdr->tp_net;
-  // for ( int i = 0; i < sizeof(struct sockaddr_ll); i++ )
-  //   fprintf(stderr, "%x:", byte[i]);
+  // ppd = (struct tpacket3_hdr *) ( (uint8_t *) pbd + pbd->h1.offset_to_first_pkt);
 
-  // fprintf(stderr, "\n");
+  ll = (struct sockaddr_ll *) ((uint8_t *) ppd + TPACKET3_HDRLEN - sizeof(struct sockaddr_ll));
+  l2 = (struct ethhdr *) ( (uint8_t *) ppd + ppd->tp_mac);
+  l3 = (struct iphdr *)  ( (uint8_t *) ppd + ppd->tp_net);
+  l4 = (struct tcp_udp_h *)  ( (uint8_t *) ppd + ppd->tp_net + (l3->ihl * 4) );
+  // fprintf (stderr, "l2 proto - %d\n", ntohs(l2->h_proto));
+  // fprintf (stderr, "l3 src - %d\n", l3->saddr);
+  // fprintf (stderr, "l4 srcd - %d\n", ntohs(l4->dest));
+  // fprintf (stderr, "ll type - %d\n", ll->sll_pkttype);
+  // fprintf (stderr, "num_pkts - %d\n", pbd->h1.num_pkts);
 
   bool loopback = true;
   // discard traffic loopback, mac address is zero
@@ -192,35 +189,40 @@ parse_packet ( struct packet *restrict pkt, struct tpacket_hdr *restrict tphdr )
     goto END;
 
   // l2 = ( struct ethhdr * ) buf;
-  l2 = (struct ethhdr *) (frame_ptr + tphdr->tp_mac);
-  // fprintf(stderr, "l2->h_proto - %d\n", ntohs(l2->h_proto));
-
+//   l2 = (struct ethhdr *) (frame_ptr + tphdr->tp_mac);
+//   // fprintf(stderr, "l2->h_proto - %d\n", ntohs(l2->h_proto));
+//
   // not is a packet internet protocol
   if ( ntohs ( l2->h_proto ) != ETH_P_IP )
     goto END;
 
-  // l3 = ( struct iphdr * ) ( buf + ETH_HLEN );
-  l3 = (struct iphdr *) (frame_ptr + tphdr->tp_net);
-  l4 = (struct tcp_udp_h *) (frame_ptr + tphdr->tp_net + (l3->ihl * 4));
-    // fprintf(stderr, "l3->h_proto - %d\n", l3->protocol);
-    // fprintf(stderr, "nt packet - rem_port = %d\n", ntohs(l4->dest));
 
-  // caso tenha farejado pacotes TCP e opção udp nao estaja ligada. Default
-  if ( l3->protocol == IPPROTO_TCP && !udp )
-    // l4 = ( struct tcp_udp_h * ) ( buf + ETH_HLEN + ( l3->ihl * 4 ) );
-    l4 = (struct tcp_udp_h *) (frame_ptr + tphdr->tp_net + (l3->ihl * 4));
-  // caso tenha farejado pacote UDP e a opção udp esteja ligada
-  else if ( l3->protocol == IPPROTO_UDP && udp )
-    // l4 = ( struct tcp_udp_h * ) ( buf + ETH_HLEN + ( l3->ihl * 4 ) );
-    l4 = (struct tcp_udp_h *) (frame_ptr + tphdr->tp_net + (l3->ihl * 4));
-  // pacote não suportado
-  else
+//
+//   // l3 = ( struct iphdr * ) ( buf + ETH_HLEN );
+//   l3 = (struct iphdr *) (frame_ptr + tphdr->tp_net);
+//   l4 = (struct tcp_udp_h *) (frame_ptr + tphdr->tp_net + (l3->ihl * 4));
+//     // fprintf(stderr, "l3->h_proto - %d\n", l3->protocol);
+//     // fprintf(stderr, "nt packet - rem_port = %d\n", ntohs(l4->dest));
+//
+  // se não for um protocolo suportado
+  if (l3->protocol != IPPROTO_TCP && l3->protocol != IPPROTO_UDP)
     goto END;
+  // caso tenha farejado pacotes TCP e opção udp estaja ligada, falha
+  else if ( l3->protocol == IPPROTO_TCP && udp )
+    goto END;
+  // caso tenha farejado pacote UDP e a opção udp esteja desligada, falha
+  else if ( l3->protocol == IPPROTO_UDP && !udp )
+    goto END;
+  // pacote não suportado
+  // fprintf (stderr, "aqui\n");
 
+
+
+//
   // atigido MAX_REASSEMBLIES, dados não computados
   if ( is_first_frag ( l3, l4 ) == -1 )
     goto END;
-
+//
   int id = is_frag ( l3 );
   // create packet
   if ( ll->sll_pkttype == PACKET_OUTGOING )
@@ -233,7 +235,7 @@ parse_packet ( struct packet *restrict pkt, struct tpacket_hdr *restrict tphdr )
                              l3->daddr,
                              ntohs ( l4->source ),
                              ntohs ( l4->dest ),
-                             tphdr->tp_len );
+                             ppd->tp_snaplen );
 
       else if ( id >= 0 )
         // é um fragmento, pega dados da camada de transporte
@@ -244,7 +246,7 @@ parse_packet ( struct packet *restrict pkt, struct tpacket_hdr *restrict tphdr )
                              l3->daddr,
                              pkt_ip_frag[id].source_port,
                              pkt_ip_frag[id].dest_port,
-                             tphdr->tp_len );
+                             ppd->tp_snaplen );
       else
         // é um fragmento, porem maximo de fragmentos de um pacote atingido.
         // dados não serão computados
@@ -262,7 +264,7 @@ parse_packet ( struct packet *restrict pkt, struct tpacket_hdr *restrict tphdr )
                              l3->saddr,
                              ntohs ( l4->dest ),
                              ntohs ( l4->source ),
-                             tphdr->tp_len);
+                             ppd->tp_snaplen);
       else if ( id >= 0 )
         // é um fragmento, pega dados da camada de transporte
         // no array de pacotes fragmentados
@@ -272,7 +274,7 @@ parse_packet ( struct packet *restrict pkt, struct tpacket_hdr *restrict tphdr )
                              l3->saddr,
                              pkt_ip_frag[id].dest_port,
                              pkt_ip_frag[id].source_port,
-                             tphdr->tp_len );
+                             ppd->tp_snaplen );
       else
         // é um fragmento, porem maximo de fragmentos de um pacote atingido.
         // dados não serão computados

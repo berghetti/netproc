@@ -23,6 +23,7 @@
 #include <linux/if_packet.h>  // struct sockaddr_ll
 #include <stdint.h>           // types uint*_t
 #include <sys/types.h>        // type ssize_t
+#include "sock.h"
 
 #ifndef IP_MAXPACKET
 #define IP_MAXPACKET 65535  // maximum packet size
@@ -54,7 +55,9 @@ get_packet ( struct sockaddr_ll *restrict link_level,
 // tambem verifica se é um pacote de download(entrada) ou upload(saida).
 // então insere os dados na estrutura packet
 int
-parse_packet ( struct packet *restrict pkt, struct tpacket_hdr *restrict tphdr );//,
+parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd);
+// parse_packet ( struct packet *restrict pkt, struct tpacket2_hdr *restrict tphdr );//,
+// parse_packet ( struct packet *pkt, struct block_desc *pbd, const int block_num);
                // const uint8_t *restrict buf,
                // const struct sockaddr_ll *restrict ll );
 
