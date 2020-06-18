@@ -28,9 +28,9 @@ CFLAGS=
 
 # environment var
 ifdef DEBUG
-	CPPFLAGS=-DDEBUG
 	CFLAGS+=-Wall -Wextra -pedantic -pedantic-errors -O0 -g
 else
+	CPPFLAGS=-D NDEBUG
 	CFLAGS+= -O2 -march=native -Wall -Wextra
 endif
 

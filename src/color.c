@@ -17,7 +17,7 @@
 //   TOT_ELEMENTS
 // };
 
-int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
+static const int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
         [DEFAULT] =
                 {
                         [RESET] = A_NORMAL | COLOR_PAIR ( 4 ),
@@ -40,7 +40,7 @@ int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
                 [TREE] = A_BOLD,
         }};
 
-int *color_scheme;
+const int *color_scheme;
 
 void
 define_color_scheme ( void )

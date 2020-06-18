@@ -23,7 +23,8 @@
 #define BASE_IEC 1024  // default
 #define BASE_SI 1000
 
-#define LEN_ARR_SUFIX 5
+// b, KB, MB, GB, TB, PB
+#define TOT_ELEMENTS_SUFIX 6
 
 // n = BASE_IEC ? 1 /1024 : 1/1000
 #define INVERSE_BASE( n ) ( ( n ) == BASE_IEC ) ? 9.76562E-4 : 1E-3

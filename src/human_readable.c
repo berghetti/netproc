@@ -84,12 +84,13 @@ human_readable ( char *buffer,
   // but make the code more readable
   double bytest = bytes;
 
-  for ( size_t i = 1; i < LEN_ARR_SUFIX; i++ )
+  for ( size_t i = 1; i < TOT_ELEMENTS_SUFIX; i++ )
     {
       /* At each iteration N is greater than the *subsequent* power.
          That way N/1024.0 produces a decimal number in the units of
          *this* power.  */
-      if ( ( val = bytest * base ) < chosen_base || i == ( LEN_ARR_SUFIX - 1 ) )
+      if ( ( val = bytest * base ) < chosen_base ||
+           i == ( TOT_ELEMENTS_SUFIX - 1 ) )
         {
           // coloca casas decimais se o valor for menor que ACCURACY
           // e se não for um valor inteiro

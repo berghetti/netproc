@@ -20,6 +20,9 @@
 #ifndef ERROR_H
 #define ERROR_H
 
+#include <string.h>  // strerror
+#include <errno.h>   // variable errno
+
 #define ERROR "[ERROR]"
 #define FATAL "[FATAL]"
 

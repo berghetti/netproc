@@ -70,8 +70,9 @@ translate ( const conection_t *con )
 static void
 check_flags ( int *flags )
 {
+  *flags = 0;
   // use proto UDP to search
-  *flags &= NI_DGRAM;
+  *flags |= NI_DGRAM;
 
   if ( !translate_host && !translate_service )
     *flags |= NI_NUMERICHOST | NI_NUMERICSERV;

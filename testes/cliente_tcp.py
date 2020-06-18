@@ -8,7 +8,6 @@ SERVER = '172.217.172.142'
 PORT = 80
 dest = (SERVER, PORT)
 
-
 #while 1:
 
 #print ('Para sair use CTRL+X\n')

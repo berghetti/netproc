@@ -24,8 +24,8 @@
 #include <unistd.h>  // STDIN_FILENO
 #include <poll.h>    // poll
 
-#include "m_error.h"
-#include "network.h"
+#include "crc32.h"
+#include "packet.h"
 #include "rate.h"
 #include "process.h"
 #include "show.h"
@@ -35,6 +35,7 @@
 #include "terminal.h"
 #include "timer.h"
 #include "usage.h"
+#include "m_error.h"
 
 // a cada vez que o tempo de T_REFRESH segundo(s) é atingido
 // esse valor é alterado (entre 0 e 1), para que outras partes, statistics_proc,
@@ -42,7 +43,10 @@
 #define TIC_TAC( t ) ( ( t ) ? ( t )-- : ( t )++ )
 
 // intervalo de atualização do programa, não alterar
-#define T_REFRESH 1.0
+#define T_REFRESH 1
+
+// 1 segundo = 1000 milisegundos
+#define TIMEOUT_POLL 1000
 
 static void
 clear_exit ( void );
@@ -51,7 +55,7 @@ static void
 sig_handler ( int );
 
 static void
-parse_options ( int, const char ** );
+parse_options ( int argc, const char **argv );
 
 // options default
 bool udp = false;               // mode TCP
@@ -60,27 +64,36 @@ bool view_bytes = false;        // view in bits
 bool view_conections = false;   // show process conections
 bool translate_host = true;     // translate ip in name using DNS
 bool translate_service = true;  // translate service, ex 443 -> https
+hash_t hash_crc32_udp = 0;      // para checar se arquivo foi alterado
 char *iface = NULL;             // sniff all interfaces
 
-uint8_t *buff_pkt = NULL;
+// uint8_t *buff_pkt = NULL;
 static process_t *processes = NULL;
 static uint32_t tot_process_act = 0;
 uint8_t tic_tac = 0;
-
-extern size_t frames_per_block;
 
 static int sock;
 
 int
 main ( int argc, const char **argv )
 {
+  struct ring ring;
+  struct packet packet = {0};
+  // struct block_desc *pbd;
+  struct tpacket_block_desc *pbd;
+  struct tpacket3_hdr *ppd;
+  bool packtes_reads;
+  int block_num = 0;
+  int blocks_tot = 64;
+  int rp;
+  hash_t hash_tmp;
+
   atexit ( clear_exit );
 
   setup_terminal ();
 
   parse_options ( argc, argv );
 
-  struct ring ring;
   sock = create_socket ( &ring );
 
   define_sufix ();
@@ -92,149 +105,98 @@ main ( int argc, const char **argv )
   sigaction ( SIGTERM, &sigact, NULL );
   // sigaction ( SIGALRM, &sigact, NULL );
 
-
-
-  const nfds_t nfds = 1;
-  struct pollfd fds[1] = {0};
-
-  // fds[0].fd = STDIN_FILENO;
-  // fds[0].events = POLLIN;
-  // fds[0].revents = 0;
-
-  fds[0].fd = sock;
-  fds[0].events = POLLIN | POLLPRI;
-  fds[0].revents = 0;
+  const nfds_t nfds = 2;
+  struct pollfd poll_set[2] = {
+          {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0},
+          {.fd = sock, .events = POLLIN | POLLPRI, .revents = 0}};
 
   // setlocale ( LC_CTYPE, "" );
 
   // primeira busca por processos
   tot_process_act = get_process_active_con ( &processes, tot_process_act );
 
-  buff_pkt = calloc ( IP_MAXPACKET, 1 );
-  if ( !buff_pkt )
-    fatal_error ( "Error alloc buff_pkt packets: %s", strerror ( errno ) );
-
-  struct sockaddr_ll *link_level;
-  struct packet packet = {0};
+  hash_crc32_udp = get_crc32_file ( PATH_UDP );
 
   double m_timer = start_timer ();
-  ssize_t bytes = 0;
 
   init_ui ();  // setup
   start_ui ();
 
-  bool packtes_reads;
-  struct block_desc *pbd;
-  struct tpacket3_hdr *ppd;
-  // struct tpacket2_hdr *tphdr = (struct tpacket2_hdr *) frame_ptr;
+  pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
 
-  int block_num = 0;
-  int blocks_tot = 64;
-  pbd = (struct block_desc *) ring.rd[block_num].iov_base;
   // main loop
   while ( 1 )
     {
-      // pbd = (struct block_desc *) ring.rd[block_num].iov_base;
-
       packtes_reads = false;
-      while ( pbd->h1.block_status & TP_STATUS_USER )
-      // while (packtes_reads)
+      while ( pbd->hdr.bh1.block_status & TP_STATUS_USER )
         {
+          ppd = ( struct tpacket3_hdr * ) ( ( uint8_t * ) pbd +
+                                            pbd->hdr.bh1.offset_to_first_pkt );
 
-          // fprintf(stderr, "baixo\n");
-          ppd = (struct tpacket3_hdr *) ((uint8_t *) pbd + pbd->h1.offset_to_first_pkt);
-
-          // if (!parse_packet ( &packet, tphdr ) )
-          for (size_t i = 0; i < pbd->h1.num_pkts; i++)
+          for ( size_t i = 0; i < pbd->hdr.bh1.num_pkts; i++,
+                       ppd = ( struct tpacket3_hdr * ) ( ( uint8_t * ) ppd +
+                                                         ppd->tp_next_offset ) )
             {
+              // se houver dados porem não foi possivel identificar o trafego,
+              // não tem estatisticas para ser adicionada aos processos.
+              // deve ser trafego de protocolo não suportado
+              if ( !parse_packet ( &packet, ppd ) )
+                continue;
 
-              parse_packet(&packet, ppd);
-            //   fprintf(stderr, "parse ruim\n");
-            // else
-            //   fprintf(stderr, "parse BOM\n");
+              // se não for possivel identificar de qual processo o trafego
+              // pertence é sinal que existe um novo processo, ou nova conexão
+              // de um processo existente, que ainda não foi mapeado, então
+              // atualizamos a lista de processos com conexões ativas.
+              if ( !add_statistics_in_processes (
+                           processes, tot_process_act, &packet ) )
+                {
 
-            if ( !add_statistics_in_processes (
-                         processes, tot_process_act, &packet ) && packet.lenght > 0)
-                   tot_process_act =
-                           get_process_active_con ( &processes, tot_process_act );
+                  // mas antes de atualizar a lista de processos, checamos
+                  // se é um pacote udp e se o arquivo de conexões UDP
+                  // teve alteração desde a ultima checagem, caso o arquivo não
+                  // tenha alteração, nao tem porque atualizar a lista de
+                  // processos, que é um processo caro.
+                  // isso é necessario porque alguns aplicavos não mantem uma
+                  // conexão UDP por tempo suficiente para o kernel listar
+                  if (packet.protocol == IPPROTO_UDP)
+                    {
+                      hash_tmp = get_crc32_file(PATH_UDP);
+                      if ( hash_crc32_udp == hash_tmp )
+                        continue;
 
-              ppd = (struct tpacket3_hdr *) ((uint8_t *) ppd +
-                                                          ppd->tp_next_offset);
+                      hash_crc32_udp = hash_tmp;
+                    }
+
+                  // fprintf ( stderr,
+                  //           "%d:%d <-> %d:%d\n",
+                  //           packet.local_address,
+                  //           packet.local_port,
+                  //           packet.remote_address,
+                  //           packet.remote_port );
+                  tot_process_act = get_process_active_con (
+                          &processes, tot_process_act );
+
+
+                  continue;
+                }
+
+              packtes_reads = true;
+
+              // ppd = ( struct tpacket3_hdr * ) ( ( uint8_t * ) ppd +
+              //                                   ppd->tp_next_offset );
             }
 
+          pbd->hdr.bh1.block_status = TP_STATUS_KERNEL;
 
-          pbd->h1.block_status = TP_STATUS_KERNEL;
-
-
-          if (packet.lenght > 0)
-          // if (!packet.lenght)
-            packtes_reads = true;
-
-          block_num = (block_num + 1) % blocks_tot;
-          pbd = (struct block_desc *) ring.rd[block_num].iov_base;
+          block_num = ( block_num + 1 ) % blocks_tot;
+          pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
         }
 
+      // necessario para zerar contadores quando não ha trafego
       packet.lenght = 0;
       add_statistics_in_processes ( processes, tot_process_act, &packet );
 
-      // fprintf(stderr, "packet len - %d\n", packet.lenght);
-
-      // link_level = (struct sockaddr_ll*)(frame_ptr + TPACKET_HDRLEN - sizeof(struct sockaddr_ll));
-      // char* l2content = frame_ptr + tphdr->tp_mac;
-      // char* l3content = frame_ptr + tphdr->tp_net;
-      // handle_frame(tphdr, addr, l2content, l3content);
-
-      // pc = poll ( fds, nfds, 1000 );
-      // if ( pc > 0 )
-      //   {
-      //     for ( size_t i = 0; i < nfds; i++ )
-      //       {
-      //         if ( fds[i].revents == 0 )
-      //           continue;
-      //
-      //         if ( fds[i].fd == STDIN_FILENO )
-      //           running_input ();
-      //         else if ( fds[i].fd == sock )
-      //           {
-      //             if ( ( bytes = get_packet (
-      //                            &link_level, buff_pkt, IP_MAXPACKET ) ) == -1 )
-      //               fatal_error ( "sniffer packets" );
-      //           }
-      //       }
-      //   }
-
-      // se houver dados porem não foi possivel identificar o trafego,
-      // não tem estatisticas para ser adicionada aos processos.
-      // deve ser trafego de protocolo não suportado
-      // if ( bytes > 0 )
-        // parse_packet ( &packet, tphdr);
-        // if ( !parse_packet ( &packet, tphdr))//, buff_pkt))//, &link_level ) )
-        //   fprintf(stderr, "parse deu ruim\n");
-        // else
-        //   fprintf(stderr, "parse deu BOOMM\n");
-          // bytes = 0;
-
-      // packet.lenght = bytes;
-
-      // fprintf(stderr, "packet - len = %d\n", packet.lenght);
-      // fprintf(stderr, "packet - rem_port = %d\n", packet.remote_port);
-
-      // se não for possivel identificar de qual processo o trafego pertence
-      // é sinal que existe um novo processo, ou nova conexão de um processo
-      // existente, que ainda não foi mapeado, então atualizamos a lista
-      // de processos com conexões ativas.
-
-      // mesmo que não tenha dados para atualizar(bytes == 0), chamamos a
-      // função para que possa contabilizar na média.
-      // if ( !add_statistics_in_processes (
-      //              processes, tot_process_act, &packet ) && packet.lenght > 0)
-      //      {
-      //        // fprintf(stderr, "add stat deu ruim\n");
-      //        tot_process_act =
-      //                get_process_active_con ( &processes, tot_process_act );
-      //      }
-
-      if ( timer ( m_timer ) >= T_REFRESH )
+      if ( timer ( m_timer ) >= ( double ) T_REFRESH )
         {
           calc_avg_rate ( processes, tot_process_act );
 
@@ -245,13 +207,23 @@ main ( int argc, const char **argv )
           TIC_TAC ( tic_tac );
         }
 
-
-      if (!packtes_reads)
+      if ( !packtes_reads )
         {
-          if (poll(fds, nfds, 1000) == -1)
-            fatal_error("poll");
-        }
+          rp = poll ( poll_set, nfds, TIMEOUT_POLL );
+          if ( rp == -1 )
+            fatal_error ( "poll" );
+          if ( rp > 0 )
+            {
+              for ( size_t i = 0; i < nfds; i++ )
+                {
+                  if ( !poll_set[i].revents )
+                    continue;
 
+                  if ( poll_set[i].fd == STDIN_FILENO )
+                    running_input ();
+                }
+            }
+        }
     }
 
   return EXIT_SUCCESS;
@@ -332,8 +304,8 @@ clear_exit ( void )
 {
   close_socket ( sock );
 
-  if ( buff_pkt )
-    free ( buff_pkt );
+  // if ( buff_pkt )
+  //   free ( buff_pkt );
 
   if ( tot_process_act )
     free_process ( processes, tot_process_act );

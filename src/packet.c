@@ -30,8 +30,8 @@
 #include <stdio.h>
 
 #include "m_error.h"
-#include "network.h"
-#include "sock.h"  // defined sock
+#include "packet.h"
+// #include "sock.h"  // defined sock
 #include "timer.h"
 
 // bit dont fragment flag do cabeçalho IP
@@ -45,18 +45,20 @@
 
 // máximo de pacotes IP que podem estar fragmentados simultaneamente,
 // os pacotes que chegarem alem desse limite não serão calculados
-// e um erro informado
+// e um log enviado na saida de erro
 #define MAX_REASSEMBLIES 32
 
 // maximo de fragmentos que um pacote IP pode ter,
 // acima disso um erro sera emitido, e os demais fragmentos desse pacote
-// não serão computados
+// não serão computados e um log enviado na saida de erro
 #define MAX_FRAGMENTS 64
 
 // tempo de vida maximo de um pacote fragmentado em segundos,
+// caso não chegue todos os fragmentos do pacote nesse periodo, o fragmento
+// é descartado.
 // cada pacote possui um contador unico, independente da atualização
 // do programa
-#define LIFETIME_FRAG 1.0
+#define LIFETIME_FRAG 3
 
 // codigo de erro para numero maximo de fragmentos de um pacote aitigido
 #define ER_MAX_FRAGMENTS -2
@@ -89,7 +91,7 @@ struct pkt_ip_fragment
   uint16_t source_port;  // IP header source port value
   uint16_t dest_port;    // IP header dest port value
   uint8_t c_frag;        // count of fragments, limit is MAX_FRAGMENTS
-  float ttl;             // lifetime of packet
+  double ttl;            // lifetime of packet
 };
 
 static int
@@ -102,6 +104,7 @@ is_frag ( const struct iphdr *const l3 );
 static void
 insert_data_packet ( struct packet *pkt,
                      const uint8_t direction,
+                     const uint8_t protocol,
                      const uint32_t local_address,
                      const uint32_t remote_address,
                      const uint16_t local_port,
@@ -117,59 +120,28 @@ static struct pkt_ip_fragment pkt_ip_frag[MAX_REASSEMBLIES] = {0};
 // contador de pacotes IP que estão fragmentados
 static uint8_t count_reassemblies;
 
-// pega os da rede e adicona em buffer
-// ssize_t
-// get_packet ( struct sockaddr_ll *restrict link_level,
-//              uint8_t *restrict buffer,
-//              const int lenght )
-// {
-//   socklen_t link_level_size = sizeof ( struct sockaddr_ll );
-//
-//   ssize_t bytes_received = recvfrom ( sock,
-//                                       buffer,
-//                                       lenght,
-//                                       0,
-//                                       ( struct sockaddr * ) link_level,
-//                                       &link_level_size );
-//
-//   // retorna quantidade de bytes farejados
-//   if ( bytes_received >= 0 && bytes_received != -1 )
-//     return bytes_received;
-//
-//   // recvfrom retornou por conta do timeout definido no socket
-//   if ( bytes_received == -1 &&
-//        ( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ) )
-//     return 0;
-//
-// #ifdef DEBUG
-//   if ( bytes_received == -1 )
-//     error ( "Error get packets %s", strerror ( errno ) );
-// #endif
-//
-//   return -1;
-// }
-
 // separa os dados brutos em suas camadas 2, 3 4
 int
-parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd)//struct block_desc *pbd, const int block_num)// struct tpacket2_hdr *restrict tphdr )//,
-               // const uint8_t *restrict buf),
-               //const struct sockaddr_ll *restrict ll )
+parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
 {
-  // struct tpacket3_hdr *ppd;
+  int frag;
+  int id_frag;
+  int ret = 0;
 
   struct sockaddr_ll *ll;
   struct ethhdr *l2;
   struct iphdr *l3;
   struct tcp_udp_h *l4;
 
-  // ppd = (struct tpacket3_hdr *) ( (uint8_t *) pbd + pbd->h1.offset_to_first_pkt);
-
-  ll = (struct sockaddr_ll *) ((uint8_t *) ppd + TPACKET3_HDRLEN - sizeof(struct sockaddr_ll));
-  l2 = (struct ethhdr *) ( (uint8_t *) ppd + ppd->tp_mac);
-  l3 = (struct iphdr *)  ( (uint8_t *) ppd + ppd->tp_net);
-  l4 = (struct tcp_udp_h *)  ( (uint8_t *) ppd + ppd->tp_net + (l3->ihl * 4) );
-  // fprintf (stderr, "l2 proto - %d\n", ntohs(l2->h_proto));
+  ll = ( struct sockaddr_ll * ) ( ( uint8_t * ) ppd + TPACKET3_HDRLEN -
+                                  sizeof ( struct sockaddr_ll ) );
+  l2 = ( struct ethhdr * ) ( ( uint8_t * ) ppd + ppd->tp_mac );
+  l3 = ( struct iphdr * ) ( ( uint8_t * ) ppd + ppd->tp_net );
+  l4 = ( struct tcp_udp_h * ) ( ( uint8_t * ) ppd + ppd->tp_net +
+                                ( l3->ihl * 4 ) );
+  // fprintf (stderr, "l3 proto - %d\n", l3->protocol);
   // fprintf (stderr, "l3 src - %d\n", l3->saddr);
+  // fprintf (stderr, "l3 dest - %d\n", l3->daddr);
   // fprintf (stderr, "l4 srcd - %d\n", ntohs(l4->dest));
   // fprintf (stderr, "ll type - %d\n", ll->sll_pkttype);
   // fprintf (stderr, "num_pkts - %d\n", pbd->h1.num_pkts);
@@ -188,24 +160,12 @@ parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd)//struct block_desc 
   if ( loopback )
     goto END;
 
-  // l2 = ( struct ethhdr * ) buf;
-//   l2 = (struct ethhdr *) (frame_ptr + tphdr->tp_mac);
-//   // fprintf(stderr, "l2->h_proto - %d\n", ntohs(l2->h_proto));
-//
   // not is a packet internet protocol
   if ( ntohs ( l2->h_proto ) != ETH_P_IP )
     goto END;
 
-
-//
-//   // l3 = ( struct iphdr * ) ( buf + ETH_HLEN );
-//   l3 = (struct iphdr *) (frame_ptr + tphdr->tp_net);
-//   l4 = (struct tcp_udp_h *) (frame_ptr + tphdr->tp_net + (l3->ihl * 4));
-//     // fprintf(stderr, "l3->h_proto - %d\n", l3->protocol);
-//     // fprintf(stderr, "nt packet - rem_port = %d\n", ntohs(l4->dest));
-//
   // se não for um protocolo suportado
-  if (l3->protocol != IPPROTO_TCP && l3->protocol != IPPROTO_UDP)
+  if ( l3->protocol != IPPROTO_TCP && l3->protocol != IPPROTO_UDP )
     goto END;
   // caso tenha farejado pacotes TCP e opção udp estaja ligada, falha
   else if ( l3->protocol == IPPROTO_TCP && udp )
@@ -216,71 +176,75 @@ parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd)//struct block_desc 
   // pacote não suportado
   // fprintf (stderr, "aqui\n");
 
-
-
-//
+  //
   // atigido MAX_REASSEMBLIES, dados não computados
-  if ( is_first_frag ( l3, l4 ) == -1 )
+  if ( ( frag = is_first_frag ( l3, l4 ) ) == -1 )
     goto END;
-//
-  int id = is_frag ( l3 );
+
+  if ( ( id_frag = is_frag ( l3 ) ) == ER_MAX_FRAGMENTS )
+    goto END;
+
   // create packet
   if ( ll->sll_pkttype == PACKET_OUTGOING )
     {  // upload
-      if ( id == -1 )
+      if ( id_frag == -1 )
         // não é um fragmento, assumi que isso é maioria dos casos
         insert_data_packet ( pkt,
                              PKT_UPL,
+                             l3->protocol,
                              l3->saddr,
                              l3->daddr,
-                             ntohs ( l4->source ),
-                             ntohs ( l4->dest ),
+                             l4->source,
+                             l4->dest,
                              ppd->tp_snaplen );
 
-      else if ( id >= 0 )
+      else if ( id_frag >= 0 )
         // é um fragmento, pega dados da camada de transporte
         // no array de pacotes fragmentados
         insert_data_packet ( pkt,
                              PKT_UPL,
+                             l3->protocol,
                              l3->saddr,
                              l3->daddr,
-                             pkt_ip_frag[id].source_port,
-                             pkt_ip_frag[id].dest_port,
+                             pkt_ip_frag[id_frag].source_port,
+                             pkt_ip_frag[id_frag].dest_port,
                              ppd->tp_snaplen );
       else
         // é um fragmento, porem maximo de fragmentos de um pacote atingido.
         // dados não serão computados
         goto END;
 
-      return 1;
+      ret = 1;
     }
-  else
+  else if ( ll->sll_pkttype == PACKET_HOST )
     {  // download
-      if ( id == -1 )
+      if ( id_frag == -1 )
         // não é um fragmento, assumi que isso é maioria dos casos
         insert_data_packet ( pkt,
                              PKT_DOWN,
+                             l3->protocol,
                              l3->daddr,
                              l3->saddr,
-                             ntohs ( l4->dest ),
-                             ntohs ( l4->source ),
-                             ppd->tp_snaplen);
-      else if ( id >= 0 )
+                             l4->dest,
+                             l4->source,
+                             ppd->tp_snaplen );
+      else if ( id_frag >= 0 )
         // é um fragmento, pega dados da camada de transporte
         // no array de pacotes fragmentados
         insert_data_packet ( pkt,
                              PKT_DOWN,
+                             l3->protocol,
                              l3->daddr,
                              l3->saddr,
-                             pkt_ip_frag[id].dest_port,
-                             pkt_ip_frag[id].source_port,
+                             pkt_ip_frag[id_frag].dest_port,
+                             pkt_ip_frag[id_frag].source_port,
                              ppd->tp_snaplen );
       else
         // é um fragmento, porem maximo de fragmentos de um pacote atingido.
         // dados não serão computados
         goto END;
 
-      return 1;
+      ret = 1;
     }
 
 // caso exista pacotes que foram fragmentados,
@@ -290,7 +254,7 @@ END:
   if ( count_reassemblies )
     clear_frag ();
 
-  return 0;
+  return ret;
 }
 
 // Testa se o bit more fragments (MF) esta ligado
@@ -316,7 +280,7 @@ is_first_frag ( const struct iphdr *const restrict l3,
     {
       if ( ++count_reassemblies > MAX_REASSEMBLIES )
         {
-#ifdef DEBUG
+#ifndef NDEBUG
           error ( "Maximum number of %d fragmented packets reached, "
                   "packets surpluses are not calculated.",
                   MAX_REASSEMBLIES );
@@ -332,8 +296,8 @@ is_first_frag ( const struct iphdr *const restrict l3,
           if ( pkt_ip_frag[i].ttl == 0 )  // posição livre no array
             {
               pkt_ip_frag[i].pkt_id = l3->id;
-              pkt_ip_frag[i].source_port = ntohs ( l4->source );
-              pkt_ip_frag[i].dest_port = ntohs ( l4->dest );
+              pkt_ip_frag[i].source_port = l4->source;
+              pkt_ip_frag[i].dest_port = l4->dest;
               pkt_ip_frag[i].c_frag = 1;            // first fragment
               pkt_ip_frag[i].ttl = start_timer ();  // anota tempo atual
 
@@ -371,11 +335,12 @@ is_frag ( const struct iphdr *const l3 )
               // se o total de fragmentos de um pacote for atingido
               if ( ++pkt_ip_frag[i].c_frag > MAX_FRAGMENTS )
                 {
-#ifdef DEBUG
+#ifndef NDEBUG
                   error ( "Maximum number of %d fragments in a "
                           "package reached",
                           MAX_FRAGMENTS );
 #endif
+
                   pkt_ip_frag[i].c_frag = MAX_FRAGMENTS;
                   return ER_MAX_FRAGMENTS;
                 }
@@ -408,9 +373,13 @@ is_frag ( const struct iphdr *const l3 )
 static void
 clear_frag ( void )
 {
-  for ( size_t i = 0; i < count_reassemblies; i++ )
+  for ( size_t i = 0; i < MAX_REASSEMBLIES; i++ )
     {
-      if ( timer ( pkt_ip_frag[i].ttl ) >= LIFETIME_FRAG )
+      if ( !pkt_ip_frag[i].ttl )
+        continue;
+
+      if ( timer ( pkt_ip_frag[i].ttl ) >= ( double ) LIFETIME_FRAG ||
+           pkt_ip_frag[i].c_frag == MAX_FRAGMENTS )
         {
           pkt_ip_frag[i].ttl = 0;
           DEC_REASSEMBLE ( count_reassemblies );
@@ -418,19 +387,21 @@ clear_frag ( void )
     }
 }
 
-static inline void
+static void
 insert_data_packet ( struct packet *pkt,
                      const uint8_t direction,
+                     const uint8_t protocol,
                      const uint32_t local_address,
                      const uint32_t remote_address,
                      const uint16_t local_port,
                      const uint16_t remote_port,
-                     const uint32_t len)
+                     const uint32_t len )
 {
   pkt->direction = direction;
+  pkt->protocol = protocol;
   pkt->local_address = local_address;
   pkt->remote_address = remote_address;
-  pkt->local_port = local_port;
-  pkt->remote_port = remote_port;
+  pkt->local_port = ntohs ( local_port );
+  pkt->remote_port = ntohs ( remote_port );
   pkt->lenght = len;
 }

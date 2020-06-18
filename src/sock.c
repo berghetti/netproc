@@ -30,56 +30,36 @@
 #include <fcntl.h>            // fcntl
 #include <unistd.h>           // close
 
-#include <assert.h>           // testes
-
 #include "sock.h"
 #include "m_error.h"
 
+// quantidade de blocos
+#define N_BLOCKS 64
 
+/* essa conf influencia o uso do tempo da CPU */
+#define FRAMES_PER_BLOCK 20
 
-// socket timeout default in microseconds
-// 1 second          <--> 1E+6 microseconds
-// 1E+5 microseconds <--> 1/10 second
-// #define TIMEOUT 1E+5
+// tamanho do frame (pacote), descosiderando o overhead do cabeçalho tpacket
+// seria uma boa ajustar conforme o maior MTU (tirando a loopback)
+#define LEN_FRAME 1600
 
-// struct block_desc {
-// 	uint32_t version;
-// 	uint32_t offset_to_priv;
-// 	struct tpacket_hdr_v1 h1;
-// };
-//
-// struct ring {
-// 	struct iovec *rd;
-// 	uint8_t *map;
-// 	struct tpacket_req3 req;
-// };
+// timeout in miliseconds
+#define TIMEOUT_FRAME 65
 
 // defined in main.c
 extern char *iface;
 
 static void
-create_buff( struct ring *ring, int sock );
+create_buff ( int sock, struct ring *ring );
 
 static void
-map_buff( struct ring *ring, int sock );
+map_buff ( int sock, struct ring *ring );
 
 static void
-socket_setnonblocking( int sock );
+socket_setnonblocking ( int sock );
 
 static void
-bind_interface ( const char *iface, int sock );
-
-// static void
-// set_timeout ( void );
-
-// void rotation_buffer(void)
-// {
-//   frame_idx = (frame_idx + 1) % req.tp_frame_nr;
-//   int buffer_idx = frame_idx / frames_per_block;
-//   char* buffer_ptr = rx_ring + buffer_idx * req.tp_block_size;
-//   int frame_idx_diff = frame_idx % frames_per_block;
-//   frame_ptr = buffer_ptr + frame_idx_diff * req.tp_frame_size;
-// }
+bind_interface ( int sock, const char *iface );
 
 int
 create_socket ( struct ring *ring )
@@ -89,13 +69,13 @@ create_socket ( struct ring *ring )
   if ( ( sock = socket ( AF_PACKET, SOCK_RAW, htons ( ETH_P_ALL ) ) ) == -1 )
     fatal_error ( "Error create socket: %s", strerror ( errno ) );
 
-  socket_setnonblocking( sock );
+  socket_setnonblocking ( sock );
 
-  create_buff( ring, sock );
+  create_buff ( sock, ring );
 
-  map_buff( ring, sock );
-  // set_timeout ();
-  bind_interface ( iface, sock );
+  map_buff ( sock, ring );
+
+  bind_interface ( sock, iface );
 
   return sock;
 }
@@ -108,7 +88,7 @@ close_socket ( int sock )
 }
 
 static void
-socket_setnonblocking( int sock )
+socket_setnonblocking ( int sock )
 {
   int flag;
 
@@ -116,74 +96,69 @@ socket_setnonblocking( int sock )
     fatal_error ( "Cannot get socket flags: \"%s\"", strerror ( errno ) );
 
   if ( fcntl ( sock, F_SETFL, flag | O_NONBLOCK ) == -1 )
-    fatal_error ( "Cannot set socket to non-blocking mode: \"%s\"", strerror ( errno ) );
+    fatal_error ( "Cannot set socket to non-blocking mode: \"%s\"",
+                  strerror ( errno ) );
 }
 
-
 static void
-create_buff( struct ring *ring, int sock )
+create_buff ( int sock, struct ring *ring )
 {
-  ring->req.tp_frame_size = TPACKET_ALIGN(TPACKET3_HDRLEN + ETH_HLEN) +
-                                                        TPACKET_ALIGN(2000);
+  ring->req.tp_frame_size = TPACKET_ALIGN ( TPACKET3_HDRLEN + ETH_HLEN ) +
+                            TPACKET_ALIGN ( LEN_FRAME );
   // tamanho inicial de uma pagina de memoria
-  ring->req.tp_block_size = sysconf(_SC_PAGESIZE);
+  ring->req.tp_block_size = sysconf ( _SC_PAGESIZE );
   // dobra o tamanho do bloco até que caiba um frame_size
-  while (ring->req.tp_block_size < ring->req.tp_frame_size * 20) {
-    ring->req.tp_block_size <<= 1;
-   }
-  ring->req.tp_block_nr = 64;
+  while ( ring->req.tp_block_size < ring->req.tp_frame_size * FRAMES_PER_BLOCK )
+    {
+      ring->req.tp_block_size <<= 1;
+    }
+
+  ring->req.tp_block_nr = N_BLOCKS;
   size_t frames_per_block = ring->req.tp_block_size / ring->req.tp_frame_size;
   ring->req.tp_frame_nr = ring->req.tp_block_nr * frames_per_block;
-  ring->req.tp_retire_blk_tov = 60;
+  ring->req.tp_retire_blk_tov = TIMEOUT_FRAME;
   ring->req.tp_feature_req_word = 0;
 
   // set version TPACKET
   int version = TPACKET_V3;
-  if (setsockopt(sock, SOL_PACKET, PACKET_VERSION, &version, sizeof(version)) == -1)
-    fatal_error("setsockopt version: %s", strerror ( errno ));
+  if ( setsockopt ( sock,
+                    SOL_PACKET,
+                    PACKET_VERSION,
+                    &version,
+                    sizeof ( version ) ) == -1 )
+    fatal_error ( "setsockopt version: %s", strerror ( errno ) );
 
   // set conf buffer tpacket
-  if (setsockopt(sock, SOL_PACKET, PACKET_RX_RING, &ring->req, sizeof(ring->req)) == -1 )
-    fatal_error("setsockopt: %s", strerror ( errno ));
+  if ( setsockopt ( sock,
+                    SOL_PACKET,
+                    PACKET_RX_RING,
+                    &ring->req,
+                    sizeof ( ring->req ) ) == -1 )
+    fatal_error ( "setsockopt: %s", strerror ( errno ) );
 }
 
 static void
-map_buff( struct ring *ring, int sock )
+map_buff ( int sock, struct ring *ring )
 {
   size_t rx_ring_size = ring->req.tp_block_nr * ring->req.tp_block_size;
-  ring->map = mmap(0, rx_ring_size, PROT_READ|PROT_WRITE, MAP_SHARED, sock, 0);
-  if (ring->map == MAP_FAILED)
-    fatal_error("mmap: %s", strerror ( errno ));
+  ring->map =
+          mmap ( 0, rx_ring_size, PROT_READ | PROT_WRITE, MAP_SHARED, sock, 0 );
+  if ( ring->map == MAP_FAILED )
+    fatal_error ( "mmap: %s", strerror ( errno ) );
 
+  ring->rd = calloc ( ring->req.tp_block_nr, sizeof ( *ring->rd ) );
+  if ( !ring->rd )
+    fatal_error ( "calloc: %s", strerror ( errno ) );
 
-  ring->rd = malloc(ring->req.tp_block_nr * sizeof(*ring->rd));
-	assert(ring->rd);
-	for (size_t i = 0; i < ring->req.tp_block_nr; ++i) {
-		ring->rd[i].iov_base = ring->map + (i * ring->req.tp_block_size);
-		ring->rd[i].iov_len = ring->req.tp_block_size;
-	}
-
-  // frame_ptr = ring->map;
+  for ( size_t i = 0; i < ring->req.tp_block_nr; ++i )
+    {
+      ring->rd[i].iov_base = ring->map + ( i * ring->req.tp_block_size );
+      ring->rd[i].iov_len = ring->req.tp_block_size;
+    }
 }
 
-// static void
-// set_timeout ( void )
-// {
-//   struct timeval read_timeout;
-//   read_timeout.tv_sec = 0;
-//   read_timeout.tv_usec = TIMEOUT;
-//
-//   // set timeout for read in socket
-//   if ( setsockopt ( sock,
-//                     SOL_SOCKET,
-//                     SO_RCVTIMEO,
-//                     &read_timeout,
-//                     sizeof ( read_timeout ) ) == -1 )
-//     fatal_error ( "Error set timeout socket: %s", strerror ( errno ) );
-// }
-
 static void
-bind_interface ( const char *iface, int sock )
+bind_interface ( int sock, const char *iface )
 {
   struct sockaddr_ll my_sock = {0};
   my_sock.sll_family = AF_PACKET;

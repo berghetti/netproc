@@ -21,43 +21,30 @@
 
 #include "sufix.h"
 
-// sufixos RATE
+// #define TOT_ELEMENTS_SUFIX 6
 
-// sufixos padrão IEC, com potências de 2, 1024, 2048..., com bytes
-static const char *const sufix_iec_B[] = {"B/s",
-                                          "KiB/s",
-                                          "MiB/s",
-                                          "GiB/s",
-                                          "TiB/s"};
+enum sufix_types
+{
+  SUFIX_IEC_B = 0,
+  SUFIX_IEC_b,
+  SUFIX_SI_B,
+  SUFIX_SI_b,
+  SUFIX_IEC_B_TOT,
+  SUFIX_IEC_b_TOT,
+  SUFIX_SI_B_TOT,
+  SUFIX_SI_b_TOT,
+  TOT_SUFIX_SCHEME
+};
 
-// sufixos padrão IEC com bits
-// default
-static const char *const sufix_iec_b[] = {"b/s",
-                                          "Kib/s",
-                                          "Mib/s",
-                                          "Gib/s",
-                                          "Tib/s"};
-
-// sufixos padrão SI, com potências de 10. 1000, 2000..., com bytes
-static const char *const sufix_si_B[] = {"B/s", "KB/s", "MB/s", "GB/s", "TB/s"};
-
-// sufixos padrão SI com bits
-static const char *const sufix_si_b[] = {"b/s", "Kb/s", "Mb/s", "Gb/s", "Tb/s"};
-
-// sufixos total
-
-// sufixos padrão IEC, com potências de 2, 1024, 2048..., com bytes
-static const char *const sufix_iec_B_tot[] = {"B", "KiB", "MiB", "GiB", "TiB"};
-
-// sufixos padrão IEC com bits
-// default
-static const char *const sufix_iec_b_tot[] = {"b", "Kib", "Mib", "Gib", "Tib"};
-
-// sufixos padrão SI, com potências de 10. 1000, 2000..., com bytes
-static const char *const sufix_si_B_tot[] = {"B", "KB", "MB", "GB", "TB"};
-
-// sufixos padrão SI com bits
-static const char *const sufix_si_b_tot[] = {"b", "Kb", "Mb", "Gb", "Tb"};
+static const char *const sufix_schemes[TOT_SUFIX_SCHEME][TOT_ELEMENTS_SUFIX] = {
+        [SUFIX_IEC_B] = {"B/s", "KiB/s", "MiB/s", "GiB/s", "TiB/s", "PiB/s"},
+        [SUFIX_IEC_b] = {"b/s", "Kib/s", "Mib/s", "Gib/s", "Tib/s", "Pib/s"},
+        [SUFIX_SI_B] = {"B/s", "KB/s", "MB/s", "GB/s", "TB/s", "PB/s"},
+        [SUFIX_SI_b] = {"b/s", "Kb/s", "Mb/s", "Gb/s", "Tb/s", "Pb/s"},
+        [SUFIX_IEC_B_TOT] = {"B", "KiB", "MiB", "GiB", "TiB", "PiB/s"},
+        [SUFIX_IEC_b_TOT] = {"b", "Kib", "Mib", "Gib", "Tib", "Pib/s"},
+        [SUFIX_SI_B_TOT] = {"B", "KB", "MB", "GB", "TB", "PB"},
+        [SUFIX_SI_b_TOT] = {"b", "Kb", "Mb", "Gb", "Tb", "Pb"}};
 
 // defined in main.c
 extern bool view_si;
@@ -73,25 +60,25 @@ define_sufix ( void )
   if ( view_si && view_bytes )
     {
       chosen_base = BASE_SI;
-      sufix_rate = sufix_si_B;
-      sufix_total = sufix_si_B_tot;
+      sufix_rate = sufix_schemes[SUFIX_SI_B];
+      sufix_total = sufix_schemes[SUFIX_SI_B_TOT];
     }
   else if ( view_si )
     {
       chosen_base = BASE_SI;
-      sufix_rate = sufix_si_b;
-      sufix_total = sufix_si_b_tot;
+      sufix_rate = sufix_schemes[SUFIX_SI_b];
+      sufix_total = sufix_schemes[SUFIX_SI_b_TOT];
     }
   else if ( view_bytes )
     {
       chosen_base = BASE_IEC;
-      sufix_rate = sufix_iec_B;
-      sufix_total = sufix_iec_B_tot;
+      sufix_rate = sufix_schemes[SUFIX_IEC_B];
+      sufix_total = sufix_schemes[SUFIX_IEC_B_TOT];
     }
   else
     {  // default
       chosen_base = BASE_IEC;
-      sufix_rate = sufix_iec_b;
-      sufix_total = sufix_iec_b_tot;
+      sufix_rate = sufix_schemes[SUFIX_IEC_b];
+      sufix_total = sufix_schemes[SUFIX_IEC_b_TOT];
     }
 }

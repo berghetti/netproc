@@ -76,20 +76,20 @@ copy_conections ( process_t *proc,
 // principal antes que seja necessario realicar mais memoria
 static uint32_t max_n_proc = 0;
 
-// buffer utilizado na função get_process_active_con
-// para armazenar o PID de todos os processos do sistema
-static uint32_t process_pids[MAX_PROCESS] = {0};
-
-// armazena os dados apenas dos processos que possuem conexão ativa
-// FIXME: verificar migração para memoria dinamica para o buffer "processos"
-static process_t processos[MAX_PROCESS] = {0};
-
-// buffer utilziado na função get_process_active_con
-// para armazenas todas as conexões do sistema
-static conection_t conections[MAX_CONECTIONS] = {0};
-
-// buffer utilizado para armazenar conexões individuais dos processos
-static int index_history_con[MAX_CONECTIONS] = {0};
+// // buffer utilizado na função get_process_active_con
+// // para armazenar o PID de todos os processos do sistema
+// static uint32_t process_pids[MAX_PROCESS] = {0};
+//
+// // armazena os dados apenas dos processos que possuem conexão ativa
+// // FIXME: verificar migração para memoria dinamica para o buffer "processos"
+// static process_t processos[MAX_PROCESS] = {0};
+//
+// // buffer utilziado na função get_process_active_con
+// // para armazenas todas as conexões do sistema
+// static conection_t conections[MAX_CONECTIONS] = {0};
+//
+// // buffer utilizado para armazenar conexões individuais dos processos
+// static int index_history_con[MAX_CONECTIONS] = {0};
 
 /*
  percorre todos os processos encontrados no diretório '/proc/',
@@ -102,6 +102,21 @@ static int index_history_con[MAX_CONECTIONS] = {0};
 int
 get_process_active_con ( process_t **cur_proc, const size_t tot_cur_proc_act )
 {
+  // buffer utilizado na função get_process_active_con
+  // para armazenar o PID de todos os processos do sistema
+  static uint32_t process_pids[MAX_PROCESS] = {0};
+
+  // armazena os dados apenas dos processos que possuem conexão ativa
+  // FIXME: verificar migração para memoria dinamica para o buffer "processos"
+  static process_t processos[MAX_PROCESS] = {0};
+
+  // buffer utilziado na função get_process_active_con
+  // para armazenas todas as conexões do sistema
+  static conection_t conections[MAX_CONECTIONS] = {0};
+
+  // buffer utilizado para armazenar conexões individuais dos processos
+  static int index_history_con[MAX_CONECTIONS] = {0};
+
   int total_process =
           get_numeric_directory ( process_pids, MAX_PROCESS, PROCESS_DIR );
 
