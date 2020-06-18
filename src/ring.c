@@ -21,8 +21,9 @@
 #define FRAMES_PER_BLOCK 20
 
 // tamanho do frame (pacote), descosiderando o overhead do cabeçalho tpacket
-// seria uma boa ajustar conforme o maior MTU (tirando a loopback)
-#define LEN_FRAME 1600
+// sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct tcphdr)
+// payload not important
+#define LEN_FRAME ETH_HLEN + 20 + 20
 
 // timeout in miliseconds
 #define TIMEOUT_FRAME 65
@@ -30,7 +31,7 @@
 static void
 create_ring_buff ( struct ring *ring )
 {
-  ring->req.tp_frame_size = TPACKET_ALIGN ( TPACKET3_HDRLEN + ETH_HLEN ) +
+  ring->req.tp_frame_size = TPACKET_ALIGN ( TPACKET3_HDRLEN ) +
                             TPACKET_ALIGN ( LEN_FRAME );
   // tamanho inicial de uma pagina de memoria
   ring->req.tp_block_size = sysconf ( _SC_PAGESIZE );

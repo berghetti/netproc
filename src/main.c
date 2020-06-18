@@ -106,7 +106,6 @@ main ( int argc, const char **argv )
 
   sigaction ( SIGINT, &sigact, NULL );
   sigaction ( SIGTERM, &sigact, NULL );
-  // sigaction ( SIGALRM, &sigact, NULL );
 
   const nfds_t nfds = 2;
   struct pollfd poll_set[2] = {
@@ -116,7 +115,6 @@ main ( int argc, const char **argv )
   // first search by processes
   tot_process_act = get_process_active_con ( &processes, tot_process_act );
 
-  // hash_crc32_udp = get_crc32_file ( PATH_UDP );
   hash_crc32_udp = get_crc32_udp_conection ();
 
   init_ui ();  // setup

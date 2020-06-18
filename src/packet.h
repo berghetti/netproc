@@ -45,16 +45,7 @@ struct packet
   uint8_t protocol;
 };
 
-// pega os dados do socket armazena no buffer e preenche a struct sockaddr_ll
-// lenght tamanho maximo do buffer
-// ssize_t
-// get_packet ( struct sockaddr_ll *restrict link_level,
-//              uint8_t *restrict buffer,
-//              const int lenght );
-
-// organiza os dados recebidos nas camadas 2, 3 e 4 e
-// tambem verifica se é um pacote de download(entrada) ou upload(saida).
-// então insere os dados na estrutura packet
+// preenche a struct packet com os dados do pacote recebido
 int
 parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd );
 

@@ -5,9 +5,6 @@
 
 typedef uint64_t hash_t;
 
-// hash_t
-// get_crc32_file (const char *file_path);
-
 hash_t
 get_crc32_udp_conection ( void );
 

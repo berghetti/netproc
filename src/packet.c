@@ -139,15 +139,16 @@ parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
   l3 = ( struct iphdr * ) ( ( uint8_t * ) ppd + ppd->tp_net );
   l4 = ( struct tcp_udp_h * ) ( ( uint8_t * ) ppd + ppd->tp_net +
                                 ( l3->ihl * 4 ) );
-  // fprintf (stderr, "l3 proto - %d\n", l3->protocol);
+
+  // fprintf (stderr, "ll type - %d\n", ll->sll_pkttype);
+  // fprintf (stderr, "l2 proto - %d\n", ntohs(l2->h_proto));
   // fprintf (stderr, "l3 src - %d\n", l3->saddr);
   // fprintf (stderr, "l3 dest - %d\n", l3->daddr);
-  // fprintf (stderr, "l4 srcd - %d\n", ntohs(l4->dest));
-  // fprintf (stderr, "ll type - %d\n", ll->sll_pkttype);
-  // fprintf (stderr, "num_pkts - %d\n", pbd->h1.num_pkts);
+  // fprintf (stderr, "l4 destp - %d\n", ntohs(l4->dest));
 
   bool loopback = true;
   // discard traffic loopback, mac address is zero
+  // FIXME: create filter BPF to block traffic loopback
   for ( int i = 0; i < ll->sll_halen; i++ )
     {
       if ( ll->sll_addr[i] )
@@ -173,10 +174,8 @@ parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
   // caso tenha farejado pacote UDP e a opção udp esteja desligada, falha
   else if ( l3->protocol == IPPROTO_UDP && !udp )
     goto END;
-  // pacote não suportado
-  // fprintf (stderr, "aqui\n");
 
-  //
+
   // atigido MAX_REASSEMBLIES, dados não computados
   if ( ( frag = is_first_frag ( l3, l4 ) ) == -1 )
     goto END;
