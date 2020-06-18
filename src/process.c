@@ -29,6 +29,7 @@
 
 // defined in main.c
 extern bool view_conections;
+extern bool udp;
 
 static int
 get_name_process ( char **buffer, const pid_t pid );
@@ -123,7 +124,8 @@ get_process_active_con ( process_t **cur_proc, const size_t tot_cur_proc_act )
   if ( total_process == -1 )
     fatal_error ( "Error get PIDs of processes" );
 
-  int total_conections = get_info_conections ( conections, MAX_CONECTIONS );
+  int total_conections = get_info_conections (
+          conections, MAX_CONECTIONS, ( udp ) ? PATH_UDP : PATH_TCP );
 
   if ( total_conections == -1 )
     fatal_error ( "Error get_info_conections" );
@@ -201,7 +203,7 @@ get_process_active_con ( process_t **cur_proc, const size_t tot_cur_proc_act )
                      process_pids[index_pd],
                      fds_p[id_fd] );
 
-          // se der erro para ler, provavel acesso negado
+          // se der erro para ler
           // vai pro proximo fd do processo
           if ( ( len_link = readlink ( path_fd, data_fd, MAX_NAME_SOCKET ) ) ==
                -1 )
@@ -401,8 +403,8 @@ copy_conections ( process_t *proc,
                   con[index_con[a]] = con[index_con[b]];
                   // con[index_con[b]] = temp;
                 }
-              //
-              // // diminiu o tamanho do laço interno (para performance)
+
+              // diminiu o tamanho do laço interno (para performance)
               b++;
 
               break;

@@ -30,6 +30,7 @@
 #include "process.h"
 #include "show.h"
 #include "sock.h"
+#include "ring.h"
 #include "statistics.h"
 #include "sufix.h"
 #include "terminal.h"
@@ -73,18 +74,18 @@ static uint32_t tot_process_act = 0;
 uint8_t tic_tac = 0;
 
 static int sock;
+static struct ring ring;
 
 int
 main ( int argc, const char **argv )
 {
-  struct ring ring;
+  // struct ring ring;
   struct packet packet = {0};
-  // struct block_desc *pbd;
   struct tpacket_block_desc *pbd;
   struct tpacket3_hdr *ppd;
   bool packtes_reads;
   int block_num = 0;
-  int blocks_tot = 64;
+  // int tot_blocks = 64; == ring.req.tp_block_nr
   int rp;
   hash_t hash_tmp;
 
@@ -94,7 +95,9 @@ main ( int argc, const char **argv )
 
   parse_options ( argc, argv );
 
-  sock = create_socket ( &ring );
+  sock = create_socket ();
+
+  create_ring(sock, &ring);
 
   define_sufix ();
 
@@ -110,20 +113,18 @@ main ( int argc, const char **argv )
           {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0},
           {.fd = sock, .events = POLLIN | POLLPRI, .revents = 0}};
 
-  // setlocale ( LC_CTYPE, "" );
-
-  // primeira busca por processos
+  // first search by processes
   tot_process_act = get_process_active_con ( &processes, tot_process_act );
 
-  hash_crc32_udp = get_crc32_file ( PATH_UDP );
-
-  double m_timer = start_timer ();
+  // hash_crc32_udp = get_crc32_file ( PATH_UDP );
+  hash_crc32_udp = get_crc32_udp_conection ();
 
   init_ui ();  // setup
   start_ui ();
 
   pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
 
+  double m_timer = start_timer ();
   // main loop
   while ( 1 )
     {
@@ -150,17 +151,17 @@ main ( int argc, const char **argv )
               if ( !add_statistics_in_processes (
                            processes, tot_process_act, &packet ) )
                 {
-
                   // mas antes de atualizar a lista de processos, checamos
-                  // se é um pacote udp e se o arquivo de conexões UDP
-                  // teve alteração desde a ultima checagem, caso o arquivo não
-                  // tenha alteração, nao tem porque atualizar a lista de
+                  // se é um pacote udp e se as conexões UDP
+                  // teveram alterações desde a ultima checagem, caso
+                  // não tenha alteração, nao tem porque atualizar a lista de
                   // processos, que é um processo caro.
                   // isso é necessario porque alguns aplicavos não mantem uma
                   // conexão UDP por tempo suficiente para o kernel listar
-                  if (packet.protocol == IPPROTO_UDP)
+                  if ( packet.protocol == IPPROTO_UDP )
                     {
-                      hash_tmp = get_crc32_file(PATH_UDP);
+                      hash_tmp = get_crc32_udp_conection ();
+                      // fprintf ( stderr, "hash - %lx\n", hash_tmp );
                       if ( hash_crc32_udp == hash_tmp )
                         continue;
 
@@ -173,22 +174,21 @@ main ( int argc, const char **argv )
                   //           packet.local_port,
                   //           packet.remote_address,
                   //           packet.remote_port );
-                  tot_process_act = get_process_active_con (
-                          &processes, tot_process_act );
-
+                  tot_process_act = get_process_active_con ( &processes,
+                                                             tot_process_act );
 
                   continue;
                 }
 
               packtes_reads = true;
 
-              // ppd = ( struct tpacket3_hdr * ) ( ( uint8_t * ) ppd +
-              //                                   ppd->tp_next_offset );
             }
 
+          // flush block
           pbd->hdr.bh1.block_status = TP_STATUS_KERNEL;
 
-          block_num = ( block_num + 1 ) % blocks_tot;
+          // rotete block
+          block_num = ( block_num + 1 ) % ring.req.tp_block_nr;
           pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
         }
 
@@ -211,7 +211,7 @@ main ( int argc, const char **argv )
         {
           rp = poll ( poll_set, nfds, TIMEOUT_POLL );
           if ( rp == -1 )
-            fatal_error ( "poll" );
+            fatal_error ( "poll %s", strerror ( errno ) );
           if ( rp > 0 )
             {
               for ( size_t i = 0; i < nfds; i++ )
@@ -304,8 +304,7 @@ clear_exit ( void )
 {
   close_socket ( sock );
 
-  // if ( buff_pkt )
-  //   free ( buff_pkt );
+  free_ring(&ring);
 
   if ( tot_process_act )
     free_process ( processes, tot_process_act );

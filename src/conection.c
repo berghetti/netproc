@@ -26,7 +26,7 @@
 #include "m_error.h"
 
 // defined in main.c
-extern bool udp;
+// extern bool udp;
 
 // le o arquivo onde fica salva as conexoes '/proc/net/tcp',
 // recebe o local do arquivo, um buffer para armazenar
@@ -34,13 +34,15 @@ extern bool udp;
 // retorna a quantidade de registros encontrada
 // ou -1 em caso de erro
 int
-get_info_conections ( conection_t *conection, const size_t lenght )
+get_info_conections ( conection_t *conection,
+                      const size_t lenght,
+                      const char *path_file )
 {
-  const char *conn_file = ( udp ) ? PATH_UDP : PATH_TCP;
+  // const char *conn_file = ( udp ) ? PATH_UDP : PATH_TCP;
 
   FILE *arq = NULL;
 
-  if ( !( arq = fopen ( conn_file, "r" ) ) )
+  if ( !( arq = fopen ( path_file, "r" ) ) )
     return -1;
 
   char *line = NULL;
@@ -87,11 +89,13 @@ get_info_conections ( conection_t *conection, const size_t lenght )
           // converte char para tipo inteiro
           if ( 1 !=
                sscanf ( local_addr, "%x", &conection[count].local_address ) )
-            error ( "Error converting ip address: %s", strerror ( errno ) );
+            fatal_error ( "Error converting ip address: %s",
+                          strerror ( errno ) );
 
           if ( 1 !=
                sscanf ( rem_addr, "%x", &conection[count].remote_address ) )
-            error ( "Error converting ip address: %s", strerror ( errno ) );
+            fatal_error ( "Error converting ip address: %s",
+                          strerror ( errno ) );
 
           conection[count].local_port = local_port;
           conection[count].remote_port = rem_port;

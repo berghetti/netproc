@@ -25,7 +25,6 @@
 #include <net/if.h>           // if_nametoindex
 #include <string.h>           // strerror
 #include <sys/socket.h>       // socket
-#include <sys/mman.h>         // mmap
 #include <sys/types.h>        // socket
 #include <fcntl.h>            // fcntl
 #include <unistd.h>           // close
@@ -33,27 +32,27 @@
 #include "sock.h"
 #include "m_error.h"
 
-// quantidade de blocos
-#define N_BLOCKS 64
-
-/* essa conf influencia o uso do tempo da CPU */
-#define FRAMES_PER_BLOCK 20
-
-// tamanho do frame (pacote), descosiderando o overhead do cabeçalho tpacket
-// seria uma boa ajustar conforme o maior MTU (tirando a loopback)
-#define LEN_FRAME 1600
-
-// timeout in miliseconds
-#define TIMEOUT_FRAME 65
+// // quantidade de blocos
+// #define N_BLOCKS 64
+//
+// /* essa conf influencia o uso do tempo da CPU */
+// #define FRAMES_PER_BLOCK 20
+//
+// // tamanho do frame (pacote), descosiderando o overhead do cabeçalho tpacket
+// // seria uma boa ajustar conforme o maior MTU (tirando a loopback)
+// #define LEN_FRAME 1600
+//
+// // timeout in miliseconds
+// #define TIMEOUT_FRAME 65
 
 // defined in main.c
 extern char *iface;
 
-static void
-create_buff ( int sock, struct ring *ring );
+// static void
+// create_buff ( int sock, struct ring *ring );
 
-static void
-map_buff ( int sock, struct ring *ring );
+// static void
+// map_buff ( int sock, struct ring *ring );
 
 static void
 socket_setnonblocking ( int sock );
@@ -62,7 +61,7 @@ static void
 bind_interface ( int sock, const char *iface );
 
 int
-create_socket ( struct ring *ring )
+create_socket ( void )
 {
   int sock;
 
@@ -71,9 +70,9 @@ create_socket ( struct ring *ring )
 
   socket_setnonblocking ( sock );
 
-  create_buff ( sock, ring );
-
-  map_buff ( sock, ring );
+  // create_buff ( sock, ring );
+  //
+  // map_buff ( sock, ring );
 
   bind_interface ( sock, iface );
 
@@ -100,62 +99,62 @@ socket_setnonblocking ( int sock )
                   strerror ( errno ) );
 }
 
-static void
-create_buff ( int sock, struct ring *ring )
-{
-  ring->req.tp_frame_size = TPACKET_ALIGN ( TPACKET3_HDRLEN + ETH_HLEN ) +
-                            TPACKET_ALIGN ( LEN_FRAME );
-  // tamanho inicial de uma pagina de memoria
-  ring->req.tp_block_size = sysconf ( _SC_PAGESIZE );
-  // dobra o tamanho do bloco até que caiba um frame_size
-  while ( ring->req.tp_block_size < ring->req.tp_frame_size * FRAMES_PER_BLOCK )
-    {
-      ring->req.tp_block_size <<= 1;
-    }
-
-  ring->req.tp_block_nr = N_BLOCKS;
-  size_t frames_per_block = ring->req.tp_block_size / ring->req.tp_frame_size;
-  ring->req.tp_frame_nr = ring->req.tp_block_nr * frames_per_block;
-  ring->req.tp_retire_blk_tov = TIMEOUT_FRAME;
-  ring->req.tp_feature_req_word = 0;
-
-  // set version TPACKET
-  int version = TPACKET_V3;
-  if ( setsockopt ( sock,
-                    SOL_PACKET,
-                    PACKET_VERSION,
-                    &version,
-                    sizeof ( version ) ) == -1 )
-    fatal_error ( "setsockopt version: %s", strerror ( errno ) );
-
-  // set conf buffer tpacket
-  if ( setsockopt ( sock,
-                    SOL_PACKET,
-                    PACKET_RX_RING,
-                    &ring->req,
-                    sizeof ( ring->req ) ) == -1 )
-    fatal_error ( "setsockopt: %s", strerror ( errno ) );
-}
-
-static void
-map_buff ( int sock, struct ring *ring )
-{
-  size_t rx_ring_size = ring->req.tp_block_nr * ring->req.tp_block_size;
-  ring->map =
-          mmap ( 0, rx_ring_size, PROT_READ | PROT_WRITE, MAP_SHARED, sock, 0 );
-  if ( ring->map == MAP_FAILED )
-    fatal_error ( "mmap: %s", strerror ( errno ) );
-
-  ring->rd = calloc ( ring->req.tp_block_nr, sizeof ( *ring->rd ) );
-  if ( !ring->rd )
-    fatal_error ( "calloc: %s", strerror ( errno ) );
-
-  for ( size_t i = 0; i < ring->req.tp_block_nr; ++i )
-    {
-      ring->rd[i].iov_base = ring->map + ( i * ring->req.tp_block_size );
-      ring->rd[i].iov_len = ring->req.tp_block_size;
-    }
-}
+// static void
+// create_buff ( int sock, struct ring *ring )
+// {
+//   ring->req.tp_frame_size = TPACKET_ALIGN ( TPACKET3_HDRLEN + ETH_HLEN ) +
+//                             TPACKET_ALIGN ( LEN_FRAME );
+//   // tamanho inicial de uma pagina de memoria
+//   ring->req.tp_block_size = sysconf ( _SC_PAGESIZE );
+//   // dobra o tamanho do bloco até que caiba um frame_size
+//   while ( ring->req.tp_block_size < ring->req.tp_frame_size * FRAMES_PER_BLOCK )
+//     {
+//       ring->req.tp_block_size <<= 1;
+//     }
+//
+//   ring->req.tp_block_nr = N_BLOCKS;
+//   size_t frames_per_block = ring->req.tp_block_size / ring->req.tp_frame_size;
+//   ring->req.tp_frame_nr = ring->req.tp_block_nr * frames_per_block;
+//   ring->req.tp_retire_blk_tov = TIMEOUT_FRAME;
+//   ring->req.tp_feature_req_word = 0;
+//
+//   // set version TPACKET
+//   int version = TPACKET_V3;
+//   if ( setsockopt ( sock,
+//                     SOL_PACKET,
+//                     PACKET_VERSION,
+//                     &version,
+//                     sizeof ( version ) ) == -1 )
+//     fatal_error ( "setsockopt version: %s", strerror ( errno ) );
+//
+//   // set conf buffer tpacket
+//   if ( setsockopt ( sock,
+//                     SOL_PACKET,
+//                     PACKET_RX_RING,
+//                     &ring->req,
+//                     sizeof ( ring->req ) ) == -1 )
+//     fatal_error ( "setsockopt: %s", strerror ( errno ) );
+// }
+//
+// static void
+// map_buff ( int sock, struct ring *ring )
+// {
+//   size_t rx_ring_size = ring->req.tp_block_nr * ring->req.tp_block_size;
+//   ring->map =
+//           mmap ( 0, rx_ring_size, PROT_READ | PROT_WRITE, MAP_SHARED, sock, 0 );
+//   if ( ring->map == MAP_FAILED )
+//     fatal_error ( "mmap: %s", strerror ( errno ) );
+//
+//   ring->rd = calloc ( ring->req.tp_block_nr, sizeof ( *ring->rd ) );
+//   if ( !ring->rd )
+//     fatal_error ( "calloc: %s", strerror ( errno ) );
+//
+//   for ( size_t i = 0; i < ring->req.tp_block_nr; ++i )
+//     {
+//       ring->rd[i].iov_base = ring->map + ( i * ring->req.tp_block_size );
+//       ring->rd[i].iov_len = ring->req.tp_block_size;
+//     }
+// }
 
 static void
 bind_interface ( int sock, const char *iface )

@@ -20,21 +20,18 @@
 #ifndef SOCK_SNIFF_H
 #define SOCK_SNIFF_H
 
-#include <sys/uio.h>  // struct iovec
-
-struct ring
-{
-  struct iovec *rd;
-  uint8_t *map;
-  struct tpacket_req3 req;
-};
+// #include <sys/uio.h>  // struct iovec
+//
+// struct ring
+// {
+//   struct iovec *rd;
+//   uint8_t *map;
+//   struct tpacket_req3 req;
+// };
 
 // inicializa o socket para escutar conexões
 int
-create_socket ( struct ring *ring );
-
-void
-rotation_buffer ( void );
+create_socket ( void );
 
 void
 close_socket ( int sock );

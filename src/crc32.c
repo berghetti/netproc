@@ -5,7 +5,10 @@
 #include <inttypes.h>  // uint_*
 
 #include "crc32.h"
+#include "conection.h"
 #include "m_error.h"
+
+#define CRC_BUFFER_SIZE 4096
 
 static const hash_t crctable[256] = {
         0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -101,50 +104,71 @@ crc32_computebuf ( hash_t incrc32, const void *buf, size_t buflen )
  *     - file errors
 \*----------------------------------------------------------------------------*/
 
-int
-crc32_computefile ( FILE *file, hash_t *outcrc32 )
-{
-  uint8_t *buf = calloc ( 1, CRC_BUFFER_SIZE );
-  size_t buflen = 0;
+// static int
+// crc32_computefile ( FILE *file, hash_t *outcrc32 )
+// {
+//   uint8_t *buf = calloc ( 1, CRC_BUFFER_SIZE );
+//   size_t buflen = 0;
+//
+//   int ret = 0;
+//
+//   /** accumulate crc32 from file **/
+//   *outcrc32 = 0;
+//   while ( 1 )
+//     {
+//       buflen = fread ( buf, 1, CRC_BUFFER_SIZE, file );
+//       if ( buflen == 0 )
+//         {
+//           if ( ferror ( file ) )
+//             ret = -1;
+//
+//           break;
+//         }
+//
+//       *outcrc32 = crc32_computebuf ( *outcrc32, buf, buflen );
+//     }
+//
+//   free ( buf );
+//   return ret;
+// }
 
-  int ret = 0;
-
-  /** accumulate crc32 from file **/
-  *outcrc32 = 0;
-  while ( 1 )
-    {
-      buflen = fread ( buf, 1, CRC_BUFFER_SIZE, file );
-      if ( buflen == 0 )
-        {
-          if ( ferror ( file ) )
-            ret = -1;
-
-          break;
-        }
-
-      *outcrc32 = crc32_computebuf ( *outcrc32, buf, buflen );
-    }
-
-  free ( buf );
-  return ret;
-}
-
+// crc32_computebuf ( hash_t incrc32, const void *buf, size_t buflen )
 hash_t
-get_crc32_file (const char *file_path)
+get_crc32_udp_conection ( void )
 {
-  FILE *file;
-  hash_t crc32 = 0;
+  conection_t *con_udp = calloc ( sizeof(conection_t), MAX_CONECTIONS );
+  if ( !con_udp )
+    fatal_error ( "alloc memory %s", strerror ( errno ) );
 
-  file = fopen ( file_path, "rb" );
-  if ( !file )
-    fatal_error ( "open file %s", strerror ( errno ) );
+  ssize_t tot_con;
+  hash_t crc32;
 
-  if ( crc32_computefile ( file, &crc32 ) == -1 )
-    {
-      fclose ( file );
-      fatal_error ( "error reading file conections" );
-    }
+  tot_con = get_info_conections ( con_udp, MAX_CONECTIONS, PATH_UDP );
+  if ( tot_con == -1 )
+    fatal_error ( "get conections: %s", strerror ( errno ) );
 
-  fclose ( file );
+  crc32 = crc32_computebuf ( 0, con_udp, tot_con );
+
+  free ( con_udp );
   return crc32;
 }
+
+// hash_t
+// get_crc32_file (const char *file_path)
+// {
+//   FILE *file;
+//   hash_t crc32 = 0;
+//
+//   file = fopen ( file_path, "rb" );
+//   if ( !file )
+//     fatal_error ( "open file %s", strerror ( errno ) );
+//
+//   if ( crc32_computefile ( file, &crc32 ) == -1 )
+//     {
+//       fclose ( file );
+//       fatal_error ( "error reading file conections" );
+//     }
+//
+//   fclose ( file );
+//   return crc32;
+// }

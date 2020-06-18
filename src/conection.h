@@ -26,16 +26,14 @@
 
 #include "rate.h"  // struct net_stat
 
-// FIXME: ... value is ideal???
+// FIXME: ... value ideal???
 // tamanho do buffer para identificar as conexões do sistema
-#define MAX_CONECTIONS 8000
+#define MAX_CONECTIONS 4096
 
 // caminho do arquivo onde o kernel
 // fornece as conexoes TCP e UDP
 #define PATH_TCP "/proc/net/tcp"
 #define PATH_UDP "/proc/net/udp"
-
-// struct net_stat;
 
 typedef struct conection
 {
@@ -49,7 +47,9 @@ typedef struct conection
 
 // get conections of system in "/proc/net/tcp or udp"
 int
-get_info_conections ( conection_t *conection, const size_t lenght );
+get_info_conections ( conection_t *conection,
+                      const size_t lenght,
+                      const char *path_file );
 
 // preenche o buffer com indices apenas das conexões que estão ativas
 // @param size *buffer - armazena os indices correspondentes do array

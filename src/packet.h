@@ -57,9 +57,5 @@ struct packet
 // então insere os dados na estrutura packet
 int
 parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd );
-// parse_packet ( struct packet *restrict pkt, struct tpacket2_hdr *restrict
-// tphdr );//, parse_packet ( struct packet *pkt, struct block_desc *pbd, const
-// int block_num); const uint8_t *restrict buf, const struct sockaddr_ll
-// *restrict ll );
 
 #endif  // NETWORK_H

@@ -21,30 +21,28 @@
 
 #include "sufix.h"
 
-// #define TOT_ELEMENTS_SUFIX 6
-
 enum sufix_types
 {
-  SUFIX_IEC_B = 0,
-  SUFIX_IEC_b,
-  SUFIX_SI_B,
-  SUFIX_SI_b,
-  SUFIX_IEC_B_TOT,
-  SUFIX_IEC_b_TOT,
-  SUFIX_SI_B_TOT,
-  SUFIX_SI_b_TOT,
+  SUFIX_IEC_BYTE = 0,
+  SUFIX_IEC_BIT,
+  SUFIX_SI_BYTE,
+  SUFIX_SI_BIT,
+  SUFIX_IEC_BYTE_TOT,
+  SUFIX_IEC_BIT_TOT,
+  SUFIX_SI_BYTE_TOT,
+  SUFIX_SI_BIT_TOT,
   TOT_SUFIX_SCHEME
 };
 
 static const char *const sufix_schemes[TOT_SUFIX_SCHEME][TOT_ELEMENTS_SUFIX] = {
-        [SUFIX_IEC_B] = {"B/s", "KiB/s", "MiB/s", "GiB/s", "TiB/s", "PiB/s"},
-        [SUFIX_IEC_b] = {"b/s", "Kib/s", "Mib/s", "Gib/s", "Tib/s", "Pib/s"},
-        [SUFIX_SI_B] = {"B/s", "KB/s", "MB/s", "GB/s", "TB/s", "PB/s"},
-        [SUFIX_SI_b] = {"b/s", "Kb/s", "Mb/s", "Gb/s", "Tb/s", "Pb/s"},
-        [SUFIX_IEC_B_TOT] = {"B", "KiB", "MiB", "GiB", "TiB", "PiB/s"},
-        [SUFIX_IEC_b_TOT] = {"b", "Kib", "Mib", "Gib", "Tib", "Pib/s"},
-        [SUFIX_SI_B_TOT] = {"B", "KB", "MB", "GB", "TB", "PB"},
-        [SUFIX_SI_b_TOT] = {"b", "Kb", "Mb", "Gb", "Tb", "Pb"}};
+        [SUFIX_IEC_BYTE] = {"B/s", "KiB/s", "MiB/s", "GiB/s", "TiB/s", "PiB/s"},
+        [SUFIX_IEC_BIT] = {"b/s", "Kib/s", "Mib/s", "Gib/s", "Tib/s", "Pib/s"},
+        [SUFIX_SI_BYTE] = {"B/s", "KB/s", "MB/s", "GB/s", "TB/s", "PB/s"},
+        [SUFIX_SI_BIT] = {"b/s", "Kb/s", "Mb/s", "Gb/s", "Tb/s", "Pb/s"},
+        [SUFIX_IEC_BYTE_TOT] = {"B", "KiB", "MiB", "GiB", "TiB", "PiB/s"},
+        [SUFIX_IEC_BIT_TOT] = {"b", "Kib", "Mib", "Gib", "Tib", "Pib/s"},
+        [SUFIX_SI_BYTE_TOT] = {"B", "KB", "MB", "GB", "TB", "PB"},
+        [SUFIX_SI_BIT_TOT] = {"b", "Kb", "Mb", "Gb", "Tb", "Pb"}};
 
 // defined in main.c
 extern bool view_si;
@@ -60,25 +58,25 @@ define_sufix ( void )
   if ( view_si && view_bytes )
     {
       chosen_base = BASE_SI;
-      sufix_rate = sufix_schemes[SUFIX_SI_B];
-      sufix_total = sufix_schemes[SUFIX_SI_B_TOT];
+      sufix_rate = sufix_schemes[SUFIX_SI_BYTE];
+      sufix_total = sufix_schemes[SUFIX_SI_BYTE_TOT];
     }
   else if ( view_si )
     {
       chosen_base = BASE_SI;
-      sufix_rate = sufix_schemes[SUFIX_SI_b];
-      sufix_total = sufix_schemes[SUFIX_SI_b_TOT];
+      sufix_rate = sufix_schemes[SUFIX_SI_BIT];
+      sufix_total = sufix_schemes[SUFIX_SI_BIT_TOT];
     }
   else if ( view_bytes )
     {
       chosen_base = BASE_IEC;
-      sufix_rate = sufix_schemes[SUFIX_IEC_B];
-      sufix_total = sufix_schemes[SUFIX_IEC_B_TOT];
+      sufix_rate = sufix_schemes[SUFIX_IEC_BYTE];
+      sufix_total = sufix_schemes[SUFIX_IEC_BYTE_TOT];
     }
   else
     {  // default
       chosen_base = BASE_IEC;
-      sufix_rate = sufix_schemes[SUFIX_IEC_b];
-      sufix_total = sufix_schemes[SUFIX_IEC_b_TOT];
+      sufix_rate = sufix_schemes[SUFIX_IEC_BIT];
+      sufix_total = sufix_schemes[SUFIX_IEC_BIT_TOT];
     }
 }

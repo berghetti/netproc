@@ -17,14 +17,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>  // snprintf()
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>  // snprintf()
 
 #include "human_readable.h"
 #include "integer.h"  // is_integer()
 #include "sufix.h"    // define chosen_base, sufix, sufix_tot,
-                      // LEN_ARR_SUFIX
+                      // TOT_ELEMENTS_SUFIX
 
 // based in source code of program wget
 // https://github.com/mirror/wget/blob/master/src/utils.c
