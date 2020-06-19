@@ -11,9 +11,9 @@ struct ring
 };
 
 void
-create_ring(int sock, struct ring *ring);
+create_ring ( int sock, struct ring *ring );
 
 void
-free_ring(struct ring *ring);
+free_ring ( struct ring *ring );
 
-#endif // RING_H
+#endif  // RING_H

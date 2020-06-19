@@ -17,21 +17,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <arpa/inet.h>        // htons
-#include <errno.h>            // variable errno
-#include <linux/if_ether.h>   // struct ethhdr
+#include <arpa/inet.h>  // htons
+// #include <linux/if_ether.h>   // struct ethhdr
 #include <linux/if_packet.h>  // struct sockaddr_ll
 #include <linux/ip.h>         // struct iphdr
 #include <stdbool.h>          // boolean type
-#include <string.h>           // strerror
-#include <sys/socket.h>       // recvfrom
-#include <sys/types.h>        // recvfrom
+// #include <sys/socket.h>       // recvfrom
+// #include <sys/types.h>        // recvfrom
 
-#include <stdio.h>
+#include <stdio.h>  // provisório
 
 #include "m_error.h"
 #include "packet.h"
-// #include "sock.h"  // defined sock
 #include "timer.h"
 
 // bit dont fragment flag do cabeçalho IP
@@ -67,7 +64,7 @@
 #define DEC_REASSEMBLE( var ) ( ( var > 0 ) ? ( var )-- : ( var = 0 ) )
 
 // defined in main
-extern bool udp;
+// extern bool udp;
 extern uint8_t tic_tac;
 
 // Aproveitamos do fato dos cabeçalhos TCP e UDP
@@ -129,13 +126,13 @@ parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
   int ret = 0;
 
   struct sockaddr_ll *ll;
-  struct ethhdr *l2;
+  // struct ethhdr *l2;
   struct iphdr *l3;
   struct tcp_udp_h *l4;
 
   ll = ( struct sockaddr_ll * ) ( ( uint8_t * ) ppd + TPACKET3_HDRLEN -
                                   sizeof ( struct sockaddr_ll ) );
-  l2 = ( struct ethhdr * ) ( ( uint8_t * ) ppd + ppd->tp_mac );
+  // l2 = ( struct ethhdr * ) ( ( uint8_t * ) ppd + ppd->tp_mac );
   l3 = ( struct iphdr * ) ( ( uint8_t * ) ppd + ppd->tp_net );
   l4 = ( struct tcp_udp_h * ) ( ( uint8_t * ) ppd + ppd->tp_net +
                                 ( l3->ihl * 4 ) );
@@ -145,36 +142,6 @@ parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
   // fprintf (stderr, "l3 src - %d\n", l3->saddr);
   // fprintf (stderr, "l3 dest - %d\n", l3->daddr);
   // fprintf (stderr, "l4 destp - %d\n", ntohs(l4->dest));
-
-  bool loopback = true;
-  // discard traffic loopback, mac address is zero
-  // FIXME: create filter BPF to block traffic loopback
-  for ( int i = 0; i < ll->sll_halen; i++ )
-    {
-      if ( ll->sll_addr[i] )
-        {
-          loopback = false;
-          break;
-        }
-    }
-
-  if ( loopback )
-    goto END;
-
-  // not is a packet internet protocol
-  if ( ntohs ( l2->h_proto ) != ETH_P_IP )
-    goto END;
-
-  // se não for um protocolo suportado
-  if ( l3->protocol != IPPROTO_TCP && l3->protocol != IPPROTO_UDP )
-    goto END;
-  // caso tenha farejado pacotes TCP e opção udp estaja ligada, falha
-  else if ( l3->protocol == IPPROTO_TCP && udp )
-    goto END;
-  // caso tenha farejado pacote UDP e a opção udp esteja desligada, falha
-  else if ( l3->protocol == IPPROTO_UDP && !udp )
-    goto END;
-
 
   // atigido MAX_REASSEMBLIES, dados não computados
   if ( ( frag = is_first_frag ( l3, l4 ) ) == -1 )

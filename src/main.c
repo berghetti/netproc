@@ -31,6 +31,7 @@
 #include "show.h"
 #include "sock.h"
 #include "ring.h"
+#include "filter.h"
 #include "statistics.h"
 #include "sufix.h"
 #include "terminal.h"
@@ -97,7 +98,9 @@ main ( int argc, const char **argv )
 
   sock = create_socket ();
 
-  create_ring(sock, &ring);
+  create_ring ( sock, &ring );
+
+  set_filter ( sock );
 
   define_sufix ();
 
@@ -179,7 +182,6 @@ main ( int argc, const char **argv )
                 }
 
               packtes_reads = true;
-
             }
 
           // flush block
@@ -302,7 +304,7 @@ clear_exit ( void )
 {
   close_socket ( sock );
 
-  free_ring(&ring);
+  free_ring ( &ring );
 
   if ( tot_process_act )
     free_process ( processes, tot_process_act );

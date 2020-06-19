@@ -1,5 +1,5 @@
 
-#include <stdlib.h>           // calloc
+#include <stdlib.h>  // calloc
 #include <inttypes.h>
 #include <sys/socket.h>       // setsockopt
 #include <linux/if_packet.h>  // *PACKET*
@@ -31,8 +31,8 @@
 static void
 create_ring_buff ( struct ring *ring )
 {
-  ring->req.tp_frame_size = TPACKET_ALIGN ( TPACKET3_HDRLEN ) +
-                            TPACKET_ALIGN ( LEN_FRAME );
+  ring->req.tp_frame_size =
+          TPACKET_ALIGN ( TPACKET3_HDRLEN ) + TPACKET_ALIGN ( LEN_FRAME );
   // tamanho inicial de uma pagina de memoria
   ring->req.tp_block_size = sysconf ( _SC_PAGESIZE );
   // dobra o tamanho do bloco até que caiba um frame_size
@@ -46,11 +46,10 @@ create_ring_buff ( struct ring *ring )
   ring->req.tp_frame_nr = ring->req.tp_block_nr * frames_per_block;
   ring->req.tp_retire_blk_tov = TIMEOUT_FRAME;
   ring->req.tp_feature_req_word = 0;
-
 }
 
 static void
-config_ring(int sock, struct ring *ring, int version)
+config_ring ( int sock, struct ring *ring, int version )
 {
   // set version TPACKET
   if ( setsockopt ( sock,
@@ -90,18 +89,18 @@ map_buff ( int sock, struct ring *ring )
 }
 
 void
-create_ring(int sock, struct ring *ring)
+create_ring ( int sock, struct ring *ring )
 {
-  create_ring_buff(ring);
+  create_ring_buff ( ring );
 
-  config_ring(sock, ring, TPACKET_V3);
+  config_ring ( sock, ring, TPACKET_V3 );
 
-  map_buff(sock, ring);
+  map_buff ( sock, ring );
 }
 
 void
-free_ring(struct ring *ring)
+free_ring ( struct ring *ring )
 {
-  munmap(ring->map, ring->req.tp_block_size * ring->req.tp_block_nr);
-  free(ring->rd);
+  munmap ( ring->map, ring->req.tp_block_size * ring->req.tp_block_nr );
+  free ( ring->rd );
 }
