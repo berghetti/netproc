@@ -20,8 +20,8 @@
 #include <term.h>    // setupterm, tputs, tigetstr
 #include <unistd.h>  // STDOUT_FILENO
 #include <ncurses.h>
-// #include <ncursesw/ncurses.h>
 
+#include "config.h"
 #include "color.h"
 #include "show.h"
 #include "m_error.h"
@@ -59,7 +59,7 @@ setup_terminal ( void )
 }
 
 void
-init_ui ()
+setup_ui (struct config_op *co)
 {
   initscr ();
   cbreak ();  // disable buffering to get keypad
@@ -75,7 +75,7 @@ init_ui ()
 
   curs_set ( 0 );  // cursor invisible
 
-  define_color_scheme ();
+  co->color_scheme = define_color_scheme ();
 }
 
 void

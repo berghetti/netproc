@@ -44,30 +44,26 @@ static const char *const sufix_schemes[TOT_SUFIX_SCHEME][TOT_ELEMENTS_SUFIX] = {
         [SUFIX_SI_BYTE_TOT] = {"B", "KB", "MB", "GB", "TB", "PB"},
         [SUFIX_SI_BIT_TOT] = {"b", "Kb", "Mb", "Gb", "Tb", "Pb"}};
 
-// defined in main.c
-extern bool view_si;
-extern bool view_bytes;
-
 int chosen_base;
 const char *const *sufix_rate;
 const char *const *sufix_total;
 
 void
-define_sufix ( void )
+define_sufix ( const struct config_op *co )
 {
-  if ( view_si && view_bytes )
+  if ( co->view_si && co->view_bytes )
     {
       chosen_base = BASE_SI;
       sufix_rate = sufix_schemes[SUFIX_SI_BYTE];
       sufix_total = sufix_schemes[SUFIX_SI_BYTE_TOT];
     }
-  else if ( view_si )
+  else if ( co->view_si )
     {
       chosen_base = BASE_SI;
       sufix_rate = sufix_schemes[SUFIX_SI_BIT];
       sufix_total = sufix_schemes[SUFIX_SI_BIT_TOT];
     }
-  else if ( view_bytes )
+  else if ( co->view_bytes )
     {
       chosen_base = BASE_IEC;
       sufix_rate = sufix_schemes[SUFIX_IEC_BYTE];

@@ -17,7 +17,7 @@
 //   TOT_ELEMENTS
 // };
 
-static const int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
+static int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
         [DEFAULT] =
                 {
                         [RESET] = A_NORMAL | COLOR_PAIR ( 4 ),
@@ -40,13 +40,14 @@ static const int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
                 [TREE] = A_BOLD,
         }};
 
-const int *color_scheme;
+// const int *color_scheme;
 
-void
+int *
 define_color_scheme ( void )
 {
   if ( !has_colors () )
-    color_scheme = color_schemes[MONO];
+    // color_scheme = color_schemes[MONO];
+    return color_schemes[MONO];
   else
     {
       start_color ();
@@ -59,6 +60,7 @@ define_color_scheme ( void )
       init_pair ( 3, COLOR_BLACK, COLOR_CYAN );  // line selected, column sorted
       init_pair ( 4, COLOR_WHITE, -1 );
 
-      color_scheme = color_schemes[DEFAULT];
+      // color_scheme = color_schemes[DEFAULT];
+      return color_schemes[DEFAULT];
     }
 }

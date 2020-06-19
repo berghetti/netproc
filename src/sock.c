@@ -32,9 +32,6 @@
 #include "sock.h"
 #include "m_error.h"
 
-// defined in main.c
-extern char *iface;
-
 static void
 socket_setnonblocking ( int sock );
 
@@ -42,7 +39,7 @@ static void
 bind_interface ( int sock, const char *iface );
 
 int
-create_socket ( void )
+create_socket ( const struct config_op *co )
 {
   int sock;
 
@@ -51,7 +48,7 @@ create_socket ( void )
 
   socket_setnonblocking ( sock );
 
-  bind_interface ( sock, iface );
+  bind_interface ( sock, co->iface );
 
   return sock;
 }

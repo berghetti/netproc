@@ -24,15 +24,11 @@
 #include "round.h"
 #include "rate.h"
 
-// defined in main.c
-extern bool view_bytes;
-extern bool view_conections;
-
 static void
-calc_avg_rate_conection ( process_t *process );
+calc_avg_rate_conection ( process_t *restrict process, const struct config_op *restrict co );
 
 void
-calc_avg_rate ( process_t *proc, const size_t tot_proc )
+calc_avg_rate ( process_t *restrict proc, const size_t tot_proc, const struct config_op *restrict co )
 {
   uint64_t sum_bytes_rx, sum_bytes_tx, sum_pps_rx, sum_pps_tx;
 
@@ -55,7 +51,7 @@ calc_avg_rate ( process_t *proc, const size_t tot_proc )
         }
 
       // transforma bytes em bits
-      if ( !view_bytes )
+      if ( !co->view_bytes )
         {
           sum_bytes_rx *= 8;
           sum_bytes_tx *= 8;
@@ -107,13 +103,13 @@ calc_avg_rate ( process_t *proc, const size_t tot_proc )
                        proc[i].net_stat.tot_Bps_tx,
                        TOTAL );
       // calcula taxa individual de cada conexão
-      if ( view_conections )
-        calc_avg_rate_conection ( &proc[i] );
+      if ( co->view_conections )
+        calc_avg_rate_conection ( &proc[i], co );
     }
 }
 
 static void
-calc_avg_rate_conection ( process_t *process )
+calc_avg_rate_conection ( process_t *restrict process, const struct config_op *restrict co )
 {
   uint64_t sum_bytes_rx, sum_bytes_tx, sum_pps_rx, sum_pps_tx;
 
@@ -134,7 +130,7 @@ calc_avg_rate_conection ( process_t *process )
         }
 
       // transforma bytes em bits
-      if ( !view_bytes )
+      if ( !co->view_bytes )
         {
           sum_bytes_rx *= 8;
           sum_bytes_tx *= 8;

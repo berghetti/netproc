@@ -5,9 +5,9 @@
 
 struct ring
 {
+  struct tpacket_req3 req;
   struct iovec *rd;
   uint8_t *map;
-  struct tpacket_req3 req;
 };
 
 void

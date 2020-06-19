@@ -4,6 +4,6 @@
 #include "conection.h"
 
 char *
-translate ( const conection_t * );
+translate ( const conection_t *restrictcon, const struct config_op *restrict co );
 
 #endif  // TRANSLETE_H

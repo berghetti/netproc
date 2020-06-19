@@ -102,5 +102,7 @@ void
 free_ring ( struct ring *ring )
 {
   munmap ( ring->map, ring->req.tp_block_size * ring->req.tp_block_nr );
-  free ( ring->rd );
+
+  if ( ring->rd )
+    free ( ring->rd );
 }

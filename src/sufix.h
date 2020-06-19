@@ -20,6 +20,8 @@
 #ifndef SUFIX_H
 #define SUFIX_H
 
+#include "config.h"
+
 #define BASE_IEC 1024  // default
 #define BASE_SI 1000
 
@@ -34,6 +36,6 @@ extern const char *const *sufix_rate;
 extern const char *const *sufix_total;
 
 void
-define_sufix ( void );
+define_sufix ( const struct config_op *co );
 
 #endif  // SUFIX_H

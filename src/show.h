@@ -21,6 +21,7 @@
 #define SHOW_H
 
 #include "process.h"  // type process_t, MAX_NAME
+#include "config.h"
 
 // tamanho fixo de caracteres até a coluna program
 #define PROGRAM 77
@@ -29,14 +30,14 @@
 
 // exibe os processos e suas estatisticas de rede
 void
-show_process ( const process_t *processes, const size_t tot_process );
+show_process ( const process_t *restrict processes, const size_t tot_process, const struct config_op *restrict co );
 
 // inicia a primeira vez a interface "grafica"
 void
-start_ui ( void );
+start_ui ( const struct config_op *co );
 
 // trata teclas pressionadas durante execução
 void
-running_input ();
+running_input (const struct config_op *co);
 
 #endif  // SHOW_H

@@ -20,6 +20,7 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
+#include "config.h"
 #include "conection.h"
 #include "directory.h"
 #include "rate.h"
@@ -60,7 +61,9 @@ typedef struct process
 // inicializa a estrutura process_t com os processos ativos e
 // retorna a quantidade processos armazenados
 int
-get_process_active_con ( process_t **procs, const size_t tot_process_act_old );
+get_process_active_con ( process_t **procs,
+                         const size_t tot_process_act_old,
+                         const struct config_op *co );
 
 // libera os processos informados (usado para apagar todos os processos)
 void

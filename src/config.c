@@ -1,0 +1,90 @@
+
+#include <stdlib.h>  // exit
+#include <unistd.h>  // EXIT_*
+
+#include "config.h"
+#include "usage.h"
+#include "m_error.h"
+
+// default options
+static struct config_op co = {
+        .iface = NULL,
+        .udp = false,
+        .view_si = false,
+        .view_bytes = false,
+        .view_conections = false,
+        .translate_host = true,
+        .translate_service = true,
+        .tic_tac = 0,
+};
+
+struct config_op *
+parse_options ( int argc, const char **argv )
+{
+  // parse options
+  while ( --argc )
+    {
+      if ( *++argv && **argv == '-' )
+        {
+          switch ( *( *argv + 1 ) )
+            {
+              case 'u':
+                co.udp = true;
+                break;
+              case 'i':
+                co.iface = ( char * ) *++argv;
+                argc--;
+                break;
+              case 'B':
+                co.view_bytes = true;
+                break;
+              case 'c':
+                co.view_conections = true;
+                break;
+              case 's':
+                if ( *( *argv + 2 ) && *( *argv + 2 ) == 'i' )
+                  {
+                    co.view_si = true;
+                    break;
+                  }
+                goto FAIL;
+              case 'n':
+                // view conections implict
+                co.view_conections = true;
+
+                if ( *( *argv + 2 ) && *( *argv + 2 ) == 'h' )
+                  {
+                    co.translate_host = false;
+                    break;
+                  }
+                else if ( *( *argv + 2 ) && *( *argv + 2 ) == 'p' )
+                  {
+                    co.translate_service = false;
+                    break;
+                  }
+                else if ( ( *( *argv + 2 ) ) )
+                  goto FAIL;
+
+                co.translate_host = false;
+                break;
+              case 'h':
+                usage ();
+                exit ( EXIT_SUCCESS );
+              case 'v':
+                show_version ();
+                exit ( EXIT_SUCCESS );
+              default:
+                goto FAIL;
+            }
+        }
+      else
+        goto FAIL;
+    }
+
+  return &co;
+
+FAIL:
+  error ( "Invalid argument '%s'", *argv );
+  usage ();
+  exit ( EXIT_FAILURE );
+}

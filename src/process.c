@@ -23,13 +23,9 @@
 #include <string.h>  // memset
 #include <unistd.h>  // readliink
 
-#include "m_error.h"  // fatal_error, error
+#include "config.h"
 #include "process.h"  // process_t
-// #include "rate.h"
-
-// defined in main.c
-extern bool view_conections;
-extern bool udp;
+#include "m_error.h"  // fatal_error, error
 
 static int
 get_name_process ( char **buffer, const pid_t pid );
@@ -58,10 +54,6 @@ process_copy ( process_t *restrict proc,
                process_t *restrict new_procs,
                const size_t new_tot_proc );
 
-// static void
-// save_statistics ( process_t *restrict proc_dst, process_t *restrict proc_src
-// );
-
 static void
 save_statistics ( struct net_stat *restrict stat_dst,
                   struct net_stat *restrict stat_src );
@@ -77,21 +69,6 @@ copy_conections ( process_t *proc,
 // principal antes que seja necessario realicar mais memoria
 static uint32_t max_n_proc = 0;
 
-// // buffer utilizado na função get_process_active_con
-// // para armazenar o PID de todos os processos do sistema
-// static uint32_t process_pids[MAX_PROCESS] = {0};
-//
-// // armazena os dados apenas dos processos que possuem conexão ativa
-// // FIXME: verificar migração para memoria dinamica para o buffer "processos"
-// static process_t processos[MAX_PROCESS] = {0};
-//
-// // buffer utilziado na função get_process_active_con
-// // para armazenas todas as conexões do sistema
-// static conection_t conections[MAX_CONECTIONS] = {0};
-//
-// // buffer utilizado para armazenar conexões individuais dos processos
-// static int index_history_con[MAX_CONECTIONS] = {0};
-
 /*
  percorre todos os processos encontrados no diretório '/proc/',
  em cada processo encontrado armazena todos os file descriptors
@@ -101,7 +78,9 @@ static uint32_t max_n_proc = 0;
  encontramos o processo que corresponde ao inode (conexão).
 */
 int
-get_process_active_con ( process_t **cur_proc, const size_t tot_cur_proc_act )
+get_process_active_con ( process_t **cur_proc,
+                         const size_t tot_cur_proc_act,
+                         const struct config_op *co )
 {
   // buffer utilizado na função get_process_active_con
   // para armazenar o PID de todos os processos do sistema
@@ -125,7 +104,7 @@ get_process_active_con ( process_t **cur_proc, const size_t tot_cur_proc_act )
     fatal_error ( "Error get PIDs of processes" );
 
   int total_conections = get_info_conections (
-          conections, MAX_CONECTIONS, ( udp ) ? PATH_UDP : PATH_TCP );
+          conections, MAX_CONECTIONS, ( co->udp ) ? PATH_UDP : PATH_TCP );
 
   if ( total_conections == -1 )
     fatal_error ( "Error get_info_conections" );

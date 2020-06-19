@@ -3,14 +3,13 @@
 #include <linux/filter.h>
 #include <sys/socket.h>  // setsockopt
 
+#include "config.h"
 #include "m_error.h"
 
 #define ELEMENTS_ARRAY( x ) ( sizeof ( x ) / sizeof ( x[0] ) )
 
-extern int udp;
-
 void
-set_filter ( int sock )
+set_filter ( int sock, const struct config_op *co )
 {
   // tcpdump not net 127 and ip and tcp -s 100 -dd
   // block 127.0.0.0/8 network
@@ -48,18 +47,18 @@ set_filter ( int sock )
           {0x6, 0, 0, 0x00000000},
   };
 
-  if ( udp )
+  struct sock_fprog bpf;
+
+  if ( co->udp )
     {
-      fprog->len = ELEMENTS_ARRAY ( ip_udp );
-      fprog->filter = ip_udp;
+      bpf.len = ELEMENTS_ARRAY ( ip_udp );
+      bpf.filter = ip_udp;
     }
   else
     {
-      fprog->len = ELEMENTS_ARRAY ( ip_tcp );
-      fprog->filter = ip_tcp;
+      bpf.len = ELEMENTS_ARRAY ( ip_tcp );
+      bpf.filter = ip_tcp;
     }
-
-  struct sock_fprog bpf;
 
   if ( setsockopt (
                sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof ( bpf ) ) ==

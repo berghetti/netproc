@@ -7,18 +7,13 @@
 
 #include "translate.h"
 
-// defined in main.c
-extern bool udp;
-extern bool translate_host;
-extern bool translate_service;
-
 #define LEN_TUPLE ( ( NI_MAXHOST + NI_MAXSERV ) * 2 ) + 7
 
 static void
-check_flags ( int * );
+check_flags ( int *restrict flags, const struct config_op *restrict co );
 
 char *
-translate ( const conection_t *con )
+translate ( const conection_t *restrict con, const struct config_op *restrict co )
 {
   // tuple ip:port <-> ip:port
   static char tuple[LEN_TUPLE];
@@ -26,7 +21,7 @@ translate ( const conection_t *con )
   const socklen_t socklen = sizeof ( struct sockaddr_in );
 
   int flags = 0;
-  check_flags ( &flags );
+  check_flags ( &flags, co );
 
   char l_host[NI_MAXHOST], l_service[NI_MAXSERV];
   char r_host[NI_MAXHOST], r_service[NI_MAXSERV];
@@ -68,16 +63,16 @@ translate ( const conection_t *con )
 }
 
 static void
-check_flags ( int *flags )
+check_flags ( int *restrict flags, const struct config_op *restrict co )
 {
   *flags = 0;
   // use proto UDP to search
   *flags |= NI_DGRAM;
 
-  if ( !translate_host && !translate_service )
+  if ( !co->translate_host && !co->translate_service )
     *flags |= NI_NUMERICHOST | NI_NUMERICSERV;
-  else if ( !translate_host )
+  else if ( !co->translate_host )
     *flags |= NI_NUMERICHOST;
-  else if ( !translate_service )
+  else if ( !co->translate_service )
     *flags |= NI_NUMERICSERV;
 }

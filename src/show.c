@@ -19,24 +19,15 @@
 
 #include <stdbool.h>
 #include <string.h>  // strlen
-// #include <ctype.h>   // isprint
-// #include <unistd.h>   // STDOUT_FILENO
 #include <ncurses.h>
-// #include <ncursesw/ncurses.h>
 
 #include "str.h"
 #include "process.h"
 #include "conection.h"
-// #include "terminal.h"
 #include "color.h"
 #include "translate.h"
 #include "show.h"
 #include "sort.h"
-
-// defined in main.c
-extern bool view_conections;
-extern process_t *processes;
-extern uint32_t tot_process_act;
 
 // defined un terminal.c
 extern WINDOW *pad;
@@ -67,23 +58,23 @@ static int tot_rows;      // total linhas exibidas
 // static chtype line_color[COLS_PAD];  // versão otimizada não precisa
 
 static void
-show_conections ( const process_t *process );
+show_conections ( const process_t *restrict process, const struct config_op *restrict co );
 
 static void
-show_header ();
+show_header (const struct config_op *co);
 
 static void
-paint_selected ();
+paint_selected (const struct config_op *co);
 
 void
-start_ui ( void )
+start_ui ( const struct config_op *co )
 {
-  show_header ();
+  show_header (co);
   doupdate ();
 }
 
 void
-show_process ( const process_t *processes, const size_t tot_process )
+show_process ( const process_t *restrict processes, const size_t tot_process, const struct config_op * restrict co )
 {
   int len_base_name, len_name;
   // limpa a tela e o scrollback
@@ -137,17 +128,17 @@ show_process ( const process_t *processes, const size_t tot_process )
               if ( j >= len_name && j < len_base_name )
                 // pinta somente o nome do programa
                 waddch ( pad,
-                         processes[i].name[j] | color_scheme[NAME_PROG_BOLD] );
+                         processes[i].name[j] | co->color_scheme[NAME_PROG_BOLD] );
               else
                 // pinta todo o caminho do programa e parametros
-                waddch ( pad, processes[i].name[j] | color_scheme[NAME_PROG] );
+                waddch ( pad, processes[i].name[j] | co->color_scheme[NAME_PROG] );
             }
 
           waddch ( pad, '\n' );
 
-          if ( view_conections & ( processes[i].net_stat.avg_Bps_rx ||
+          if ( co->view_conections & ( processes[i].net_stat.avg_Bps_rx ||
                                    processes[i].net_stat.avg_Bps_tx ) )
-            show_conections ( &processes[i] );
+            show_conections ( &processes[i], co );
         }
     }
 
@@ -164,7 +155,7 @@ show_process ( const process_t *processes, const size_t tot_process )
       mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD - 1 );
       // wprintw(pad, "vamo ve 2 \n%d\n%d\n", tot_rows, SELECTED_H);
       // (re)pinta item selecionado
-      paint_selected ();
+      paint_selected (co);
     }
 
   // pnoutrefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );  // atualiza
@@ -179,14 +170,14 @@ show_process ( const process_t *processes, const size_t tot_process )
 }
 
 static void
-show_conections ( const process_t *process )
+show_conections ( const process_t *restrict process, const struct config_op *restrict co )
 {
   // tuple ip:port <-> ip:port
   char *tuple;
   bool last_con = false;
   size_t i;
 
-  wattron ( pad, color_scheme[CONECTIONS] );
+  wattron ( pad, co->color_scheme[CONECTIONS] );
   for ( i = 0; i < process->total_conections; i++ )
     {
       tot_rows++;
@@ -202,9 +193,8 @@ show_conections ( const process_t *process )
         last_con = true;
 
       // faz a tradução de ip:porta para nome-reverso:serviço
-      tuple = translate ( &process->conection[i] );
+      tuple = translate ( &process->conection[i], co );
 
-      // waddch(pad, 'C' | A_INVIS);
       wprintw ( pad,
                 " %*s %*ld %*ld %*s %*s ",
                 PID,
@@ -220,7 +210,7 @@ show_conections ( const process_t *process )
 
       wprintw ( pad, "%*s", TUPLE, "" );
 
-      wattron ( pad, color_scheme[TREE] );
+      wattron ( pad, co->color_scheme[TREE] );
       if ( !last_con )
         {
           waddch ( pad, ACS_LTEE );   // ├
@@ -231,7 +221,7 @@ show_conections ( const process_t *process )
           waddch ( pad, ACS_LLCORNER );  // └
           waddch ( pad, ACS_HLINE );     // ─
         }
-      wattroff ( pad, color_scheme[TREE] );
+      wattroff ( pad, co->color_scheme[TREE] );
 
       wprintw ( pad, " %s\n", tuple );
 
@@ -245,60 +235,60 @@ show_conections ( const process_t *process )
       tot_rows++;
     }
 
-  wattroff ( pad, color_scheme[CONECTIONS] );
+  wattroff ( pad, co->color_scheme[CONECTIONS] );
 }
 
 static void
-show_header ( void )
+show_header ( const struct config_op *co )
 {
   wmove ( pad, 0, 0 );  // move first line
 
   wattrset ( pad,
-             ( sort_by == S_PID ) ? color_scheme[SELECTED_H]
-                                  : color_scheme[HEADER] );
+             ( sort_by == S_PID ) ? co->color_scheme[SELECTED_H]
+                                  : co->color_scheme[HEADER] );
   wprintw ( pad, " %*s ", PID, "PID" );
 
   wattrset ( pad,
-             ( sort_by == PPS_TX ) ? color_scheme[SELECTED_H]
-                                   : color_scheme[HEADER] );
+             ( sort_by == PPS_TX ) ? co->color_scheme[SELECTED_H]
+                                   : co->color_scheme[HEADER] );
   wprintw ( pad, "%*s ", PPS, "PPS TX" );
 
   wattrset ( pad,
-             ( sort_by == PPS_RX ) ? color_scheme[SELECTED_H]
-                                   : color_scheme[HEADER] );
+             ( sort_by == PPS_RX ) ? co->color_scheme[SELECTED_H]
+                                   : co->color_scheme[HEADER] );
   wprintw ( pad, "%*s", PPS, "PPS RX" );
 
   wattrset ( pad,
-             ( sort_by == RATE_TX ) ? color_scheme[SELECTED_H]
-                                    : color_scheme[HEADER] );
+             ( sort_by == RATE_TX ) ? co->color_scheme[SELECTED_H]
+                                    : co->color_scheme[HEADER] );
   wprintw ( pad, "    %s   ", "RATE TX" );
 
   wattrset ( pad,
-             ( sort_by == RATE_RX ) ? color_scheme[SELECTED_H]
-                                    : color_scheme[HEADER] );
+             ( sort_by == RATE_RX ) ? co->color_scheme[SELECTED_H]
+                                    : co->color_scheme[HEADER] );
   wprintw ( pad, "    %s   ", "RATE RX" );
 
   wattrset ( pad,
-             ( sort_by == TOT_TX ) ? color_scheme[SELECTED_H]
-                                   : color_scheme[HEADER] );
+             ( sort_by == TOT_TX ) ? co->color_scheme[SELECTED_H]
+                                   : co->color_scheme[HEADER] );
   wprintw ( pad, "    %s    ", "TOTAL TX" );
 
   wattrset ( pad,
-             ( sort_by == TOT_RX ) ? color_scheme[SELECTED_H]
-                                   : color_scheme[HEADER] );
+             ( sort_by == TOT_RX ) ? co->color_scheme[SELECTED_H]
+                                   : co->color_scheme[HEADER] );
   wprintw ( pad, "  %s   ", "TOTAL RX" );
 
-  wattrset ( pad, color_scheme[HEADER] );
+  wattrset ( pad, co->color_scheme[HEADER] );
   wprintw ( pad, "%*s", -( COLS_PAD - PROGRAM - 1 ), "PROGRAM" );
 
-  wattrset ( pad, color_scheme[RESET] );
+  wattrset ( pad, co->color_scheme[RESET] );
 
   // atualiza cabeçalho
   pnoutrefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );
 }
 
 void
-running_input ()
+running_input (const struct config_op *co)
 {
   int ch;
 
@@ -346,7 +336,7 @@ running_input ()
                 mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD - 1 );
 
                 // pinta a linha selecionada
-                paint_selected ();
+                paint_selected (co);
 
                 // atualiza tela
                 // getyx(pad, y, x);
@@ -372,7 +362,7 @@ running_input ()
                 // pintada)
                 mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD - 1 );
 
-                paint_selected ();
+                paint_selected (co);
 
                 // atualiza tela
                 pnoutrefresh (
@@ -386,7 +376,7 @@ running_input ()
           case 's':
           case 'S':
             sort_by = ( sort_by + 1 < COLS_TO_SORT ) ? sort_by + 1 : 0;
-            show_header ();
+            show_header (co);
             doupdate ();
             break;
           case 'q':
@@ -397,7 +387,7 @@ running_input ()
 }
 
 static void
-paint_selected ()
+paint_selected (const struct config_op *co)
 {
   int i = 0;
   bool skip = false;
@@ -415,13 +405,13 @@ paint_selected ()
       if ( line_original[i] )
         waddch ( pad,
                  ( line_original[i] & ( A_CHARTEXT | A_ALTCHARSET ) ) |
-                         color_scheme[SELECTED_L] );
+                         co->color_scheme[SELECTED_L] );
       else
         skip = true;
 
     SKIP:
       if ( skip )
-        waddch ( pad, ' ' | color_scheme[SELECTED_L] );
+        waddch ( pad, ' ' | co->color_scheme[SELECTED_L] );
 
       i++;
     }

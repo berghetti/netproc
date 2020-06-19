@@ -23,6 +23,8 @@
 #include <stdlib.h>  // type size_t
 #include <stdint.h>  // uint*_t
 
+#include "config.h"
+
 // espaço amostral para calcular a média
 // de estatisticas de rede.
 // 5 é um bom valor...
@@ -60,6 +62,6 @@ struct net_stat
 typedef struct process process_t;
 
 void
-calc_avg_rate ( process_t *proc, const size_t tot_proc );
+calc_avg_rate ( process_t *restrict proc, const size_t tot_proc, const struct config_op *restrict co );
 
 #endif  // RATE_H

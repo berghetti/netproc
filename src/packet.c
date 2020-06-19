@@ -63,10 +63,6 @@
 // atualiza o total de pacotes fragmentados
 #define DEC_REASSEMBLE( var ) ( ( var > 0 ) ? ( var )-- : ( var = 0 ) )
 
-// defined in main
-// extern bool udp;
-extern uint8_t tic_tac;
-
 // Aproveitamos do fato dos cabeçalhos TCP e UDP
 // receberem as portas de origem e destino na mesma ordem,
 // e como atributos iniciais, assim podemos utilizar esse estrutura
