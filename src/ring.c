@@ -77,7 +77,7 @@ map_buff ( int sock, struct ring *ring )
   if ( ring->map == MAP_FAILED )
     fatal_error ( "mmap: %s", strerror ( errno ) );
 
-  ring->rd = calloc ( ring->req.tp_block_nr, sizeof ( *ring->rd ) );
+  ring->rd = calloc ( sizeof ( *ring->rd ), ring->req.tp_block_nr );
   if ( !ring->rd )
     fatal_error ( "calloc: %s", strerror ( errno ) );
 

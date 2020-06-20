@@ -27,13 +27,8 @@
 
 #include "m_error.h"
 
-// based in source code of program t50
-// https://gitlab.com/fredericopissarra/t50/-/blob/master/src/errors.c
-
 #define RED 1
 #define YELLOW 3
-
-static int istty;
 
 static int
 puterr ( const int c );
@@ -45,6 +40,7 @@ void
 error ( const char *msg, ... )
 {
   va_list args;
+  int istty;
 
   // imprime caracteres de escape para cores apenas se for para um terminal
   if ( ( istty = isatty ( STDERR_FILENO ) ) )
@@ -70,6 +66,7 @@ void
 fatal_error ( const char *msg, ... )
 {
   va_list args;
+  int istty;
 
   // imprime caracteres de escape para cores apenas se for para um terminal
   if ( ( istty = isatty ( STDERR_FILENO ) ) )

@@ -4,11 +4,24 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
+0.4.0 - 2020-06-20
+  * improvements interface user
+    colors;
+    scroll horizontal and vertial;
+    sort by columns;
+  * improved CPU usage using socket mmap with TPACKET_V3 and poll
+  * traffic no necessary discarded with filter BPF
+  * check necessary update process more eficient in mode udp
+  - check argument '-i' improved
+  - statistics conections storage
+  + statistics total bytes/bits TX and RX
+
+
 0.3.1 - 2020-05-25
-  + translate of host and service 
+  + translate of host and service
   * improved parse of options, now code is more readble and checking of parameters is best
   * updated [options] of README
-  - minor change of function copy_conections in process.c  
+  - minor change of function copy_conections in process.c
 
 0.2.0 - 2020-05-22
   + individual statistics by connections, option '-c'

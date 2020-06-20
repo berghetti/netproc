@@ -22,10 +22,6 @@
 #include <linux/if_packet.h>  // struct sockaddr_ll
 #include <linux/ip.h>         // struct iphdr
 #include <stdbool.h>          // boolean type
-// #include <sys/socket.h>       // recvfrom
-// #include <sys/types.h>        // recvfrom
-
-#include <stdio.h>  // provisório
 
 #include "m_error.h"
 #include "packet.h"
@@ -132,12 +128,6 @@ parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
   l3 = ( struct iphdr * ) ( ( uint8_t * ) ppd + ppd->tp_net );
   l4 = ( struct tcp_udp_h * ) ( ( uint8_t * ) ppd + ppd->tp_net +
                                 ( l3->ihl * 4 ) );
-
-  // fprintf (stderr, "ll type - %d\n", ll->sll_pkttype);
-  // fprintf (stderr, "l2 proto - %d\n", ntohs(l2->h_proto));
-  // fprintf (stderr, "l3 src - %d\n", l3->saddr);
-  // fprintf (stderr, "l3 dest - %d\n", l3->daddr);
-  // fprintf (stderr, "l4 destp - %d\n", ntohs(l4->dest));
 
   // atigido MAX_REASSEMBLIES, dados não computados
   if ( ( frag = is_first_frag ( l3, l4 ) ) == -1 )

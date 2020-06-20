@@ -27,17 +27,20 @@
 #define PROGRAM 77
 
 #define COLS_PAD PROGRAM + MAX_NAME
+#define LINES_PAD 1000
 
 // exibe os processos e suas estatisticas de rede
 void
-show_process ( const process_t *restrict processes, const size_t tot_process, const struct config_op *restrict co );
+show_process ( const process_t *restrict processes,
+               const size_t tot_process,
+               const struct config_op *restrict co );
 
 // inicia a primeira vez a interface "grafica"
 void
 start_ui ( const struct config_op *co );
 
-// trata teclas pressionadas durante execução
+// handle input of user while program is running
 void
-running_input (const struct config_op *co);
+running_input ( const struct config_op *co );
 
 #endif  // SHOW_H

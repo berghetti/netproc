@@ -18,7 +18,6 @@
  */
 
 #include <stdbool.h>
-#include <stdio.h>  // provisório
 
 #include "config.h"
 #include "packet.h"
@@ -26,8 +25,6 @@
 
 // incremento circular de 0 até LEN_BUF_CIRC_RATE - 1
 #define UPDATE_ID_BUFF( id ) ( ( id ) = ( ( id ) + 1 ) % LEN_BUF_CIRC_RATE )
-// ( ( id + 1 ) < LEN_BUF_CIRC_RATE ? ( id++ ) : ( id = 0 ) )
-
 
 bool
 add_statistics_in_processes ( process_t *restrict processes,
@@ -85,8 +82,6 @@ add_statistics_in_processes ( process_t *restrict processes,
       // percorre todas as conexões do processo...
       for ( size_t j = 0; j < processes[i].total_conections; j++ )
         {
-          // fprintf(stderr, "process - %d\nkt - %d\n",
-          // processes[i].conection[j].remote_port, pkt->remote_port);
           // ... e verifica com o pacote recebido pela rede com base
           // na porta local, visto que somente um processo por vez pode usar
           // determinada porta

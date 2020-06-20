@@ -13,7 +13,8 @@ static void
 check_flags ( int *restrict flags, const struct config_op *restrict co );
 
 char *
-translate ( const conection_t *restrict con, const struct config_op *restrict co )
+translate ( const conection_t *restrict con,
+            const struct config_op *restrict co )
 {
   // tuple ip:port <-> ip:port
   static char tuple[LEN_TUPLE];

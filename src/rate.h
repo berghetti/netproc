@@ -62,6 +62,8 @@ struct net_stat
 typedef struct process process_t;
 
 void
-calc_avg_rate ( process_t *restrict proc, const size_t tot_proc, const struct config_op *restrict co );
+calc_avg_rate ( process_t *restrict proc,
+                const size_t tot_proc,
+                const struct config_op *restrict co );
 
 #endif  // RATE_H

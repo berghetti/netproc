@@ -44,7 +44,7 @@
 // a cada vez que o tempo de T_REFRESH segundo(s) é atingido
 // esse valor é alterado (entre 0 e 1), para que outras partes, statistics_proc,
 // do programa possam ter uma referencia de tempo
-#define TIC_TAC( t ) ( ( t ) ? ( t )-- : ( t )++ )
+#define TIC_TAC( t ) ( ( t ) ? ( t = 0 ) : ( t = 1 ) )
 
 // intervalo de atualização do programa, não alterar
 #define T_REFRESH 1
@@ -90,16 +90,16 @@ main ( int argc, const char **argv )
 
   co = parse_options ( argc, argv );
 
-  sock = create_socket (co);
+  sock = create_socket ( co );
 
   create_ring ( sock, &ring );
 
   set_filter ( sock, co );
 
-  define_sufix (co);
+  define_sufix ( co );
 
-  setup_ui (co);
-  start_ui (co);
+  setup_ui ( co );
+  start_ui ( co );
 
   const nfds_t nfds = 2;
   struct pollfd poll_set[2] = {
@@ -159,14 +159,8 @@ main ( int argc, const char **argv )
                       hash_crc32_udp = hash_tmp;
                     }
 
-                  // fprintf ( stderr,
-                  //           "%d:%d <-> %d:%d\n",
-                  //           packet.local_address,
-                  //           packet.local_port,
-                  //           packet.remote_address,
-                  //           packet.remote_port );
-                  tot_process_act = get_process_active_con ( &processes,
-                                                             tot_process_act, co );
+                  tot_process_act = get_process_active_con (
+                          &processes, tot_process_act, co );
 
                   continue;
                 }
@@ -182,7 +176,6 @@ main ( int argc, const char **argv )
           pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
         }
 
-      // FIXME: need improved this
       // necessario para zerar contadores quando não ha trafego
       packet.lenght = 0;
       add_statistics_in_processes ( processes, tot_process_act, &packet, co );
@@ -211,7 +204,7 @@ main ( int argc, const char **argv )
                     continue;
 
                   if ( poll_set[i].fd == STDIN_FILENO )
-                    running_input (co);
+                    running_input ( co );
                 }
             }
         }

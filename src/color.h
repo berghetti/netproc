@@ -21,8 +21,6 @@ enum elements_in_schemes
   TOT_ELEMENTS
 };
 
-// extern const int *color_scheme;
-
 int *
 define_color_scheme ( void );
 

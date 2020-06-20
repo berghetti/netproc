@@ -8,7 +8,7 @@
 
 // default options
 static struct config_op co = {
-        .iface = NULL,
+        .iface = NULL,  //all interfaces
         .udp = false,
         .view_si = false,
         .view_bytes = false,
@@ -32,7 +32,14 @@ parse_options ( int argc, const char **argv )
                 co.udp = true;
                 break;
               case 'i':
-                co.iface = ( char * ) *++argv;
+                if ( !(*++argv) || **argv == '-' )
+                  {
+                    error("Argument '-i' requere interface name");
+                    usage();
+                    exit(EXIT_FAILURE);
+                  }
+
+                co.iface = ( char * ) *argv;
                 argc--;
                 break;
               case 'B':

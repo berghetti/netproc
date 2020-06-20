@@ -26,11 +26,11 @@
 #include "conection.h"
 #include "color.h"
 #include "translate.h"
+#include "terminal.h"
 #include "show.h"
 #include "sort.h"
 
 // defined un terminal.c
-extern WINDOW *pad;
 
 // tamanho representação textual porta da camada de transporte
 #define PORTLEN 5  // 65535
@@ -58,23 +58,26 @@ static int tot_rows;      // total linhas exibidas
 // static chtype line_color[COLS_PAD];  // versão otimizada não precisa
 
 static void
-show_conections ( const process_t *restrict process, const struct config_op *restrict co );
+show_conections ( const process_t *restrict process,
+                  const struct config_op *restrict co );
 
 static void
-show_header (const struct config_op *co);
+show_header ( const struct config_op *co );
 
 static void
-paint_selected (const struct config_op *co);
+paint_selected ( const struct config_op *co );
 
 void
 start_ui ( const struct config_op *co )
 {
-  show_header (co);
+  show_header ( co );
   doupdate ();
 }
 
 void
-show_process ( const process_t *restrict processes, const size_t tot_process, const struct config_op * restrict co )
+show_process ( const process_t *restrict processes,
+               const size_t tot_process,
+               const struct config_op *restrict co )
 {
   int len_base_name, len_name;
   // limpa a tela e o scrollback
@@ -116,7 +119,7 @@ show_process ( const process_t *restrict processes, const size_t tot_process, co
 
           // wprintw ( pad, "%s", processes[i].name );
 
-          // /usr/bin/programa-nome
+          // "/usr/bin/programa-nome" --any_parameters
           len_base_name = strlen_space ( processes[i].name );
 
           // programa-nome
@@ -128,16 +131,18 @@ show_process ( const process_t *restrict processes, const size_t tot_process, co
               if ( j >= len_name && j < len_base_name )
                 // pinta somente o nome do programa
                 waddch ( pad,
-                         processes[i].name[j] | co->color_scheme[NAME_PROG_BOLD] );
+                         processes[i].name[j] |
+                                 co->color_scheme[NAME_PROG_BOLD] );
               else
                 // pinta todo o caminho do programa e parametros
-                waddch ( pad, processes[i].name[j] | co->color_scheme[NAME_PROG] );
+                waddch ( pad,
+                         processes[i].name[j] | co->color_scheme[NAME_PROG] );
             }
 
           waddch ( pad, '\n' );
 
           if ( co->view_conections & ( processes[i].net_stat.avg_Bps_rx ||
-                                   processes[i].net_stat.avg_Bps_tx ) )
+                                       processes[i].net_stat.avg_Bps_tx ) )
             show_conections ( &processes[i], co );
         }
     }
@@ -153,9 +158,9 @@ show_process ( const process_t *restrict processes, const size_t tot_process, co
 
       // salva conteudo da linha antes de pintar
       mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD - 1 );
-      // wprintw(pad, "vamo ve 2 \n%d\n%d\n", tot_rows, SELECTED_H);
+
       // (re)pinta item selecionado
-      paint_selected (co);
+      paint_selected ( co );
     }
 
   // pnoutrefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );  // atualiza
@@ -170,7 +175,8 @@ show_process ( const process_t *restrict processes, const size_t tot_process, co
 }
 
 static void
-show_conections ( const process_t *restrict process, const struct config_op *restrict co )
+show_conections ( const process_t *restrict process,
+                  const struct config_op *restrict co )
 {
   // tuple ip:port <-> ip:port
   char *tuple;
@@ -279,6 +285,7 @@ show_header ( const struct config_op *co )
   wprintw ( pad, "  %s   ", "TOTAL RX" );
 
   wattrset ( pad, co->color_scheme[HEADER] );
+                        // paint to the end of line
   wprintw ( pad, "%*s", -( COLS_PAD - PROGRAM - 1 ), "PROGRAM" );
 
   wattrset ( pad, co->color_scheme[RESET] );
@@ -287,8 +294,9 @@ show_header ( const struct config_op *co )
   pnoutrefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );
 }
 
+// handle input of user while program is running
 void
-running_input (const struct config_op *co)
+running_input ( const struct config_op *co )
 {
   int ch;
 
@@ -336,7 +344,7 @@ running_input (const struct config_op *co)
                 mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD - 1 );
 
                 // pinta a linha selecionada
-                paint_selected (co);
+                paint_selected ( co );
 
                 // atualiza tela
                 // getyx(pad, y, x);
@@ -362,7 +370,7 @@ running_input (const struct config_op *co)
                 // pintada)
                 mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD - 1 );
 
-                paint_selected (co);
+                paint_selected ( co );
 
                 // atualiza tela
                 pnoutrefresh (
@@ -376,7 +384,7 @@ running_input (const struct config_op *co)
           case 's':
           case 'S':
             sort_by = ( sort_by + 1 < COLS_TO_SORT ) ? sort_by + 1 : 0;
-            show_header (co);
+            show_header ( co );
             doupdate ();
             break;
           case 'q':
@@ -387,7 +395,7 @@ running_input (const struct config_op *co)
 }
 
 static void
-paint_selected (const struct config_op *co)
+paint_selected ( const struct config_op *co )
 {
   int i = 0;
   bool skip = false;

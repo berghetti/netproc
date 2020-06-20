@@ -24,6 +24,8 @@
 
 #include "config.h"
 
+extern WINDOW *pad;
+
 // carrega os parametros do terminal
 void
 setup_terminal ( void );
@@ -34,7 +36,7 @@ restore_terminal ( void );
 
 // start ncurses
 void
-setup_ui (struct config_op *co);
+setup_ui ( struct config_op *co );
 
 // limpa a tela, podendo tambem limpar o buffer do scroll se disponivel
 // void

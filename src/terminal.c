@@ -28,7 +28,6 @@
 
 WINDOW *pad;
 
-// static char *E3;
 
 // carrega informações do terminal a associa a stdout
 void
@@ -51,27 +50,19 @@ setup_terminal ( void )
         }
     }
 
-  // maneira terminfo
-  // codigo de escape para limpar scrollback
-  // E3 = tigetstr ( "E3" );
-  //
-  // tputs ( cursor_invisible, 1, putchar );
 }
 
 void
-setup_ui (struct config_op *co)
+setup_ui ( struct config_op *co )
 {
   initscr ();
   cbreak ();  // disable buffering to get keypad
   noecho ();
 
-  pad = newpad ( LINES * 2, COLS_PAD );
+  pad = newpad ( LINES_PAD, COLS_PAD );
 
   nodelay ( pad, TRUE );  // no gelay getch()
   keypad ( pad, TRUE );   // get arrow key
-
-  idlok ( pad, TRUE );
-  scrollok ( pad, TRUE );
 
   curs_set ( 0 );  // cursor invisible
 
@@ -81,23 +72,7 @@ setup_ui (struct config_op *co)
 void
 restore_terminal ( void )
 {
-  // maneira terminfo
-  // tputs ( cursor_normal, 1, putchar );
-  // tputs ( exit_attribute_mode, 1, putchar );
   delwin ( pad );
   curs_set ( 1 );  // restore cursor
   endwin ();
 }
-
-// limpa a tela, podendo tambem limpar o buffer do scroll se disponivel
-// Obs: não alterar ordem entre limpar a tela e limpar scroll
-// void
-// clear_cmd ( )
-// {
-//   // limpa a tela modo terminfo
-//   // tputs ( clear_screen, lines > 0 ? lines : 1, putchar );
-//   //
-//   // // se recurso para limpar scroll estiver disponivel
-//   // if ( E3 )
-//   //   tputs ( E3, lines > 0 ? lines : 1, putchar );
-// }

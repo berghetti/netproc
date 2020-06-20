@@ -25,9 +25,6 @@
 #include "conection.h"
 #include "m_error.h"
 
-// defined in main.c
-// extern bool udp;
-
 // le o arquivo onde fica salva as conexoes '/proc/net/tcp',
 // recebe o local do arquivo, um buffer para armazenar
 // dados da conexão e o tamanho do buffer,

@@ -25,10 +25,13 @@
 #include "rate.h"
 
 static void
-calc_avg_rate_conection ( process_t *restrict process, const struct config_op *restrict co );
+calc_avg_rate_conection ( process_t *restrict process,
+                          const struct config_op *restrict co );
 
 void
-calc_avg_rate ( process_t *restrict proc, const size_t tot_proc, const struct config_op *restrict co )
+calc_avg_rate ( process_t *restrict proc,
+                const size_t tot_proc,
+                const struct config_op *restrict co )
 {
   uint64_t sum_bytes_rx, sum_bytes_tx, sum_pps_rx, sum_pps_tx;
 
@@ -109,7 +112,8 @@ calc_avg_rate ( process_t *restrict proc, const size_t tot_proc, const struct co
 }
 
 static void
-calc_avg_rate_conection ( process_t *restrict process, const struct config_op *restrict co )
+calc_avg_rate_conection ( process_t *restrict process,
+                          const struct config_op *restrict co )
 {
   uint64_t sum_bytes_rx, sum_bytes_tx, sum_pps_rx, sum_pps_tx;
 

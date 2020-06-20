@@ -22,7 +22,6 @@
 
 #include "config.h"
 
-
 // inicializa o socket para escutar conexões
 int
 create_socket ( const struct config_op *co );

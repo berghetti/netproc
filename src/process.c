@@ -562,7 +562,7 @@ get_name_process ( char **buffer, const pid_t pid )
 
   *buffer = calloc ( 1, len + 1 );
 
-  if ( !buffer )
+  if ( !*buffer )
     {
       error ( "Alloc buffer name, %s", strerror ( errno ) );
       return -1;

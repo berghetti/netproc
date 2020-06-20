@@ -9,10 +9,9 @@
 int
 compara_processo ( const void *restrict p1,
                    const void *restrict p2,
-                   void *restrict arg )
+                   void *restrict mode )
 {
-  // fprintf(stderr, "%d\n", *(int *)arg);
-  switch ( *( int * ) arg )
+  switch ( *( int * ) mode )
     {
       case RATE_RX:
         return ( ( process_t * ) p2 )->net_stat.avg_Bps_rx -
@@ -48,9 +47,9 @@ compara_processo ( const void *restrict p1,
 int
 compara_conexao ( const void *restrict p1,
                   const void *restrict p2,
-                  void *restrict arg )
+                  void *restrict mode )
 {
-  switch ( *( int * ) arg )
+  switch ( *( int * ) mode )
     {
       case RATE_TX:
         return ( ( conection_t * ) p2 )->net_stat.avg_Bps_tx -
