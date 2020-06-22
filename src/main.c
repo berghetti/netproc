@@ -195,8 +195,14 @@ main ( int argc, const char **argv )
         {
           rp = poll ( poll_set, nfds, TIMEOUT_POLL );
           if ( rp == -1 )
-            fatal_error ( "poll %s", strerror ( errno ) );
-          if ( rp > 0 )
+            {
+              // signal event
+              if (errno == EINTR)
+                continue;
+              else
+                fatal_error("poll: \"%s\"", strerror (errno));
+            }
+          else if ( rp > 0 )
             {
               for ( size_t i = 0; i < nfds; i++ )
                 {

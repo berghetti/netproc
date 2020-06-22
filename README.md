@@ -20,7 +20,6 @@ tool to monitor network traffic based on processes
     $ git clone https://github.com/berghetti/netproc.git; cd netproc; make; sudo make install
 
 #### [Options / usage]
-    netproc - 0.3.1
     Usage: netproc [options]
 
     Options:

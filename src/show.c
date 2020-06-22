@@ -30,8 +30,6 @@
 #include "show.h"
 #include "sort.h"
 
-// defined un terminal.c
-
 // tamanho representação textual porta da camada de transporte
 #define PORTLEN 5  // 65535
 
@@ -83,7 +81,7 @@ show_process ( const process_t *restrict processes,
   // limpa a tela e o scrollback
   // wclear ( pad );
 
-  // show_header ();
+  // show_header (co);
 
   tot_rows = 0;
 
@@ -163,14 +161,14 @@ show_process ( const process_t *restrict processes,
       paint_selected ( co );
     }
 
-  // pnoutrefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );  // atualiza
-  // cabeçalho
+  // update header
+  pnoutrefresh ( pad, 0, scroll_x, 0, 0, 0, COLS - 1 );
 
   // prefresh ( pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
   // pnoutrefresh ( pad, 0, 0, 1, 0, LINES - 1, COLS - 1 );
   pnoutrefresh ( pad, scroll_y, scroll_x, 1, 0, LINES - 1, COLS - 1 );
 
-  // depois de todas as janelas verificadas, atualiza todas uma unica vez
+  // depois de todas as janelas verificadas, imprime todas uma unica vez
   doupdate ();
 }
 
