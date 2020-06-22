@@ -4,6 +4,9 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
+0.4.1 - 2020-06-21
+  - bug fix that close program when screen on resized
+
 0.4.0 - 2020-06-20
   * improvements interface user
     colors;
