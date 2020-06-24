@@ -15,8 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
+ */
 
 #include <stdlib.h>  // exit
 #include <unistd.h>  // EXIT_*
@@ -27,7 +26,7 @@
 
 // default options
 static struct config_op co = {
-        .iface = NULL,  //all interfaces
+        .iface = NULL,  // all interfaces
         .udp = false,
         .view_si = false,
         .view_bytes = false,
@@ -51,11 +50,11 @@ parse_options ( int argc, const char **argv )
                 co.udp = true;
                 break;
               case 'i':
-                if ( !(*++argv) || **argv == '-' )
+                if ( !( *++argv ) || **argv == '-' )
                   {
-                    error("Argument '-i' requere interface name");
-                    usage();
-                    exit(EXIT_FAILURE);
+                    error ( "Argument '-i' requere interface name" );
+                    usage ();
+                    exit ( EXIT_FAILURE );
                   }
 
                 co.iface = ( char * ) *argv;

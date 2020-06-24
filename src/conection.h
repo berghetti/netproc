@@ -38,6 +38,7 @@
 typedef struct conection
 {
   struct net_stat net_stat;  // armazena statisticas de rede
+  uint32_t if_index;
   uint32_t inode;
   uint32_t local_address;
   uint32_t remote_address;

@@ -18,6 +18,7 @@
  */
 
 #include <stdbool.h>
+#include <net/if.h>
 
 #include "config.h"
 #include "packet.h"
@@ -88,6 +89,8 @@ add_statistics_in_processes ( process_t *restrict processes,
           if ( processes[i].conection[j].local_port == pkt->local_port )
             {
               locate = true;
+
+              processes[i].conection[j].if_index = pkt->if_index;
 
               if ( pkt->direction == PKT_DOWN )
                 {  // estatisticas geral do processo

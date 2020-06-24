@@ -73,6 +73,7 @@ main ( int argc, const char **argv )
   struct tpacket3_hdr *ppd;
   struct config_op *co;
   bool packtes_reads;
+  bool fail_process_pkt;
   int block_num = 0;
   // int tot_blocks = 64; == ring.req.tp_block_nr
   int rp;
@@ -119,6 +120,7 @@ main ( int argc, const char **argv )
   while ( 1 )
     {
       packtes_reads = false;
+      fail_process_pkt = false;
 
       while ( pbd->hdr.bh1.block_status & TP_STATUS_USER )
         {
@@ -159,8 +161,8 @@ main ( int argc, const char **argv )
                       hash_crc32_udp = hash_tmp;
                     }
 
-                  tot_process_act = get_process_active_con (
-                          &processes, tot_process_act, co );
+                  // mark to update processes
+                  fail_process_pkt = true;
 
                   continue;
                 }
@@ -189,6 +191,11 @@ main ( int argc, const char **argv )
           m_timer = restart_timer ();
 
           TIC_TAC ( co->tic_tac );
+
+          // update processes case necessary
+          if ( fail_process_pkt )
+            tot_process_act =
+                    get_process_active_con ( &processes, tot_process_act, co );
         }
 
       if ( !packtes_reads )
@@ -197,10 +204,10 @@ main ( int argc, const char **argv )
           if ( rp == -1 )
             {
               // signal event
-              if (errno == EINTR)
+              if ( errno == EINTR )
                 continue;
               else
-                fatal_error("poll: \"%s\"", strerror (errno));
+                fatal_error ( "poll: \"%s\"", strerror ( errno ) );
             }
           else if ( rp > 0 )
             {

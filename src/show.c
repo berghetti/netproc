@@ -19,6 +19,7 @@
 
 #include <stdbool.h>
 #include <string.h>  // strlen
+#include <net/if.h>  // if_indextoname
 #include <ncurses.h>
 
 #include "str.h"
@@ -42,7 +43,7 @@
 #define RATE 13
 
 // espaçamento da estatistica até a tupla
-#define TUPLE 29
+#define TUPLE 26 - IF_NAMESIZE
 
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
 static chtype line_original[COLS_PAD] = {0};
@@ -180,6 +181,7 @@ show_conections ( const process_t *restrict process,
   char *tuple;
   bool last_con = false;
   size_t i;
+  char iface_buff[IF_NAMESIZE];
 
   wattron ( pad, co->color_scheme[CONECTIONS] );
   for ( i = 0; i < process->total_conections; i++ )
@@ -212,6 +214,12 @@ show_conections ( const process_t *restrict process,
                 RATE,
                 process->conection[i].net_stat.rx_rate );
 
+      wprintw ( pad,
+                "   %*s",
+                -( IF_NAMESIZE ),
+                if_indextoname ( process->conection[i].if_index, iface_buff ) );
+
+      // space tuple
       wprintw ( pad, "%*s", TUPLE, "" );
 
       wattron ( pad, co->color_scheme[TREE] );
@@ -283,7 +291,7 @@ show_header ( const struct config_op *co )
   wprintw ( pad, "  %s   ", "TOTAL RX" );
 
   wattrset ( pad, co->color_scheme[HEADER] );
-                        // paint to the end of line
+  // paint to the end of line
   wprintw ( pad, "%*s", -( COLS_PAD - PROGRAM - 1 ), "PROGRAM" );
 
   wattrset ( pad, co->color_scheme[RESET] );

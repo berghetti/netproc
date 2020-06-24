@@ -28,7 +28,6 @@
 
 WINDOW *pad;
 
-
 // carrega informações do terminal a associa a stdout
 void
 setup_terminal ( void )
@@ -49,7 +48,6 @@ setup_terminal ( void )
             fatal_error ( "unknown terminal" );
         }
     }
-
 }
 
 void

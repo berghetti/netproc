@@ -23,7 +23,7 @@
 #include <linux/ip.h>         // struct iphdr
 #include <stdbool.h>          // boolean type
 
-#include <stdio.h>            // provisório
+#include <stdio.h>  // provisório
 
 #include "m_error.h"
 #include "packet.h"
@@ -94,6 +94,7 @@ is_frag ( const struct iphdr *const l3 );
 
 static void
 insert_data_packet ( struct packet *pkt,
+                     const uint32_t if_index,
                      const uint8_t direction,
                      const uint8_t protocol,
                      const uint32_t local_address,
@@ -151,6 +152,7 @@ parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
       if ( id_frag == -1 )
         // não é um fragmento, assumi que isso é maioria dos casos
         insert_data_packet ( pkt,
+                             ll->sll_ifindex,
                              PKT_UPL,
                              l3->protocol,
                              l3->saddr,
@@ -163,6 +165,7 @@ parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
         // é um fragmento, pega dados da camada de transporte
         // no array de pacotes fragmentados
         insert_data_packet ( pkt,
+                             ll->sll_ifindex,
                              PKT_UPL,
                              l3->protocol,
                              l3->saddr,
@@ -182,6 +185,7 @@ parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
       if ( id_frag == -1 )
         // não é um fragmento, assumi que isso é maioria dos casos
         insert_data_packet ( pkt,
+                             ll->sll_ifindex,
                              PKT_DOWN,
                              l3->protocol,
                              l3->daddr,
@@ -193,6 +197,7 @@ parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
         // é um fragmento, pega dados da camada de transporte
         // no array de pacotes fragmentados
         insert_data_packet ( pkt,
+                             ll->sll_ifindex,
                              PKT_DOWN,
                              l3->protocol,
                              l3->daddr,
@@ -350,6 +355,7 @@ clear_frag ( void )
 
 static void
 insert_data_packet ( struct packet *pkt,
+                     const uint32_t if_index,
                      const uint8_t direction,
                      const uint8_t protocol,
                      const uint32_t local_address,
@@ -358,6 +364,7 @@ insert_data_packet ( struct packet *pkt,
                      const uint16_t remote_port,
                      const uint32_t len )
 {
+  pkt->if_index = if_index;
   pkt->direction = direction;
   pkt->protocol = protocol;
   pkt->local_address = local_address;
