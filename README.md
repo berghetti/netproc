@@ -34,8 +34,9 @@ tool to monitor network traffic based on processes
      -v            show version
 
     when running press:
-     s             change column-based sort
      arrow keys    scroll
+     s             change column-based sort
+     q		   exit
 
 #### [uninstall]
     $ sudo make uninstall
