@@ -171,7 +171,7 @@ main ( int argc, const char **argv )
           // flush block
           pbd->hdr.bh1.block_status = TP_STATUS_KERNEL;
 
-          // rotete block
+          // rotate block
           block_num = ( block_num + 1 ) % ring.req.tp_block_nr;
           pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
         }

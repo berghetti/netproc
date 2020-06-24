@@ -40,9 +40,8 @@
 #define FRAMES_PER_BLOCK 20
 
 // tamanho do frame (pacote), descosiderando o overhead do cabeçalho tpacket
-// sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct tcphdr)
-// payload not important
-#define LEN_FRAME ETH_HLEN + 20 + 20
+// size small cause more usage CPU
+#define LEN_FRAME 1600
 
 // timeout in miliseconds
 #define TIMEOUT_FRAME 65
