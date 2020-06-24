@@ -5,6 +5,8 @@ Legend:
 ! Known issue / missing feature
 
 0.4.? - ???
+  + show interface associate with conection
+  * cpu usage, decreasing update frequency of processes
   * cpu usage, resizing len frame buffer ring
   * filter bpf, now support interface tun
 
