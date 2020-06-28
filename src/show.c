@@ -43,7 +43,7 @@
 #define RATE 13
 
 // espaçamento da estatistica até a tupla
-#define TUPLE 26 - IF_NAMESIZE
+#define TUPLE 16 - IF_NAMESIZE
 
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
 static chtype line_original[COLS_PAD] = {0};
@@ -215,7 +215,7 @@ show_conections ( const process_t *restrict process,
                 process->conection[i].net_stat.rx_rate );
 
       wprintw ( pad,
-                "   %*s",
+                "             %*s",
                 -( IF_NAMESIZE ),
                 if_indextoname ( process->conection[i].if_index, iface_buff ) );
 

@@ -52,14 +52,7 @@ get_info_conections ( conection_t *conection,
                       const size_t lenght,
                       const char *path_file );
 
-// preenche o buffer com indices apenas das conexões que estão ativas
-// @param size *buffer - armazena os indices correspondentes do array
-// conection_t * que contem as conexões ativas
-// @param conection *con - o array de conexões para checar
-// @param size_t tot_con - tamanho do array para checar
-// size_t
-// get_con_active_in_process ( size_t *buffer,
-//                             const conection_t *con,
-//                             const size_t tot_con );
+int
+get_info_conections2 ( conection_t **conection, const char *path_file );
 
 #endif  // CONECTION_H

@@ -92,10 +92,12 @@ get_process_active_con ( process_t **cur_proc,
 
   // buffer utilziado na função get_process_active_con
   // para armazenas todas as conexões do sistema
-  static conection_t conections[MAX_CONECTIONS] = {0};
+  // static conection_t conections[MAX_CONECTIONS] = {0};
+  conection_t *conections;
 
   // buffer utilizado para armazenar conexões individuais dos processos
-  static int index_history_con[MAX_CONECTIONS] = {0};
+  // static int index_history_con[MAX_CONECTIONS] = {0}
+  // int *index_history_con;
 
   int total_process =
           get_numeric_directory ( process_pids, MAX_PROCESS, PROCESS_DIR );
@@ -103,14 +105,18 @@ get_process_active_con ( process_t **cur_proc,
   if ( total_process == -1 )
     fatal_error ( "Error get PIDs of processes" );
 
-  int total_conections = get_info_conections (
-          conections, MAX_CONECTIONS, ( co->udp ) ? PATH_UDP : PATH_TCP );
+  // int total_conections = get_info_conections (
+  //         conections, MAX_CONECTIONS, ( co->udp ) ? PATH_UDP : PATH_TCP );
+
+  int total_conections;
+  total_conections = get_info_conections2 ( &conections,
+                                            ( co->udp ) ? PATH_UDP : PATH_TCP );
 
   if ( total_conections == -1 )
     fatal_error ( "Error get_info_conections" );
 
-  // process_t processos[total_process];
-  // memset ( processos, 0, total_process * sizeof ( process_t ) );
+  int *index_history_con;
+  index_history_con = calloc ( total_conections, sizeof ( int ) );
 
   // todos file descriptors de um processo
   uint32_t fds_p[MAX_CONECTIONS] = {0};
@@ -288,6 +294,9 @@ get_process_active_con ( process_t **cur_proc,
   // dos processos que não são novos
   process_copy ( *cur_proc, processos, tot_process_active_con );
 
+  free ( conections );
+  free ( index_history_con );
+
   // retorna o numero de processos com conexão ativa
   return tot_process_active_con;
 }
@@ -378,9 +387,18 @@ copy_conections ( process_t *proc,
               // assim podemos diminuir o laço interno
               if ( a != b )
                 {
-                  // temp = con[index_con[a]];
                   con[index_con[a]] = con[index_con[b]];
-                  // con[index_con[b]] = temp;
+                  // con[index_con[a]].if_index = con[index_con[b]].if_index;
+                  // con[index_con[a]].inode = con[index_con[b]].inode;
+                  // con[index_con[a]].local_address =
+                  // con[index_con[b]].local_address;
+                  // con[index_con[a]].remote_address =
+                  // con[index_con[b]].remote_address;
+                  // con[index_con[a]].local_port =
+                  // con[index_con[b]].local_port; con[index_con[a]].remote_port
+                  // = con[index_con[b]].remote_port;
+                  save_statistics ( &con[index_con[a]].net_stat,
+                                    &con[index_con[b]].net_stat );
                 }
 
               // diminiu o tamanho do laço interno (para performance)
@@ -394,6 +412,14 @@ copy_conections ( process_t *proc,
         continue;
 
       proc->conection[c] = con[index_con[c]];
+      // proc->conection[c].if_index = con[index_con[b]].if_index;
+      // proc->conection[c].inode = con[index_con[b]].inode;
+      // proc->conection[c].local_address = con[index_con[b]].local_address;
+      // proc->conection[c].remote_address = con[index_con[b]].remote_address;
+      // proc->conection[c].local_port = con[index_con[b]].local_port;
+      // proc->conection[c].remote_port = con[index_con[b]].remote_port;
+      save_statistics ( &proc->conection[c].net_stat,
+                        &con[index_con[b]].net_stat );
     }
 }
 

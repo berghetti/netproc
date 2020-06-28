@@ -25,6 +25,9 @@
 #include "conection.h"
 #include "m_error.h"
 
+// len initial buffer conections
+#define TOT_CONECTIONS_BEGIN 512
+
 // le o arquivo onde fica salva as conexoes '/proc/net/tcp',
 // recebe o local do arquivo, um buffer para armazenar
 // dados da conexão e o tamanho do buffer,
@@ -81,27 +84,20 @@ get_info_conections ( conection_t *conection,
       if ( matches != 5 )
         return -1;
 
-      if ( strlen ( local_addr ) == 8 )  // only ipv4
-        {
-          // converte char para tipo inteiro
-          if ( 1 !=
-               sscanf ( local_addr, "%x", &conection[count].local_address ) )
-            fatal_error ( "Error converting ip address: %s",
-                          strerror ( errno ) );
+      // converte char para tipo inteiro
+      if ( 1 != sscanf ( local_addr, "%x", &conection[count].local_address ) )
+        fatal_error ( "Error converting ip address: %s", strerror ( errno ) );
 
-          if ( 1 !=
-               sscanf ( rem_addr, "%x", &conection[count].remote_address ) )
-            fatal_error ( "Error converting ip address: %s",
-                          strerror ( errno ) );
+      if ( 1 != sscanf ( rem_addr, "%x", &conection[count].remote_address ) )
+        fatal_error ( "Error converting ip address: %s", strerror ( errno ) );
 
-          conection[count].local_port = local_port;
-          conection[count].remote_port = rem_port;
-          conection[count].inode = inode;
-          // conection[count].con_state = con_state;
-          // conection[count].id = id;
+      conection[count].local_port = local_port;
+      conection[count].remote_port = rem_port;
+      conection[count].inode = inode;
+      // conection[count].con_state = con_state;
+      // conection[count].id = id;
 
-          count++;
-        }
+      count++;
     }
 
   free ( line );
@@ -111,24 +107,95 @@ get_info_conections ( conection_t *conection,
   return count;
 }
 
-// size_t
-// get_con_active_in_process ( size_t *buffer,
-//                             const conection_t *con,
-//                             const size_t tot_con )
-// {
-//   size_t id = 0;
-//
-//   // passa por todas as conexões
-//   for ( size_t j = 0; j < tot_con; j++ )
-//     {
-//       // se tiver atividade de rede
-//       if ( con[j].net_stat.avg_Bps_tx || con[j].net_stat.avg_Bps_rx ||
-//            con[j].net_stat.avg_pps_tx || con[j].net_stat.avg_pps_rx )
-//         {
-//           // anota o indice da conexão
-//           buffer[id++] = j;
-//         }
-//     }
-//
-//   return id;
-// }
+//////////////////////////////////////////////////////////
+
+int
+get_info_conections2 ( conection_t **conection, const char *path_file )
+{
+  FILE *arq = NULL;
+
+  if ( !( arq = fopen ( path_file, "r" ) ) )
+    return -1;
+
+  char *line = NULL;
+  size_t len = 0;
+
+  // ignore header in first line
+  if ( ( getline ( &line, &len, arq ) ) == -1 )
+    {
+      free ( line );
+      fclose ( arq );
+      return -1;
+    }
+
+  uint32_t len_buff_conections = TOT_CONECTIONS_BEGIN;
+  *conection = calloc(len_buff_conections, sizeof(conection_t));
+  if (!*conection)
+    {
+      free ( line );
+      fclose ( arq );
+      return -1;
+    }
+
+  uint32_t count = 0;
+  char local_addr[64], rem_addr[64] = {0};
+
+  unsigned int matches, local_port, rem_port;
+  unsigned long int inode;
+
+  while ( ( getline ( &line, &len, arq ) ) != -1 )
+    {
+      // clang-format off
+      // sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
+      // 0: 3500007F:0035 00000000:0000 0A 00000000:00000000 00:00000000 00000000   101        0 20911 1 0000000000000000 100 0 0 10 0
+      // 1: 0100007F:0277 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 44385 1 0000000000000000 100 0 0 10 0
+      // 2: 0100007F:1733 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 27996 1 0000000000000000 100 0 0 10 0
+      // clang-format on
+
+      matches = sscanf ( line,
+                         "%*d: %64[0-9A-Fa-f]:%X %64[0-9A-Fa-f]:%X %*X "
+                         "%*X:%*X %*X:%*X %*X %*d %*d %lu %*512s\n",
+                         local_addr,
+                         &local_port,
+                         rem_addr,
+                         &rem_port,
+                         &inode );
+
+      if ( matches != 5 )
+        return -1;
+
+      if ( 1 !=
+           sscanf ( local_addr, "%x", &( *conection )[count].local_address ) )
+        fatal_error ( "Error converting ip address: %s", strerror ( errno ) );
+
+      if ( 1 !=
+           sscanf ( rem_addr, "%x", &( *conection )[count].remote_address ) )
+        fatal_error ( "Error converting ip address: %s", strerror ( errno ) );
+
+      ( *conection )[count].local_port = local_port;
+      ( *conection )[count].remote_port = rem_port;
+      ( *conection )[count].inode = inode;
+
+      count++;
+
+      if ( count + 1 == len_buff_conections )
+        {
+          len_buff_conections <<= 1;
+          conection_t *temp;
+          temp = realloc(*conection, len_buff_conections * sizeof(conection_t));
+          if (!temp)
+            fatal_error("Alloc memory conections: \"%s\"", strerror(errno));
+
+          *conection = temp;
+
+          // initialize new space of memory
+          memset(&(*conection)[count], 0, (len_buff_conections - count) *
+          sizeof(conection_t));
+        }
+    }
+
+  free ( line );
+  fclose ( arq );
+
+  return count;
+}
