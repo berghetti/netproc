@@ -150,22 +150,22 @@ get_process_active_con ( process_t **cur_proc,
   for ( int index_pd = 0; index_pd < total_process;
         index_pd++ )  // index_pd - process pid index
     {
+      process_have_conection_history = false;
+      process_have_conection_active = false;
+
       // verifica se o pid atual, consta na buffer principal
       exists_pid = search_pid (
               process_pids[index_pd], *cur_proc, tot_cur_proc_act );
 
-      process_have_conection_history = false;
-      process_have_conection_active = false;
-
       // se o pid constar no buffer principal e tiver historico de trafego de
-      // de rede, essa indicação é habilitada
+      // de rede, essa indicação é habilitada para posteriormente salvar dados
+      // das conexões
       if ( exists_pid != -1 )
         if ( ( *cur_proc )[exists_pid].net_stat.tot_Bps_rx ||
              ( *cur_proc )[exists_pid].net_stat.tot_Bps_tx )
           process_have_conection_history = true;
 
       index_conection = 0;
-      // memset ( index_history_con, 0, MAX_CONECTIONS * sizeof ( int ) );
 
       snprintf ( path_fd, MAX_PATH_FD, "/proc/%d/fd/", process_pids[index_pd] );
 
