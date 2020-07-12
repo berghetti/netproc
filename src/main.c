@@ -95,6 +95,7 @@ main ( int argc, const char **argv )
 
   create_ring ( sock, &ring );
 
+  // set filter BPF
   set_filter ( sock, co );
 
   define_sufix ( co );

@@ -178,9 +178,10 @@ get_info_conections2 ( conection_t **conection, const char *path_file )
 
       count++;
 
-      if ( count + 1 == len_buff_conections )
+      if ( count == len_buff_conections )
         {
           len_buff_conections <<= 1;
+
           conection_t *temp;
           temp = realloc(*conection, len_buff_conections * sizeof(conection_t));
           if (!temp)

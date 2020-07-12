@@ -28,4 +28,9 @@ get_numeric_directory ( uint32_t *restrict buffer,
                         const size_t lenght,
                         const char *restrict path_dir );
 
+int
+get_numeric_directory2 ( uint32_t **buffer,
+                        const char *path_dir );
+
+
 #endif  // DIRECTORY_H
