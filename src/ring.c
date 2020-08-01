@@ -33,10 +33,11 @@
 #endif
 
 // quantidade de blocos
-#define N_BLOCKS 64
+#define N_BLOCKS 256
 
-/* essa conf influencia o uso do tempo da CPU */
-#define FRAMES_PER_BLOCK 20
+// essa conf influencia o uso do tempo da CPU
+// keep it as power-of-two
+#define FRAMES_PER_BLOCK 512
 
 // tamanho do frame (pacote), descosiderando o overhead do cabeçalho tpacket
 // size small cause more usage CPU
@@ -91,6 +92,7 @@ map_buff ( int sock, struct ring *ring )
   size_t rx_ring_size = ring->req.tp_block_nr * ring->req.tp_block_size;
   ring->map =
           mmap ( 0, rx_ring_size, PROT_READ | PROT_WRITE, MAP_SHARED, sock, 0 );
+
   if ( ring->map == MAP_FAILED )
     fatal_error ( "mmap: %s", strerror ( errno ) );
 
