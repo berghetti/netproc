@@ -35,6 +35,7 @@
 *.dylib
 
 # Executables
+netproc
 *.exe
 *.out
 *.app

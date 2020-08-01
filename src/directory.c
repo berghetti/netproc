@@ -22,7 +22,13 @@
 #include <stdbool.h>    // type boolean
 #include <stdint.h>     // type uint*
 #include <stdlib.h>     // atoi
+#include <string.h>     // memset
 #include <sys/types.h>  // *dir
+
+#include <stdio.h>
+
+// len init buffer
+#define TOT_PROCESS_BEGIN 512
 
 static bool
 is_number ( const char *string );
@@ -43,9 +49,55 @@ get_numeric_directory ( uint32_t *restrict buffer,
   struct dirent *directory = NULL;
   uint32_t count = 0;
 
-  while ( ( directory = readdir ( dir ) ) && count < lenght )
+  while ( ( directory = readdir ( dir ) ) && count < lenght  )
     if ( is_number ( directory->d_name ) )
       buffer[count++] = atoi ( directory->d_name );
+
+  closedir ( dir );
+
+  return count;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+int
+get_numeric_directory2 ( uint32_t **buffer,
+                        const char *path_dir )
+{
+  DIR *dir;
+
+  if ( ( dir = opendir ( path_dir ) ) == NULL )
+    return -1;
+
+  struct dirent *directory = NULL;
+  uint32_t count = 0;
+
+  uint32_t len_buffer = TOT_PROCESS_BEGIN;
+  *buffer = malloc( len_buffer * sizeof (**buffer) );
+  if (!*buffer)
+    return -1;
+
+  while ( ( directory = readdir ( dir ) ))
+    {
+      if ( is_number ( directory->d_name ) )
+        (*buffer)[count++] = atoi ( directory->d_name );
+
+      if (count == len_buffer)
+        {
+          len_buffer <<= 1;
+
+          uint32_t *temp;
+          temp = realloc(*buffer, len_buffer * sizeof(**buffer));
+          if (!temp)
+            return -1;
+
+          *buffer = temp;
+
+          // initialize new space of memory
+          memset(&(*buffer)[count], 0, (len_buffer - count) * sizeof(**buffer));
+
+        }
+    }
 
   closedir ( dir );
 

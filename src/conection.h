@@ -27,7 +27,7 @@
 #include "rate.h"  // struct net_stat
 
 // FIXME: ... value ideal???
-// tamanho do buffer para identificar as conexões do sistema
+// tamanho do buffer para identificar o maximo de fd de um processo
 #define MAX_CONECTIONS 4096
 
 // caminho do arquivo onde o kernel
