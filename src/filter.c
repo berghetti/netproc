@@ -30,7 +30,7 @@ void
 set_filter ( int sock, const struct config_op *co )
 {
   //   /*
-  //   sudo apt install netsniff-ng, to bpfc
+  //   sudo apt install netsniff-ng, to get program bpfc
   //   bpfc -i filter -f C -p -D TCP (or UDP)
   //   pass ipv4 and tcp
   //   suport to interface ethernet and
