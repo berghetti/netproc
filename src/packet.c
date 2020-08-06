@@ -107,7 +107,7 @@ static void
 clear_frag ( void );
 
 // armazena os dados da camada de transporte dos pacotes fragmentados
-static struct pkt_ip_fragment pkt_ip_frag[MAX_REASSEMBLIES] = {0};
+static struct pkt_ip_fragment pkt_ip_frag[MAX_REASSEMBLIES] = { 0 };
 
 // contador de pacotes IP que estão fragmentados
 static uint8_t count_reassemblies;

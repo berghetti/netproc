@@ -56,7 +56,7 @@ static int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
                 [NAME_PROG_BOLD] = A_BOLD,
                 [CONECTIONS] = A_DIM,
                 [TREE] = A_BOLD,
-        }};
+        } };
 
 // const int *color_scheme;
 

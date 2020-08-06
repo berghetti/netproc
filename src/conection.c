@@ -58,7 +58,7 @@ get_info_conections ( conection_t *conection,
     }
 
   uint32_t count = 0;
-  char local_addr[64], rem_addr[64] = {0};
+  char local_addr[64], rem_addr[64] = { 0 };
 
   unsigned int matches, local_port, rem_port;
   unsigned long int inode;
@@ -129,8 +129,8 @@ get_info_conections2 ( conection_t **conection, const char *path_file )
     }
 
   uint32_t len_buff_conections = TOT_CONECTIONS_BEGIN;
-  *conection = calloc(len_buff_conections, sizeof(conection_t));
-  if (!*conection)
+  *conection = calloc ( len_buff_conections, sizeof ( conection_t ) );
+  if ( !*conection )
     {
       free ( line );
       fclose ( arq );
@@ -138,7 +138,7 @@ get_info_conections2 ( conection_t **conection, const char *path_file )
     }
 
   uint32_t count = 0;
-  char local_addr[64], rem_addr[64] = {0};
+  char local_addr[64], rem_addr[64] = { 0 };
 
   unsigned int matches, local_port, rem_port;
   unsigned long int inode;
@@ -183,15 +183,18 @@ get_info_conections2 ( conection_t **conection, const char *path_file )
           len_buff_conections <<= 1;
 
           conection_t *temp;
-          temp = realloc(*conection, len_buff_conections * sizeof(conection_t));
-          if (!temp)
-            fatal_error("Alloc memory conections: \"%s\"", strerror(errno));
+          temp = realloc ( *conection,
+                           len_buff_conections * sizeof ( conection_t ) );
+          if ( !temp )
+            fatal_error ( "Alloc memory conections: \"%s\"",
+                          strerror ( errno ) );
 
           *conection = temp;
 
           // initialize new space of memory
-          memset(&(*conection)[count], 0, (len_buff_conections - count) *
-          sizeof(conection_t));
+          memset ( &( *conection )[count],
+                   0,
+                   ( len_buff_conections - count ) * sizeof ( conection_t ) );
         }
     }
 

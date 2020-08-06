@@ -35,10 +35,11 @@ else
 endif
 
 # biblioteca terminfo
-LDLIBS=-l ncurses
+LDLIBS=-lncurses -lpthread
 
 #.c files
 C_SOURCE=$(wildcard $(SRC)/*.c)
+C_SOURCE+=$(wildcard $(SRC)/resolver/*.c)
 #
 # .h files
 #H_SOURCE=$(wildcard *.h)
@@ -110,3 +111,4 @@ uninstall:
 format:
 	@ echo "Formating code"
 	@ clang-format -i $(SRC)/*.[ch]
+	@ clang-format -i $(SRC)/resolver/*.[ch]

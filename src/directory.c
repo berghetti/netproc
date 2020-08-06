@@ -49,7 +49,7 @@ get_numeric_directory ( uint32_t *restrict buffer,
   struct dirent *directory = NULL;
   uint32_t count = 0;
 
-  while ( ( directory = readdir ( dir ) ) && count < lenght  )
+  while ( ( directory = readdir ( dir ) ) && count < lenght )
     if ( is_number ( directory->d_name ) )
       buffer[count++] = atoi ( directory->d_name );
 
@@ -61,8 +61,7 @@ get_numeric_directory ( uint32_t *restrict buffer,
 ////////////////////////////////////////////////////////////////////////////////
 
 int
-get_numeric_directory2 ( uint32_t **buffer,
-                        const char *path_dir )
+get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
 {
   DIR *dir;
 
@@ -73,29 +72,30 @@ get_numeric_directory2 ( uint32_t **buffer,
   uint32_t count = 0;
 
   uint32_t len_buffer = TOT_PROCESS_BEGIN;
-  *buffer = malloc( len_buffer * sizeof (**buffer) );
-  if (!*buffer)
+  *buffer = malloc ( len_buffer * sizeof ( **buffer ) );
+  if ( !*buffer )
     return -1;
 
-  while ( ( directory = readdir ( dir ) ))
+  while ( ( directory = readdir ( dir ) ) )
     {
       if ( is_number ( directory->d_name ) )
-        (*buffer)[count++] = atoi ( directory->d_name );
+        ( *buffer )[count++] = atoi ( directory->d_name );
 
-      if (count == len_buffer)
+      if ( count == len_buffer )
         {
           len_buffer <<= 1;
 
           uint32_t *temp;
-          temp = realloc(*buffer, len_buffer * sizeof(**buffer));
-          if (!temp)
+          temp = realloc ( *buffer, len_buffer * sizeof ( **buffer ) );
+          if ( !temp )
             return -1;
 
           *buffer = temp;
 
           // initialize new space of memory
-          memset(&(*buffer)[count], 0, (len_buffer - count) * sizeof(**buffer));
-
+          memset ( &( *buffer )[count],
+                   0,
+                   ( len_buffer - count ) * sizeof ( **buffer ) );
         }
     }
 

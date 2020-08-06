@@ -35,7 +35,7 @@
 #define PORTLEN 5  // 65535
 
 // "ddd.ddd.ddd.ddd:ppppp <-> ddd.ddd.ddd.ddd:ppppp"
-#define LEN_TUPLE ( ( INET_ADDRSTRLEN + PORTLEN ) * 2 ) + 7
+// #define LEN_TUPLE ( ( INET_ADDRSTRLEN + PORTLEN ) * 2 ) + 7
 
 // espaçamento entre as colunas
 #define PID -5  // negativo alinhado a esquerda
@@ -46,7 +46,7 @@
 #define TUPLE 16 - IF_NAMESIZE
 
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
-static chtype line_original[COLS_PAD] = {0};
+static chtype line_original[COLS_PAD] = { 0 };
 
 static int sort_by = RATE_RX;  // ordenação padrão
 static int scroll_x = 0;
@@ -182,6 +182,7 @@ show_conections ( const process_t *restrict process,
   bool last_con = false;
   size_t i;
   char iface_buff[IF_NAMESIZE];
+  char *iface;
 
   wattron ( pad, co->color_scheme[CONECTIONS] );
   for ( i = 0; i < process->total_conections; i++ )
@@ -214,10 +215,12 @@ show_conections ( const process_t *restrict process,
                 RATE,
                 process->conection[i].net_stat.rx_rate );
 
-      wprintw ( pad,
-                "             %*s",
-                -( IF_NAMESIZE ),
-                if_indextoname ( process->conection[i].if_index, iface_buff ) );
+      if ( if_indextoname ( process->conection[i].if_index, iface_buff ) )
+        iface = iface_buff;
+      else
+        iface = "";
+
+      wprintw ( pad, "             %*s", -( IF_NAMESIZE ), iface );
 
       // space tuple
       wprintw ( pad, "%*s", TUPLE, "" );
@@ -240,7 +243,7 @@ show_conections ( const process_t *restrict process,
       if ( last_con )
         break;
     }
-  // se teve conexões exibidas
+  // se teve conexões exibidas, pula uma linha
   if ( last_con )
     {
       waddch ( pad, '\n' );

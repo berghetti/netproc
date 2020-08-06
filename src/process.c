@@ -59,9 +59,7 @@ save_statistics ( struct net_stat *restrict stat_dst,
                   struct net_stat *restrict stat_src );
 
 static void
-copy_conections ( process_t *proc,
-                  conection_t *con,
-                  int *index_con);
+copy_conections ( process_t *proc, conection_t *con, int *index_con );
 
 // armazena a quantidade maxima de PROCESSOS
 // que podem ser armazenas na memoria da struct process_t
@@ -102,12 +100,12 @@ get_process_active_con ( process_t **cur_proc,
 
   uint32_t *process_pids;
   int total_process;
-  total_process = get_numeric_directory2( &process_pids, PROCESS_DIR);
+  total_process = get_numeric_directory2 ( &process_pids, PROCESS_DIR );
 
   process_t *processes;
-  processes = calloc(total_process, sizeof(*processes));
-  if (!processes)
-    fatal_error("Alloc memory history pid");
+  processes = calloc ( total_process, sizeof ( *processes ) );
+  if ( !processes )
+    fatal_error ( "Alloc memory history pid" );
 
   if ( total_process == -1 )
     fatal_error ( "Error get PIDs of processes" );
@@ -124,15 +122,16 @@ get_process_active_con ( process_t **cur_proc,
     fatal_error ( "Error get_info_conections" );
 
   int *index_history_con;
-  index_history_con = calloc ( total_conections, sizeof ( *index_history_con ) );
-  if (!index_history_con)
-    fatal_error("Alloc memory history pid");
+  index_history_con =
+          calloc ( total_conections, sizeof ( *index_history_con ) );
+  if ( !index_history_con )
+    fatal_error ( "Alloc memory history pid" );
 
   // todos file descriptors de um processo
-  uint32_t fds_p[MAX_CONECTIONS] = {0};
-  char path_fd[MAX_PATH_FD] = {0};      // proc/pid/fd/
-  char socket[MAX_NAME_SOCKET] = {0};   // socket:[99999999]
-  char data_fd[MAX_NAME_SOCKET] = {0};  // dados lidos de um fd do processo
+  uint32_t fds_p[MAX_CONECTIONS] = { 0 };
+  char path_fd[MAX_PATH_FD] = { 0 };      // proc/pid/fd/
+  char socket[MAX_NAME_SOCKET] = { 0 };   // socket:[99999999]
+  char data_fd[MAX_NAME_SOCKET] = { 0 };  // dados lidos de um fd do processo
 
   // tamanho da string armazenada em data_fd por readlink
   int len_link;
@@ -273,10 +272,9 @@ get_process_active_con ( process_t **cur_proc,
 
           // copia as conexões verificando se a conexão ja for existente
           // mantem as statisticas de trafego de rede
-          copy_conections (
-                  &processes[tot_process_active_con],
-                  conections,
-                  index_history_con );
+          copy_conections ( &processes[tot_process_active_con],
+                            conections,
+                            index_history_con );
 
           // contabiliza total de processos que possuem conexao ativa
           tot_process_active_con++;
@@ -286,13 +284,13 @@ get_process_active_con ( process_t **cur_proc,
 
   // sem processos com conexao ativa
   if ( tot_process_active_con == 0 )
-      return 0;
+    return 0;
 
   alloc_memory_process ( cur_proc, tot_process_active_con );
 
   // libera processos que nao estão no buffer principal
   free_dead_process (
-            *cur_proc, tot_cur_proc_act, processes, tot_process_active_con );
+          *cur_proc, tot_cur_proc_act, processes, tot_process_active_con );
 
   // copia os processes com conexões ativos para
   // o buffer principal struct process_t, mantendo as estatisticas de rede
@@ -366,9 +364,7 @@ process_copy ( process_t *restrict proc,
 // @index_con - array que identifica somente as conexões do processo em questão
 // @tot_con   - total de conexões que o processo possui
 static void
-copy_conections ( process_t *proc,
-                  conection_t *con,
-                  int *index_con )
+copy_conections ( process_t *proc, conection_t *con, int *index_con )
 {
   // conection_t temp;
   int b = 0;

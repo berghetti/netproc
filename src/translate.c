@@ -18,57 +18,65 @@
  */
 
 #include <stdio.h>  // snprintf
+#include <string.h>
 #include <stdbool.h>
-#include <sys/socket.h>  // getnameinfo
-#include <netdb.h>       // getnameinfo
-#include <arpa/inet.h>   // htons
+#include <netdb.h>      // NI_MAXHOST, NI_MAXSERV
+#include <arpa/inet.h>  // htons
 
 #include "translate.h"
+#include "resolver/sock_util.h"
+#include "resolver/domain.h"
+#include "resolver/service.h"
 
-#define LEN_TUPLE ( ( NI_MAXHOST + NI_MAXSERV ) * 2 ) + 7
+#define LEN_TUPLE ( ( NI_MAXHOST + NI_MAXSERV ) * 2 ) + 7 + 10
 
-static void
-check_flags ( int *restrict flags, const struct config_op *restrict co );
+// static void
+// check_flags ( int *restrict flags, const struct config_op *restrict co );
 
 char *
 translate ( const conection_t *restrict con,
             const struct config_op *restrict co )
 {
   // tuple ip:port <-> ip:port
-  static char tuple[LEN_TUPLE];
+  static char tuple[LEN_TUPLE] = { 0 };
   struct sockaddr_in l_sock, r_sock;  // local_socket and remote_socket
-  const socklen_t socklen = sizeof ( struct sockaddr_in );
 
-  int flags = 0;
-  check_flags ( &flags, co );
+  char *proto = ( co->udp ) ? "udp" : "tcp";
 
   char l_host[NI_MAXHOST], l_service[NI_MAXSERV];
   char r_host[NI_MAXHOST], r_service[NI_MAXSERV];
 
   l_sock.sin_family = AF_INET;
-  r_sock.sin_family = AF_INET;
-
   l_sock.sin_port = htons ( con->local_port );
   l_sock.sin_addr.s_addr = con->local_address;
 
+  r_sock.sin_family = AF_INET;
   r_sock.sin_port = htons ( con->remote_port );
   r_sock.sin_addr.s_addr = con->remote_address;
 
-  getnameinfo ( ( struct sockaddr * ) &r_sock,
-                socklen,
-                r_host,
-                NI_MAXHOST,
-                r_service,
-                NI_MAXSERV,
-                flags );
+  if ( co->translate_host )
+    {
+      ip2domain ( ( struct sockaddr_storage * ) &l_sock, l_host, NI_MAXHOST );
+      ip2domain ( ( struct sockaddr_storage * ) &r_sock, r_host, NI_MAXHOST );
+    }
+  else
+    {
+      sockaddr_ntop (
+              ( struct sockaddr_storage * ) &l_sock, l_host, NI_MAXHOST );
+      sockaddr_ntop (
+              ( struct sockaddr_storage * ) &r_sock, r_host, NI_MAXHOST );
+    }
 
-  getnameinfo ( ( struct sockaddr * ) &l_sock,
-                socklen,
-                l_host,
-                NI_MAXHOST,
-                l_service,
-                NI_MAXSERV,
-                flags );
+  if ( co->translate_service )
+    {
+      port2serv ( con->local_port, proto, l_service, NI_MAXSERV );
+      port2serv ( con->remote_port, proto, r_service, NI_MAXSERV );
+    }
+  else
+    {
+      snprintf ( l_service, NI_MAXSERV, "%u", con->local_port );
+      snprintf ( r_service, NI_MAXSERV, "%u", con->remote_port );
+    }
 
   snprintf ( tuple,
              LEN_TUPLE,
@@ -79,19 +87,4 @@ translate ( const conection_t *restrict con,
              r_service );
 
   return tuple;
-}
-
-static void
-check_flags ( int *restrict flags, const struct config_op *restrict co )
-{
-  *flags = 0;
-  // use proto UDP to search
-  *flags |= NI_DGRAM;
-
-  if ( !co->translate_host && !co->translate_service )
-    *flags |= NI_NUMERICHOST | NI_NUMERICSERV;
-  else if ( !co->translate_host )
-    *flags |= NI_NUMERICHOST;
-  else if ( !co->translate_service )
-    *flags |= NI_NUMERICSERV;
 }
