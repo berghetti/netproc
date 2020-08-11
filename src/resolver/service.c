@@ -6,15 +6,15 @@
 
 int
 port2serv ( unsigned short int port,
-            const char *proto,
+            char *proto,
             char *buf,
             const size_t buf_len )
 {
   struct servent *sve;
 
-  memset ( buf, 0, buf_len );
+  char *protocol = (proto) ? proto : "tcp";
 
-  sve = getservbyport ( htons ( port ), proto );
+  sve = getservbyport ( port, protocol );
 
   if ( sve != NULL )
     {

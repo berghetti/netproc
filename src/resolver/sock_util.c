@@ -1,5 +1,5 @@
 
-#include <arpa/inet.h>   // inet_ntop
+#include <arpa/inet.h>  // inet_ntop
 #include <stdlib.h>
 #include <stdbool.h>
 

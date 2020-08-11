@@ -69,8 +69,8 @@ translate ( const conection_t *restrict con,
 
   if ( co->translate_service )
     {
-      port2serv ( con->local_port, proto, l_service, NI_MAXSERV );
-      port2serv ( con->remote_port, proto, r_service, NI_MAXSERV );
+      port2serv ( l_sock.sin_port, proto, l_service, NI_MAXSERV );
+      port2serv ( r_sock.sin_port, proto, r_service, NI_MAXSERV );
     }
   else
     {
