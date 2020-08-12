@@ -33,7 +33,8 @@ struct config_op
   bool view_conections;    // show conections each process
   bool translate_host;     // translate ip to name using DNS
   bool translate_service;  // translate port to service
-  uint8_t tic_tac;         // sinc program
+
+  uint8_t tic_tac;  // sinc program, internal control
 };
 
 struct config_op *

@@ -135,14 +135,11 @@ crc32_computebuf ( hash_t incrc32, const void *buf, size_t buflen )
 hash_t
 get_crc32_udp_conection ( void )
 {
-  conection_t *con_udp = calloc ( sizeof ( conection_t ), MAX_CONECTIONS );
-  if ( !con_udp )
-    fatal_error ( "alloc memory %s", strerror ( errno ) );
-
-  ssize_t tot_con;
+  conection_t *con_udp = NULL;
   hash_t crc32;
+  ssize_t tot_con;
 
-  tot_con = get_info_conections ( con_udp, MAX_CONECTIONS, PATH_UDP );
+  tot_con = get_info_conections2 ( &con_udp, PATH_UDP );
   if ( tot_con == -1 )
     fatal_error ( "get conections: %s", strerror ( errno ) );
 

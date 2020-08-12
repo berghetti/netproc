@@ -129,7 +129,7 @@ get_info_conections2 ( conection_t **conection, const char *path_file )
     }
 
   uint32_t len_buff_conections = TOT_CONECTIONS_BEGIN;
-  *conection = calloc ( len_buff_conections, sizeof ( conection_t ) );
+  *conection = calloc ( len_buff_conections, sizeof ( **conection ) );
   if ( !*conection )
     {
       free ( line );
@@ -184,17 +184,17 @@ get_info_conections2 ( conection_t **conection, const char *path_file )
 
           conection_t *temp;
           temp = realloc ( *conection,
-                           len_buff_conections * sizeof ( conection_t ) );
+                           len_buff_conections * sizeof ( **conection ) );
           if ( !temp )
             fatal_error ( "Alloc memory conections: \"%s\"",
                           strerror ( errno ) );
 
           *conection = temp;
 
-          // initialize new space of memory
+          // initialize new space of memory (important)
           memset ( &( *conection )[count],
                    0,
-                   ( len_buff_conections - count ) * sizeof ( conection_t ) );
+                   ( len_buff_conections - count ) * sizeof ( **conection ) );
         }
     }
 

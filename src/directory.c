@@ -59,7 +59,7 @@ get_numeric_directory ( uint32_t *restrict buffer,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
+// version with management of memory auto
 int
 get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
 {
@@ -69,10 +69,10 @@ get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
     return -1;
 
   struct dirent *directory = NULL;
-  uint32_t count = 0;
+  size_t count = 0;
 
-  uint32_t len_buffer = TOT_PROCESS_BEGIN;
-  *buffer = malloc ( len_buffer * sizeof ( **buffer ) );
+  size_t len_buffer = TOT_PROCESS_BEGIN;
+  *buffer = calloc ( len_buffer, sizeof ( **buffer ) );
   if ( !*buffer )
     return -1;
 
@@ -85,7 +85,7 @@ get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
         {
           len_buffer <<= 1;
 
-          uint32_t *temp;
+          void *temp;
           temp = realloc ( *buffer, len_buffer * sizeof ( **buffer ) );
           if ( !temp )
             return -1;

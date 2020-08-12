@@ -31,15 +31,15 @@ check_name_resolved ( struct sockaddr_storage *ss,
       if ( check_addr_equal ( ss, &hosts_cache[i].ss ) )
         {
           if ( hosts_cache[i].status == RESOLVED )
-          return i; //cache hit
+            return i;  // cache hit
 
-        // already in cache, but not resolved
-        return -2;
-      }
-  }
+          // already in cache, but not resolved
+          return -2;
+        }
+    }
 
-// not found in cache
-return -1;
+  // not found in cache
+  return -1;
 }
 
 void *
@@ -64,7 +64,8 @@ ip2domain_thread ( void *arg )
 
   host->status = RESOLVED;
 
-  pthread_exit ( NULL );  // close thread
+  pthread_detach(pthread_self());   // free resources to system
+  pthread_exit ( NULL );            // close thread
 }
 
 int
@@ -85,7 +86,7 @@ ip2domain ( struct sockaddr_storage *ss, char *buff, const size_t buff_len )
       strncpy ( buff, hosts_cache[nr].fqdn, buff_len );
       return 1;
     }
-  else if (nr == -2)
+  else if ( nr == -2 )
     {
       // already resolving
       sockaddr_ntop ( ss, buff, buff_len );
@@ -109,7 +110,6 @@ ip2domain ( struct sockaddr_storage *ss, char *buff, const size_t buff_len )
               sockaddr_ntop ( ss, buff, buff_len );
               return 0;
             }
-
         }
 
       memcpy ( &hosts_cache[index_cache_host].ss, ss, sizeof ( *ss ) );

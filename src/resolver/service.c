@@ -12,7 +12,7 @@ port2serv ( unsigned short int port,
 {
   struct servent *sve;
 
-  char *protocol = (proto) ? proto : "tcp";
+  char *protocol = ( proto ) ? proto : "tcp";
 
   sve = getservbyport ( port, protocol );
 

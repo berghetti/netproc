@@ -26,10 +26,6 @@
 
 #include "rate.h"  // struct net_stat
 
-// FIXME: ... value ideal???
-// tamanho do buffer para identificar o maximo de fd de um processo
-#define MAX_CONECTIONS 4096
-
 // caminho do arquivo onde o kernel
 // fornece as conexoes TCP e UDP
 #define PATH_TCP "/proc/net/tcp"
@@ -52,6 +48,7 @@ get_info_conections ( conection_t *conection,
                       const size_t lenght,
                       const char *path_file );
 
+// new version with auto management of memory
 int
 get_info_conections2 ( conection_t **conection, const char *path_file );
 

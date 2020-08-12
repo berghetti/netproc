@@ -33,6 +33,8 @@ static struct config_op co = {
         .view_conections = false,
         .translate_host = true,
         .translate_service = true,
+
+        // internal control sinc of program, NOT REMOVE
         .tic_tac = 0,
 };
 

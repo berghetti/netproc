@@ -6,6 +6,8 @@ Legend:
 
 0.4.? - ???
   + show interface associate with conection
+  * improved consult dns, now no cause delay in application
+  * improved management of memory
   * cpu usage, extended numbers of blocks, frames per blocks and len each
     frame from mmap ring
   * cpu usage, decreasing update frequency of processes
