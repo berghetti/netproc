@@ -4,7 +4,7 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
-0.4.? - ???
+0.4.2 - 2020-08-13
   + show interface associate with conection
   * improved consult dns, now no cause delay in application
   * improved management of memory
