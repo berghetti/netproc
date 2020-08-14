@@ -29,55 +29,28 @@
 void
 set_filter ( int sock, const struct config_op *co )
 {
-  //   /*
-  //   sudo apt install netsniff-ng, to get program bpfc
-  //   bpfc -i filter -f C -p -D TCP (or UDP)
-  //   pass ipv4 and tcp
-  //   suport to interface ethernet and
-  //   interface tun (that not has header ethernet)
-  // */
-  //
-  // #define P_TCP 0x06
-  // #define P_UDP 0x11
-  //
-  // #if UDP
-  // #define PROTO P_UDP
-  // #elif TCP
-  // #define PROTO P_TCP
-  // #else
-  // #error "protocol missig, use option -D UDP or TCP"
-  // #endif
-  //
-  // /* test in interface tun */
-  // l0:   ldb      [0]                      /* load offset */
-  // l1:   and      #0xf0                    /* bitwise and */
-  // l2:   jeq      #0x40,       l3,	l11     /* if ipv4 true */
-  // l3:   ld       [12]                     /* test source ip */
-  // l4:   and      #0xff000000
-  // l5:   jeq      #0x7f000000, drop, l6    /* drop network 127.0.0.0/8 */
-  // l6:   ld       [16]                     /* test dest ip */
-  // l7:   and      #0xff000000
-  // l8:   jeq      #0x7f000000, drop, l9    /* drop network 127.0.0.0/8 */
-  // l9:   ldb      [9]                      /* load offset */
-  // l10:  jeq      #PROTO,   pass, l11      /* if protocol true */
-  // /* test in interface ethernet */
-  // l11:  ldh      [12]                     /* load half-word offset 12 */
-  // l12:  jeq      #0x0800,     l13, drop   /* if ipv4 */
-  // l13:  ld       [26]                     /* test source ip */
-  // l14:  and      #0xff000000
-  // l15:  jeq      #0x7f000000, drop, l16   /* drop network 127.0.0.0/8 */
-  // l16:  ld       [30]                     /* test dest ip */
-  // l17:  and      #0xff000000
-  // l18:  jeq      #0x7f000000, drop, l19   /* drop network 127.0.0.0/8 */
-  // l19:  ldb      [23]
-  // l20:  jeq      #PROTO,    pass, drop    /* if protocol true */
-  // pass: ret      #262144
-  // drop: ret      #0
-
-  // pass only ipv4, tcp or udp (choose this),
-  // and all network, except 127.0.0.0/8,
+  // pass only tcp or udp, block net address 127.*
   // suport interface ethernet and tun
+  // bpfc -i bpf/program.bpf -f C -p
+  struct sock_filter ip_tcp_udp[] = {
+          { 0x30, 0, 0, 0x00000000 },  { 0x54, 0, 0, 0x000000f0 },
+          { 0x15, 0, 9, 0x00000040 },  { 0x20, 0, 0, 0x0000000c },
+          { 0x54, 0, 0, 0xff000000 },  { 0x15, 18, 0, 0x7f000000 },
+          { 0x20, 0, 0, 0x00000010 },  { 0x54, 0, 0, 0xff000000 },
+          { 0x15, 15, 0, 0x7f000000 }, { 0x30, 0, 0, 0x00000009 },
+          { 0x15, 12, 0, 0x00000006 }, { 0x15, 11, 0, 0x00000011 },
+          { 0x28, 0, 0, 0x0000000c },  { 0x15, 0, 10, 0x00000800 },
+          { 0x20, 0, 0, 0x0000001a },  { 0x54, 0, 0, 0xff000000 },
+          { 0x15, 7, 0, 0x7f000000 },  { 0x20, 0, 0, 0x0000001e },
+          { 0x54, 0, 0, 0xff000000 },  { 0x15, 4, 0, 0x7f000000 },
+          { 0x30, 0, 0, 0x00000017 },  { 0x15, 1, 0, 0x00000006 },
+          { 0x15, 0, 1, 0x00000011 },  { 0x6, 0, 0, 0x00040000 },
+          { 0x6, 0, 0, 0x00000000 },
+  };
 
+  // pass only tcp, block net address 127.*
+  // suport interface ethernet and tun
+  // bpfc -i bpf/program.bpf -f C -p -D TCP
   struct sock_filter ip_tcp[] = {
           { 0x30, 0, 0, 0x00000000 },  { 0x54, 0, 0, 0x000000f0 },
           { 0x15, 0, 8, 0x00000040 },  { 0x20, 0, 0, 0x0000000c },
@@ -93,6 +66,9 @@ set_filter ( int sock, const struct config_op *co )
           { 0x6, 0, 0, 0x00000000 },
   };
 
+  // pass only udp, block net address 127.*
+  // suport interface ethernet and tun
+  // bpfc -i bpf/program.bpf -f C -p -D UDP
   struct sock_filter ip_udp[] = {
           { 0x30, 0, 0, 0x00000000 },  { 0x54, 0, 0, 0x000000f0 },
           { 0x15, 0, 8, 0x00000040 },  { 0x20, 0, 0, 0x0000000c },
@@ -110,15 +86,26 @@ set_filter ( int sock, const struct config_op *co )
 
   struct sock_fprog bpf;
 
-  if ( co->udp )
+  switch ( co->proto )
     {
-      bpf.len = ELEMENTS_ARRAY ( ip_udp );
-      bpf.filter = ip_udp;
-    }
-  else
-    {
-      bpf.len = ELEMENTS_ARRAY ( ip_tcp );
-      bpf.filter = ip_tcp;
+      case TCP | UDP:
+        error ( "selecionado TCP e UDP" );
+        bpf.len = ELEMENTS_ARRAY ( ip_tcp_udp );
+        bpf.filter = ip_tcp_udp;
+        break;
+
+      case TCP:
+        error ( "selecionado TCP" );
+        bpf.len = ELEMENTS_ARRAY ( ip_tcp );
+        bpf.filter = ip_tcp;
+        break;
+      case UDP:
+        error ( "selecionado UDP" );
+        bpf.len = ELEMENTS_ARRAY ( ip_udp );
+        bpf.filter = ip_udp;
+        break;
+      default:
+        fatal_error ( "Protocol filter bpf invalid" );
     }
 
   if ( setsockopt (

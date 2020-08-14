@@ -27,7 +27,7 @@
 
 // FIXME:
 // ulimit -a do meu sistema, melhorar isso...
-#define MAX_PROCESS 13504
+// #define MAX_PROCESS 13504
 
 // diretorios onde são listados os processos do sistema
 #define PROCESS_DIR "/proc/"
@@ -45,15 +45,15 @@
 
 typedef struct process
 {
-  struct net_stat net_stat;   // estatisticas de rede
-  conection_t *conection;     // array de conexoes do processo
-  char *name;                 // nome processo
-  pid_t pid;                  // pid do processo
-  uint32_t total_fd;          // totalal de fd no processo
+  struct net_stat net_stat;  // estatisticas de rede
+  conection_t *conection;    // array de conexoes do processo
+  char *name;                // nome processo
+  pid_t pid;                 // pid do processo
+  // uint32_t total_fd;          // totalal de fd no processo em /proc/pid/fd
   uint32_t total_conections;  // total de conexões apontada por conection_t *
 
   // variavel de controle, armazena o numero maximo
-  // de conexoes que podem ser armazenada antes
+  // de conexoes que podem ser armazenada no array *conection_t antes
   // que a memoria precise ser realocada
   uint32_t max_n_con;
 } process_t;

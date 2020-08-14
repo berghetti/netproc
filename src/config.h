@@ -23,11 +23,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define TCP ( 1 << 0 )
+#define UDP ( 1 << 1 )
+
 struct config_op
 {
-  char *iface;             // bind interface
-  int *color_scheme;       // scheme colors
-  bool udp;                // TCP or UDP
+  char *iface;        // bind interface
+  int *color_scheme;  // scheme colors
+  int proto;          // tcp or udp
+  // bool udp;                // TCP or UDP
   bool view_si;            // SI or IEC prefix
   bool view_bytes;         // view in bytes or bits
   bool view_conections;    // show conections each process

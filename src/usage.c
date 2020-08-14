@@ -31,7 +31,7 @@ usage ( void )
 {
   show_version ();
   // clang-format off
-  puts ( "Usage: " PROG_NAME " [options]\n"
+  fputs ( "Usage: " PROG_NAME " [options]\n"
          "\n"
          "Options:\n"
          " -B            view in bytes, default in bits\n"
@@ -40,12 +40,14 @@ usage ( void )
          " -i <iface>    specifies an interface, default is all (except interface with network 127.0.0.0/8)\n"
          " -n            not translate host and service, implicit '-c',\n"
          "               try '-nh' to no translate only host or '-np' to not translate only service\n"
+         " -p tcp | udp  specifies only a protocol, the default is tcp and udp"
          " -si           SI format display, with powers of 1000, default is IEC, with powers of 1024\n"
-         " -u            tracks udp traffic, default is tcp\n"
          " -v            show version\n"
          "\n"
          "when running press:\n"
+         " arrow keys    scroll\n"
          " s             change column-based sort\n"
-         " arrow keys    scroll");
+         " q              exit"
+         , stderr);
   // clang-format on
 }

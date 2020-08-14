@@ -20,10 +20,10 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-#include <linux/if_packet.h>  // struct sockaddr_ll
+#include <linux/if_packet.h>  // struct tpacket3_hdr
 #include <stdint.h>           // types uint*_t
 #include <sys/types.h>        // type ssize_t
-#include "sock.h"
+#include <sys/socket.h>       // setsockopt
 
 #ifndef IPPROTO_UDP
 #define IPPROTO_UDP 17

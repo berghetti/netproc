@@ -37,6 +37,7 @@ add_statistics_in_processes ( process_t *restrict processes,
   static uint8_t id_buff_circ;
   bool locate = false;
 
+  // time geral do programa atualizou, desloca o indice do buffer
   if ( last_tic != co->tic_tac )
     UPDATE_ID_BUFF ( id_buff_circ );
 
@@ -84,9 +85,10 @@ add_statistics_in_processes ( process_t *restrict processes,
       for ( size_t j = 0; j < processes[i].total_conections; j++ )
         {
           // ... e verifica com o pacote recebido pela rede com base
-          // na porta local, visto que somente um processo por vez pode usar
-          // determinada porta
-          if ( processes[i].conection[j].local_port == pkt->local_port )
+          // na porta local e tipo do protocolo, visto que somente um processo
+          // por vez pode usar determinada porta por protocolo
+          if ( processes[i].conection[j].local_port == pkt->local_port &&
+               processes[i].conection[j].protocol == pkt->protocol )
             {
               locate = true;
 

@@ -152,15 +152,15 @@ main ( int argc, const char **argv )
                   // processos, que é um processo caro.
                   // isso é necessario porque alguns aplicavos não mantem uma
                   // conexão UDP por tempo suficiente para o kernel listar
-                  if ( packet.protocol == IPPROTO_UDP )
-                    {
-                      hash_tmp = get_crc32_udp_conection ();
-
-                      if ( hash_crc32_udp == hash_tmp )
-                        continue;
-
-                      hash_crc32_udp = hash_tmp;
-                    }
+                  // if ( packet.protocol == IPPROTO_UDP )
+                  //   {
+                  //     hash_tmp = get_crc32_udp_conection ();
+                  //
+                  //     if ( hash_crc32_udp == hash_tmp )
+                  //       continue;
+                  //
+                  //     hash_crc32_udp = hash_tmp;
+                  //   }
 
                   // mark to update processes
                   fail_process_pkt = true;

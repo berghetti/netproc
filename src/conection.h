@@ -40,6 +40,7 @@ typedef struct conection
   uint32_t remote_address;
   uint16_t local_port;
   uint16_t remote_port;
+  uint8_t protocol;
 } conection_t;
 
 // get conections of system in "/proc/net/tcp or udp"

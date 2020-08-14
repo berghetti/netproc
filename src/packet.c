@@ -22,6 +22,7 @@
 #include <linux/if_packet.h>  // struct sockaddr_ll
 #include <linux/ip.h>         // struct iphdr
 #include <stdbool.h>          // boolean type
+#include <sys/socket.h>       // setsockopt
 
 #include <stdio.h>  // provisório
 
@@ -40,19 +41,19 @@
 
 // máximo de pacotes IP que podem estar fragmentados simultaneamente,
 // os pacotes que chegarem alem desse limite não serão calculados
-// e um log enviado na saida de erro
+// e um log sera enviado na saida de erro padrão
 #define MAX_REASSEMBLIES 32
 
 // maximo de fragmentos que um pacote IP pode ter,
 // acima disso um erro sera emitido, e os demais fragmentos desse pacote
-// não serão computados e um log enviado na saida de erro
+// não serão computados e um log sera enviado na saida de erro padrão
 #define MAX_FRAGMENTS 64
 
 // tempo de vida maximo de um pacote fragmentado em segundos,
 // caso não chegue todos os fragmentos do pacote nesse periodo, o fragmento
 // é descartado.
-// cada pacote possui um contador unico, independente da atualização
-// do programa
+// cada pacote possui um contador unico, independente da frequencia de
+// atualização do programa
 #define LIFETIME_FRAG 3
 
 // codigo de erro para numero maximo de fragmentos de um pacote aitigido
@@ -66,7 +67,7 @@
 // e como atributos iniciais, assim podemos utilizar esse estrutura
 // simplificada para extrair as portas tanto de pacotes
 // TCP quanto UDP, lembrando que não utilizaremos outros campos
-// dos cabeçalhos.
+// dos respectivos cabeçalhos.
 struct tcp_udp_h
 {
   uint16_t source;
@@ -93,6 +94,9 @@ static int
 is_frag ( const struct iphdr *const l3 );
 
 static void
+clear_frag ( void );
+
+static void
 insert_data_packet ( struct packet *pkt,
                      const uint32_t if_index,
                      const uint8_t direction,
@@ -102,9 +106,6 @@ insert_data_packet ( struct packet *pkt,
                      const uint16_t local_port,
                      const uint16_t remote_port,
                      const uint32_t len );
-
-static void
-clear_frag ( void );
 
 // armazena os dados da camada de transporte dos pacotes fragmentados
 static struct pkt_ip_fragment pkt_ip_frag[MAX_REASSEMBLIES] = { 0 };
@@ -136,10 +137,10 @@ parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
   // fprintf(stderr, "ll->sll_hatype - %d\n", ll->sll_hatype);
   // // fprintf(stderr, "l2->h_proto - %x\n", ntohs(l2->h_proto));
   //
-  // fprintf(stderr, "l3->saddr - %x\n", ntohl(l3->saddr));
+  // fprintf ( stderr, "l3->proto - %d\n", l3->protocol );
   // fprintf(stderr, "l4->dest - %x\n", ntohs(l4->dest));
 
-  // atigido MAX_REASSEMBLIES, dados não computados
+  // se -1 atigido MAX_REASSEMBLIES, dados não computados
   if ( ( frag = is_first_frag ( l3, l4 ) ) == -1 )
     goto END;
 
@@ -150,7 +151,7 @@ parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
   if ( ll->sll_pkttype == PACKET_OUTGOING )
     {  // upload
       if ( id_frag == -1 )
-        // não é um fragmento, assumi que isso é maioria dos casos
+        // não é um fragmento, assume que isso é maioria dos casos
         insert_data_packet ( pkt,
                              ll->sll_ifindex,
                              PKT_UPL,

@@ -64,8 +64,8 @@ ip2domain_thread ( void *arg )
 
   host->status = RESOLVED;
 
-  pthread_detach(pthread_self());   // free resources to system
-  pthread_exit ( NULL );            // close thread
+  pthread_detach ( pthread_self () );  // free resources to system
+  pthread_exit ( NULL );               // close thread
 }
 
 int

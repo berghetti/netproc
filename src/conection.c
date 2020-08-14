@@ -20,7 +20,8 @@
 #include <errno.h>  // variable errno
 #include <stdbool.h>
 #include <stdio.h>
-#include <string.h>  // strlen, strerror
+#include <string.h>    // strlen, strerror
+#include <linux/in.h>  // IPPROTO_UDP | TCP
 
 #include "conection.h"
 #include "m_error.h"
@@ -38,8 +39,6 @@ get_info_conections ( conection_t *conection,
                       const size_t lenght,
                       const char *path_file )
 {
-  // const char *conn_file = ( udp ) ? PATH_UDP : PATH_TCP;
-
   FILE *arq = NULL;
 
   if ( !( arq = fopen ( path_file, "r" ) ) )
@@ -94,6 +93,11 @@ get_info_conections ( conection_t *conection,
       conection[count].local_port = local_port;
       conection[count].remote_port = rem_port;
       conection[count].inode = inode;
+
+      conection[count].protocol =
+              ( !strncmp ( path_file, PATH_TCP, sizeof ( PATH_TCP ) ) )
+                      ? IPPROTO_TCP
+                      : IPPROTO_UDP;
       // conection[count].con_state = con_state;
       // conection[count].id = id;
 
@@ -128,7 +132,7 @@ get_info_conections2 ( conection_t **conection, const char *path_file )
       return -1;
     }
 
-  uint32_t len_buff_conections = TOT_CONECTIONS_BEGIN;
+  size_t len_buff_conections = TOT_CONECTIONS_BEGIN;
   *conection = calloc ( len_buff_conections, sizeof ( **conection ) );
   if ( !*conection )
     {
@@ -175,6 +179,10 @@ get_info_conections2 ( conection_t **conection, const char *path_file )
       ( *conection )[count].local_port = local_port;
       ( *conection )[count].remote_port = rem_port;
       ( *conection )[count].inode = inode;
+      ( *conection )[count].protocol =
+              ( !strncmp ( path_file, PATH_TCP, sizeof ( PATH_TCP ) ) )
+                      ? IPPROTO_TCP
+                      : IPPROTO_UDP;
 
       count++;
 

@@ -18,6 +18,7 @@
  */
 
 #include <stdlib.h>  // exit
+#include <string.h>  // strncmp
 #include <unistd.h>  // EXIT_*
 
 #include "config.h"
@@ -27,7 +28,8 @@
 // default options
 static struct config_op co = {
         .iface = NULL,  // all interfaces
-        .udp = false,
+        .proto = TCP | UDP,
+        // .udp = false,
         .view_si = false,
         .view_bytes = false,
         .view_conections = false,
@@ -48,8 +50,15 @@ parse_options ( int argc, const char **argv )
         {
           switch ( *( *argv + 1 ) )
             {
-              case 'u':
-                co.udp = true;
+              case 'B':
+                co.view_bytes = true;
+                break;
+              case 'c':
+                co.view_conections = true;
+                break;
+              case 'h':
+                usage ();
+                exit ( EXIT_SUCCESS );
                 break;
               case 'i':
                 if ( !( *++argv ) || **argv == '-' )
@@ -62,19 +71,6 @@ parse_options ( int argc, const char **argv )
                 co.iface = ( char * ) *argv;
                 argc--;
                 break;
-              case 'B':
-                co.view_bytes = true;
-                break;
-              case 'c':
-                co.view_conections = true;
-                break;
-              case 's':
-                if ( *( *argv + 2 ) && *( *argv + 2 ) == 'i' )
-                  {
-                    co.view_si = true;
-                    break;
-                  }
-                goto FAIL;
               case 'n':
                 // view conections implict
                 co.view_conections = true;
@@ -94,9 +90,34 @@ parse_options ( int argc, const char **argv )
 
                 co.translate_host = false;
                 break;
-              case 'h':
-                usage ();
-                exit ( EXIT_SUCCESS );
+              case 'p':
+
+                if ( !( *++argv ) || **argv == '-' )
+                  {
+                    error ( "Argument '-p' requere protocol tcp or udp" );
+                    usage ();
+                    exit ( EXIT_FAILURE );
+                  }
+                else if ( !strncasecmp ( ( *argv ), "tcp", sizeof ( "tcp" ) ) )
+                  co.proto &= TCP;
+                else if ( !strncasecmp ( *argv, "udp", sizeof ( "udp" ) ) )
+                  co.proto &= UDP;
+                else
+                  {
+                    error ( "invalid protocol in argument '-p'" );
+                    usage ();
+                    exit ( EXIT_FAILURE );
+                  }
+
+                argc--;
+                break;
+              case 's':
+                if ( *( *argv + 2 ) && *( *argv + 2 ) == 'i' )
+                  {
+                    co.view_si = true;
+                    break;
+                  }
+                goto FAIL;
               case 'v':
                 show_version ();
                 exit ( EXIT_SUCCESS );

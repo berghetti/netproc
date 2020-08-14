@@ -59,10 +59,13 @@ save_statistics ( struct net_stat *restrict stat_dst,
                   struct net_stat *restrict stat_src );
 
 static void
-copy_conections ( process_t *proc,
-                  conection_t *con,
-                  int *index_con,
-                  bool new_proc );
+compile_conections ( conection_t *con,
+                     conection_t *con_tot,
+                     int *con_idx_proc,
+                     const size_t len );
+
+static void
+copy_conections ( process_t *proc, conection_t *con, bool new_proc );
 
 // armazena a quantidade maxima de PROCESSOS
 // que podem ser armazenas na memoria da struct process_t
@@ -82,57 +85,45 @@ get_process_active_con ( process_t **cur_proc,
                          const size_t tot_cur_proc_act,
                          const struct config_op *co )
 {
-  // buffer utilizado na função get_process_active_con
-  // para armazenar o PID de todos os processos do sistema
-  // static uint32_t process_pids[MAX_PROCESS] = {0};
-
-  // armazena os dados apenas dos processos que possuem conexão ativa
-  // FIXME: verificar migração para memoria dinamica para o buffer "processos"
-  // static process_t processos[MAX_PROCESS] = {0};
-
-  // buffer utilziado na função get_process_active_con
-  // para armazenas todas as conexões do sistema
-  // static conection_t conections[MAX_CONECTIONS] = {0};
-
-  // buffer utilizado para armazenar conexões individuais dos processos
-  // static int index_con_process[MAX_CONECTIONS] = {0}
-  // int *index_con_process;
-
-  // int total_process =
-  //         get_numeric_directory ( process_pids, MAX_PROCESS, PROCESS_DIR );
-
   // get pid all process in system
   uint32_t *process_pids;
-  int total_process;
-  total_process = get_numeric_directory2 ( &process_pids, PROCESS_DIR );
+  int total_process = get_numeric_directory2 ( &process_pids, PROCESS_DIR );
   if ( total_process == -1 )
     fatal_error ( "Error get PIDs of processes" );
 
   // stores data only process with active conection
-  process_t *processes;
-  processes = calloc ( total_process, sizeof ( *processes ) );
+  process_t *processes = calloc ( total_process, sizeof ( *processes ) );
   if ( !processes )
     fatal_error ( "Alloc memory history pid" );
 
   // get info all coenction in table of system
-  conection_t *conections;
-  int total_conections;
-  total_conections = get_info_conections2 ( &conections,
-                                            ( co->udp ) ? PATH_UDP : PATH_TCP );
+  conection_t *conections_tcp;
+  int total_conections_tcp = get_info_conections2 ( &conections_tcp, PATH_TCP );
 
-  if ( total_conections == -1 )
+  conection_t *conections_udp;
+  int total_conections_udp = get_info_conections2 ( &conections_udp, PATH_UDP );
+
+  if ( total_conections_tcp == -1 || total_conections_udp == -1 )
     fatal_error ( "Error get_info_conections" );
 
-  int *index_con_process;
-  index_con_process =
-          calloc ( total_conections, sizeof ( *index_con_process ) );
-  if ( !index_con_process )
+  // alloc buffer to store index of conections of processes
+  int *index_con_tcp_process =
+          malloc ( total_conections_tcp * sizeof ( *index_con_tcp_process ) );
+
+  int *index_con_udp_process =
+          malloc ( total_conections_udp * sizeof ( *index_con_udp_process ) );
+
+  if ( !index_con_tcp_process || !index_con_udp_process )
     fatal_error ( "Alloc memory history pid" );
 
-  uint32_t *fds_p;                // todos file descriptors de um processo
   char path_fd[MAX_PATH_FD];      // proc/pid/fd/
   char socket[MAX_NAME_SOCKET];   // socket:[99999999]
   char data_fd[MAX_NAME_SOCKET];  // dados lidos de um fd do processo
+
+  uint32_t *fds_p;  // todos file descriptors de um processo
+
+  // all conections of one process (udp and tcp)
+  conection_t *compiled_conections;
 
   // tamanho da string armazenada em data_fd por readlink
   ssize_t len_link;
@@ -149,11 +140,15 @@ get_process_active_con ( process_t **cur_proc,
   bool process_have_conection_history;
 
   // contador de processos com conexões ativas
-  uint32_t tot_process_active_con = 0;
+  size_t tot_process_active_con = 0;
 
   // armazena o indice que contem os dados referente a conexão
-  // do processo no buffer conections
-  uint32_t tot_con_process;
+  // do processo no buffer conections_tcp
+  size_t tot_con_tcp_process;
+
+  // armazena o indice que contem os dados referente a conexão
+  // do processo no buffer conections_udp
+  size_t tot_con_udp_process;
 
   // new process?
   int exists_pid;
@@ -164,8 +159,10 @@ get_process_active_con ( process_t **cur_proc,
     {
       process_have_conection_history = false;
       process_have_conection_active = false;
-      tot_con_process = 0;
+      tot_con_tcp_process = 0;
+      tot_con_udp_process = 0;
       fds_p = NULL;
+      compiled_conections = NULL;
 
       // verifica se o pid atual, consta na buffer principal
       exists_pid = search_pid (
@@ -214,26 +211,51 @@ get_process_active_con ( process_t **cur_proc,
 
           // compara o fd do processo com todos os inodes - conexões -
           // disponiveis
-          for ( int c = 0; c < total_conections; c++ )
+          // test conections tcp
+          for ( int c = 0; c < total_conections_tcp; c++ )
             {
               // connection in TIME_WAIT state, test next conection
-              if ( conections[c].inode == 0 )
+              if ( conections_tcp[c].inode == 0 )
                 continue;
 
               snprintf ( socket,
                          MAX_NAME_SOCKET,
                          "socket:[%d]",
-                         conections[c].inode );
+                         conections_tcp[c].inode );
 
               // se o conteudo de socket - socket:[$inode] - for igual
               // ao valor lido do fd do processo,
               // encontramos de qual processo a conexão pertence
               if ( ( strncmp ( socket, data_fd, len_link ) ) == 0 )
                 {
-                  // salva o indice do array conections que tem a conexao
+                  // salva o indice do array conections_tcp que tem a conexao
                   // do processo para depois pegar os dados desses indices
                   process_have_conection_active = true;
-                  index_con_process[tot_con_process++] = c;
+                  index_con_tcp_process[tot_con_tcp_process++] = c;
+                }
+            }
+
+          // test conections udp
+          for ( int c = 0; c < total_conections_udp; c++ )
+            {
+              // connection in TIME_WAIT state, test next conection
+              if ( conections_udp[c].inode == 0 )
+                continue;
+
+              snprintf ( socket,
+                         MAX_NAME_SOCKET,
+                         "socket:[%d]",
+                         conections_udp[c].inode );
+
+              // se o conteudo de socket - socket:[$inode] - for igual
+              // ao valor lido do fd do processo,
+              // encontramos de qual processo a conexão pertence
+              if ( ( strncmp ( socket, data_fd, len_link ) ) == 0 )
+                {
+                  // salva o indice do array conections_tcp que tem a conexao
+                  // do processo para depois pegar os dados desses indices
+                  process_have_conection_active = true;
+                  index_con_udp_process[tot_con_udp_process++] = c;
                 }
             }
 
@@ -243,8 +265,9 @@ get_process_active_con ( process_t **cur_proc,
         {
           // obtem informações do processo
           processes[tot_process_active_con].pid = process_pids[index_pd];
-          processes[tot_process_active_con].total_fd = total_fd_process;
-          processes[tot_process_active_con].total_conections = tot_con_process;
+          // processes[tot_process_active_con].total_fd = total_fd_process;
+          processes[tot_process_active_con].total_conections =
+                  tot_con_tcp_process + tot_con_udp_process;
 
           // processo ja existe no buffer principal
           if ( exists_pid != -1 )
@@ -268,31 +291,42 @@ get_process_active_con ( process_t **cur_proc,
 
               alloc_memory_conections ( &processes[tot_process_active_con],
                                         NULL );
-              // zera estrutura net_stat, para evitar sujeira de processo antigo
-              // FIXME: verificar migração para memoria dinamica para o buffer
-              // "processos"
-              // changed to dynamic memory
-              // memset ( &processes[tot_process_active_con].net_stat,
-              //          0,
-              //          sizeof ( struct net_stat ) );
             }
+
+          compiled_conections =
+                  malloc ( processes[tot_process_active_con].total_conections *
+                           sizeof ( *compiled_conections ) );
+          if ( !compiled_conections )
+            fatal_error ( "malloc: \"%s\"", strerror ( errno ) );
+
+          // pega todas as conexões e separa somente as que são referentes ao
+          // processo
+          compile_conections ( compiled_conections,
+                               conections_tcp,
+                               index_con_tcp_process,
+                               tot_con_tcp_process );
+
+          compile_conections ( compiled_conections + tot_con_tcp_process,
+                               conections_udp,
+                               index_con_udp_process,
+                               tot_con_udp_process );
 
           // copia as conexões referente ao processo,
           // se for um processo existente, copia apenas as conexões novas e
           // mantem as atuais ainda ativas com suas estatisticas, sem
-          // altera-las. se for um processo novo, apenas copia as conexoes
-          // referentes a ele
+          // altera-las. se for um processo novo copia tudas
           copy_conections ( &processes[tot_process_active_con],
-                            conections,
-                            index_con_process,
+                            compiled_conections,
                             ( exists_pid == -1 ) );
+
+          free ( compiled_conections );
 
           // contabiliza total de processos que possuem conexao ativa
           tot_process_active_con++;
         }
 
-      CLEANUP:
-      if (fds_p)
+    CLEANUP:
+      if ( fds_p )
         free ( fds_p );
 
     }  // for process
@@ -314,8 +348,10 @@ get_process_active_con ( process_t **cur_proc,
 
   free ( process_pids );
   free ( processes );
-  free ( conections );
-  free ( index_con_process );
+  free ( conections_tcp );
+  free ( conections_udp );
+  free ( index_con_tcp_process );
+  free ( index_con_udp_process );
 
   // retorna o numero de processos com conexão ativa
   return tot_process_active_con;
@@ -337,6 +373,18 @@ free_process ( process_t *proc, const size_t qtd_proc )
   free ( proc );
 }
 
+// compila todas as conexões que são referentes ao processo
+static void
+compile_conections ( conection_t *con_buff,
+                     conection_t *con_tot,
+                     int *con_idx_proc,
+                     const size_t len )
+{
+  for ( size_t i = 0; i < len; i++ )
+    con_buff[i] = con_tot[con_idx_proc[i]];
+}
+
+// deep copy struct net_stat
 static void
 save_statistics ( struct net_stat *restrict stat_dst,
                   struct net_stat *restrict stat_src )
@@ -378,13 +426,9 @@ process_copy ( process_t *restrict proc,
 // copia as conexões verificando se a conexão ja for existente
 // mantem as statisticas de trafego de rede
 // @proc      - processo que recebera/atualizara as conexões
-// @con       - array com as conexões ativas no sistema
-// @index_con - array que identifica somente as conexões do processo em questão
+// @con       - array com as conexões referentes ao processo
 static void
-copy_conections ( process_t *proc,
-                  conection_t *con,
-                  int *index_con,
-                  bool new_proc )
+copy_conections ( process_t *proc, conection_t *con, bool new_proc )
 {
   int b = 0;
   bool skip;
@@ -392,7 +436,7 @@ copy_conections ( process_t *proc,
   if ( new_proc )
     {
       for ( size_t c = 0; c < proc->total_conections; c++ )
-        proc->conection[c] = con[index_con[c]];
+        proc->conection[c] = con[c];
 
       return;
     }
@@ -408,19 +452,14 @@ copy_conections ( process_t *proc,
         {
           // se a conexão ja estiver mapeada no processo, pula ela
           // para não perder as estatisticas dela
-          if ( proc->conection[c].inode == con[index_con[a]].inode )
+          if ( proc->conection[c].inode == con[a].inode )
             {
               skip = true;
 
               // troca o conteudo da posição atual pelo conteudo do ultima da
               // fila, assim podemos diminuir o laço interno
               if ( a != b )
-                {
-                  con[index_con[a]] = con[index_con[b]];
-
-                  // save_statistics ( &con[index_con[a]].net_stat,
-                  //                   &con[index_con[b]].net_stat );
-                }
+                con[a] = con[b];
 
               // diminiu o tamanho do laço interno (para performance)
               b++;
@@ -435,10 +474,7 @@ copy_conections ( process_t *proc,
 
       // conexão nova, logo não tem estatisticas a serem copiadas, copia apenas
       // os dados de identificação conexão
-      proc->conection[c] = con[index_con[c]];
-
-      // save_statistics ( &proc->conection[c].net_stat,
-      //                   &con[index_con[b]].net_stat );
+      proc->conection[c] = con[c];
     }
 }
 

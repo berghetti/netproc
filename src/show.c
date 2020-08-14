@@ -18,8 +18,9 @@
  */
 
 #include <stdbool.h>
-#include <string.h>  // strlen
-#include <net/if.h>  // if_indextoname
+#include <string.h>    // strlen
+#include <net/if.h>    // if_indextoname
+#include <linux/in.h>  // IPPROTO_TCP
 #include <ncurses.h>
 
 #include "str.h"
@@ -220,7 +221,14 @@ show_conections ( const process_t *restrict process,
       else
         iface = "";
 
-      wprintw ( pad, "             %*s", -( IF_NAMESIZE ), iface );
+      // wprintw ( pad, "             %*s", -( IF_NAMESIZE ), iface );
+      wprintw ( pad,
+                "%*s %*s",
+                IF_NAMESIZE,
+                iface,
+                -11,
+                ( process->conection[i].protocol == IPPROTO_TCP ) ? "(tcp)"
+                                                                  : "(udp)" );
 
       // space tuple
       wprintw ( pad, "%*s", TUPLE, "" );

@@ -41,7 +41,7 @@ translate ( const conection_t *restrict con,
   static char tuple[LEN_TUPLE] = { 0 };
   struct sockaddr_in l_sock, r_sock;  // local_socket and remote_socket
 
-  char *proto = ( co->udp ) ? "udp" : "tcp";
+  char *proto = ( co->proto & UDP ) ? "udp" : "tcp";
 
   char l_host[NI_MAXHOST], l_service[NI_MAXSERV];
   char r_host[NI_MAXHOST], r_service[NI_MAXSERV];
