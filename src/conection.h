@@ -51,6 +51,9 @@ get_info_conections ( conection_t *conection,
 
 // new version with auto management of memory
 int
-get_info_conections2 ( conection_t **conection, const char *path_file );
+get_info_conections2 ( conection_t **conection, const int proto );
+
+int
+get_conections_system ( conection_t **buffer, const int proto );
 
 #endif  // CONECTION_H

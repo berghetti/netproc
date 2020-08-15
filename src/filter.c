@@ -89,18 +89,15 @@ set_filter ( int sock, const struct config_op *co )
   switch ( co->proto )
     {
       case TCP | UDP:
-        error ( "selecionado TCP e UDP" );
         bpf.len = ELEMENTS_ARRAY ( ip_tcp_udp );
         bpf.filter = ip_tcp_udp;
         break;
 
       case TCP:
-        error ( "selecionado TCP" );
         bpf.len = ELEMENTS_ARRAY ( ip_tcp );
         bpf.filter = ip_tcp;
         break;
       case UDP:
-        error ( "selecionado UDP" );
         bpf.len = ELEMENTS_ARRAY ( ip_udp );
         bpf.filter = ip_udp;
         break;

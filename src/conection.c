@@ -24,6 +24,7 @@
 #include <linux/in.h>  // IPPROTO_UDP | TCP
 
 #include "conection.h"
+#include "config.h"  // define TCP | UDP
 #include "m_error.h"
 
 // len initial buffer conections
@@ -114,9 +115,25 @@ get_info_conections ( conection_t *conection,
 //////////////////////////////////////////////////////////
 
 int
-get_info_conections2 ( conection_t **conection, const char *path_file )
+get_info_conections2 ( conection_t **conection, const int proto )
 {
   FILE *arq = NULL;
+  char *path_file;
+  int protocol;
+
+  switch ( proto )
+    {
+      case TCP:
+        path_file = PATH_TCP;
+        protocol = IPPROTO_TCP;
+        break;
+      case UDP:
+        path_file = PATH_UDP;
+        protocol = IPPROTO_UDP;
+        break;
+      default:
+        fatal_error ( "Invalid protocol get conections" );
+    }
 
   if ( !( arq = fopen ( path_file, "r" ) ) )
     return -1;
@@ -179,10 +196,7 @@ get_info_conections2 ( conection_t **conection, const char *path_file )
       ( *conection )[count].local_port = local_port;
       ( *conection )[count].remote_port = rem_port;
       ( *conection )[count].inode = inode;
-      ( *conection )[count].protocol =
-              ( !strncmp ( path_file, PATH_TCP, sizeof ( PATH_TCP ) ) )
-                      ? IPPROTO_TCP
-                      : IPPROTO_UDP;
+      ( *conection )[count].protocol = protocol;
 
       count++;
 
@@ -210,4 +224,43 @@ get_info_conections2 ( conection_t **conection, const char *path_file )
   fclose ( arq );
 
   return count;
+}
+
+int
+get_conections_system ( conection_t **buffer, const int proto )
+{
+  int tot_con_tcp = 0;
+  int tot_con_udp = 0;
+  int tot_con = 0;
+  int temp = 0;
+  int i;
+
+  conection_t *temp_conections_tcp = NULL;
+  conection_t *temp_conections_udp = NULL;
+
+  if ( proto & TCP )
+    tot_con_tcp = get_info_conections2 ( &temp_conections_tcp, TCP );
+
+  if ( proto & UDP )
+    tot_con_udp = get_info_conections2 ( &temp_conections_udp, UDP );
+
+  if ( tot_con_tcp == -1 || tot_con_udp == -1 )
+    fatal_error ( "Error get conections system: %s", strerror ( errno ) );
+
+  tot_con = tot_con_tcp + tot_con_udp;
+  *buffer = calloc ( tot_con, sizeof ( **buffer ) );
+  if ( !*buffer )
+    fatal_error ( "Calloc: %s", strerror ( errno ) );
+
+  for ( i = 0; i < tot_con_tcp; i++ )
+    ( *buffer )[i] = temp_conections_tcp[i];
+
+  temp += tot_con_tcp;
+  for ( i = 0; i < tot_con_udp; i++ )
+    ( *buffer + temp )[i] = temp_conections_udp[i];
+
+  free ( temp_conections_tcp );
+  free ( temp_conections_udp );
+
+  return tot_con;
 }

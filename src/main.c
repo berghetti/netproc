@@ -77,7 +77,7 @@ main ( int argc, const char **argv )
   int block_num = 0;
   // int tot_blocks = 64; == ring.req.tp_block_nr
   int rp;
-  hash_t hash_crc32_udp, hash_tmp;
+  // hash_t hash_crc32_udp, hash_tmp;
 
   atexit ( clear_exit );
 
@@ -111,7 +111,7 @@ main ( int argc, const char **argv )
   // first search by processes
   tot_process_act = get_process_active_con ( &processes, tot_process_act, co );
 
-  hash_crc32_udp = get_crc32_udp_conection ();
+  // hash_crc32_udp = get_crc32_udp_conection ();
 
   pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
 

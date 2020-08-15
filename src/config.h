@@ -28,10 +28,9 @@
 
 struct config_op
 {
-  char *iface;        // bind interface
-  int *color_scheme;  // scheme colors
-  int proto;          // tcp or udp
-  // bool udp;                // TCP or UDP
+  char *iface;             // bind interface
+  int *color_scheme;       // scheme colors
+  int proto;               // tcp or udp
   bool view_si;            // SI or IEC prefix
   bool view_bytes;         // view in bytes or bits
   bool view_conections;    // show conections each process

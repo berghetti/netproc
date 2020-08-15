@@ -29,7 +29,6 @@
 static struct config_op co = {
         .iface = NULL,  // all interfaces
         .proto = TCP | UDP,
-        // .udp = false,
         .view_si = false,
         .view_bytes = false,
         .view_conections = false,
