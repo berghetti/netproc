@@ -4,7 +4,8 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
-
+0.4.3 - ???
+  + simultaneous tracking of TCP and UDP protocols
 
 0.4.2 - 2020-08-13
   + show interface associate with conection
