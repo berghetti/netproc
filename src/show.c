@@ -35,9 +35,6 @@
 // tamanho representação textual porta da camada de transporte
 #define PORTLEN 5  // 65535
 
-// "ddd.ddd.ddd.ddd:ppppp <-> ddd.ddd.ddd.ddd:ppppp"
-// #define LEN_TUPLE ( ( INET_ADDRSTRLEN + PORTLEN ) * 2 ) + 7
-
 // espaçamento entre as colunas
 #define PID -5  // negativo alinhado a esquerda
 #define PPS 6

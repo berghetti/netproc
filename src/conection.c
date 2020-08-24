@@ -118,8 +118,8 @@ int
 get_info_conections2 ( conection_t **conection, const int proto )
 {
   FILE *arq = NULL;
-  char *path_file;
-  int protocol;
+  char *path_file = NULL;
+  int protocol = 0;
 
   switch ( proto )
     {
