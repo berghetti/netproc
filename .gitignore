@@ -1,3 +1,6 @@
+#binary
+bin/*
+
 #gdb
 .gdb_history
 
