@@ -22,6 +22,7 @@
 #include <unistd.h>  // EXIT_*
 
 #include "config.h"
+#include "conection.h"
 #include "usage.h"
 #include "m_error.h"
 

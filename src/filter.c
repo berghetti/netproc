@@ -22,6 +22,7 @@
 #include <sys/socket.h>  // setsockopt
 
 #include "config.h"
+#include "conection.h"
 #include "m_error.h"
 
 #define ELEMENTS_ARRAY( x ) ( sizeof ( x ) / sizeof ( x[0] ) )
@@ -88,11 +89,10 @@ set_filter ( int sock, const struct config_op *co )
 
   switch ( co->proto )
     {
-      case TCP | UDP:
+      case (TCP | UDP):
         bpf.len = ELEMENTS_ARRAY ( ip_tcp_udp );
         bpf.filter = ip_tcp_udp;
         break;
-
       case TCP:
         bpf.len = ELEMENTS_ARRAY ( ip_tcp );
         bpf.filter = ip_tcp;

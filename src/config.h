@@ -23,9 +23,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define TCP ( 1 << 0 )
-#define UDP ( 1 << 1 )
-
 struct config_op
 {
   char *iface;             // bind interface

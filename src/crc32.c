@@ -139,7 +139,7 @@ get_crc32_udp_conection ( void )
   hash_t crc32;
   ssize_t tot_con;
 
-  tot_con = get_info_conections2 ( &con_udp, PATH_UDP );
+  tot_con = get_conections_system ( &con_udp, UDP );
   if ( tot_con == -1 )
     fatal_error ( "get conections: %s", strerror ( errno ) );
 

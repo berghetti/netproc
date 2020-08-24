@@ -26,10 +26,9 @@
 
 #include "rate.h"  // struct net_stat
 
-// caminho do arquivo onde o kernel
-// fornece as conexoes TCP e UDP
-#define PATH_TCP "/proc/net/tcp"
-#define PATH_UDP "/proc/net/udp"
+// values field protocol struct conection
+#define TCP ( 1 << 0 )
+#define UDP ( 1 << 1 )
 
 typedef struct conection
 {
@@ -42,16 +41,6 @@ typedef struct conection
   uint16_t remote_port;
   uint8_t protocol;
 } conection_t;
-
-// get conections of system in "/proc/net/tcp or udp"
-int
-get_info_conections ( conection_t *conection,
-                      const size_t lenght,
-                      const char *path_file );
-
-// new version with auto management of memory
-int
-get_info_conections2 ( conection_t **conection, const int proto );
 
 int
 get_conections_system ( conection_t **buffer, const int proto );

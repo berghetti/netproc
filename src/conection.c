@@ -27,6 +27,11 @@
 #include "config.h"  // define TCP | UDP
 #include "m_error.h"
 
+// caminho do arquivo onde o kernel
+// fornece as conexoes TCP e UDP
+#define PATH_TCP "/proc/net/tcp"
+#define PATH_UDP "/proc/net/udp"
+
 // len initial buffer conections
 #define TOT_CONECTIONS_BEGIN 512
 
@@ -35,87 +40,8 @@
 // dados da conexão e o tamanho do buffer,
 // retorna a quantidade de registros encontrada
 // ou -1 em caso de erro
-int
-get_info_conections ( conection_t *conection,
-                      const size_t lenght,
-                      const char *path_file )
-{
-  FILE *arq = NULL;
-
-  if ( !( arq = fopen ( path_file, "r" ) ) )
-    return -1;
-
-  char *line = NULL;
-  size_t len = 0;
-
-  // ignore header in first line
-  if ( ( getline ( &line, &len, arq ) ) == -1 )
-    {
-      free ( line );
-      line = NULL;
-      fclose ( arq );
-      return -1;
-    }
-
-  uint32_t count = 0;
-  char local_addr[64], rem_addr[64] = { 0 };
-
-  unsigned int matches, local_port, rem_port;
-  unsigned long int inode;
-
-  while ( ( getline ( &line, &len, arq ) ) != -1 && ( count < lenght ) )
-    {
-      // clang-format off
-      // sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
-      // 0: 3500007F:0035 00000000:0000 0A 00000000:00000000 00:00000000 00000000   101        0 20911 1 0000000000000000 100 0 0 10 0
-      // 1: 0100007F:0277 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 44385 1 0000000000000000 100 0 0 10 0
-      // 2: 0100007F:1733 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 27996 1 0000000000000000 100 0 0 10 0
-      // clang-format on
-
-      matches = sscanf ( line,
-                         "%*d: %64[0-9A-Fa-f]:%X %64[0-9A-Fa-f]:%X %*X "
-                         "%*X:%*X %*X:%*X %*X %*d %*d %lu %*512s\n",
-                         local_addr,
-                         &local_port,
-                         rem_addr,
-                         &rem_port,
-                         &inode );
-
-      if ( matches != 5 )
-        return -1;
-
-      // converte char para tipo inteiro
-      if ( 1 != sscanf ( local_addr, "%x", &conection[count].local_address ) )
-        fatal_error ( "Error converting ip address: %s", strerror ( errno ) );
-
-      if ( 1 != sscanf ( rem_addr, "%x", &conection[count].remote_address ) )
-        fatal_error ( "Error converting ip address: %s", strerror ( errno ) );
-
-      conection[count].local_port = local_port;
-      conection[count].remote_port = rem_port;
-      conection[count].inode = inode;
-
-      conection[count].protocol =
-              ( !strncmp ( path_file, PATH_TCP, sizeof ( PATH_TCP ) ) )
-                      ? IPPROTO_TCP
-                      : IPPROTO_UDP;
-      // conection[count].con_state = con_state;
-      // conection[count].id = id;
-
-      count++;
-    }
-
-  free ( line );
-  line = NULL;
-  fclose ( arq );
-
-  return count;
-}
-
-//////////////////////////////////////////////////////////
-
-int
-get_info_conections2 ( conection_t **conection, const int proto )
+static int
+get_info_conections ( conection_t **conection, const int proto )
 {
   FILE *arq = NULL;
   char *path_file = NULL;
@@ -239,10 +165,10 @@ get_conections_system ( conection_t **buffer, const int proto )
   conection_t *temp_conections_udp = NULL;
 
   if ( proto & TCP )
-    tot_con_tcp = get_info_conections2 ( &temp_conections_tcp, TCP );
+    tot_con_tcp = get_info_conections ( &temp_conections_tcp, TCP );
 
   if ( proto & UDP )
-    tot_con_udp = get_info_conections2 ( &temp_conections_udp, UDP );
+    tot_con_udp = get_info_conections ( &temp_conections_udp, UDP );
 
   if ( tot_con_tcp == -1 || tot_con_udp == -1 )
     fatal_error ( "Error get conections system: %s", strerror ( errno ) );
