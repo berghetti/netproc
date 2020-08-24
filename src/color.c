@@ -64,7 +64,6 @@ int *
 define_color_scheme ( void )
 {
   if ( !has_colors () )
-    // color_scheme = color_schemes[MONO];
     return color_schemes[MONO];
   else
     {

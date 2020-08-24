@@ -49,7 +49,6 @@ typedef struct process
   conection_t *conection;    // array de conexoes do processo
   char *name;                // nome processo
   pid_t pid;                 // pid do processo
-  // uint32_t total_fd;          // totalal de fd no processo em /proc/pid/fd
   uint32_t total_conections;  // total de conexões apontada por conection_t *
 
   // variavel de controle, armazena o numero maximo

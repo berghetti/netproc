@@ -150,7 +150,7 @@ show_process ( const process_t *restrict processes,
   // clear lines begin cursor end screen, replace wclear()
   wclrtobot ( pad );
 
-  // paint item SELECTED_H
+  // paint item selected
   if ( tot_rows )
     {
       if ( selected > tot_rows )
@@ -185,6 +185,7 @@ show_conections ( const process_t *restrict process,
   char iface_buff[IF_NAMESIZE];
   char *iface;
 
+  // standend();
   wattron ( pad, co->color_scheme[CONECTIONS] );
   for ( i = 0; i < process->total_conections; i++ )
     {
