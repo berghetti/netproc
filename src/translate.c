@@ -30,8 +30,6 @@
 
 #define LEN_TUPLE ( ( NI_MAXHOST + NI_MAXSERV ) * 2 ) + 7 + 10
 
-// static void
-// check_flags ( int *restrict flags, const struct config_op *restrict co );
 
 char *
 translate ( const conection_t *restrict con,

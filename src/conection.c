@@ -21,7 +21,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>    // strlen, strerror
-#include <linux/in.h>  // IPPROTO_UDP | TCP
+#include <linux/in.h>  // IPPROTO_UDP | IPPROTO_TCP
 
 #include "conection.h"
 #include "config.h"  // define TCP | UDP
@@ -41,25 +41,25 @@
 // retorna a quantidade de registros encontrada
 // ou -1 em caso de erro
 static int
-get_info_conections ( conection_t **conection, const int proto )
+get_info_conections ( conection_t **conection, const int protocol )
 {
   FILE *arq = NULL;
-  char *path_file = NULL;
-  int protocol = 0;
+  // char *path_file = NULL;
+  const char *path_file = (protocol == IPPROTO_TCP) ? PATH_TCP : PATH_UDP;
 
-  switch ( proto )
-    {
-      case TCP:
-        path_file = PATH_TCP;
-        protocol = IPPROTO_TCP;
-        break;
-      case UDP:
-        path_file = PATH_UDP;
-        protocol = IPPROTO_UDP;
-        break;
-      default:
-        fatal_error ( "Invalid protocol get conections" );
-    }
+  // switch ( proto )
+  //   {
+  //     case TCP:
+  //       path_file = PATH_TCP;
+  //       protocol = IPPROTO_TCP;
+  //       break;
+  //     case UDP:
+  //       path_file = PATH_UDP;
+  //       protocol = IPPROTO_UDP;
+  //       break;
+  //     default:
+  //       fatal_error ( "Invalid protocol get conections" );
+  //   }
 
   if ( !( arq = fopen ( path_file, "r" ) ) )
     return -1;
@@ -165,10 +165,10 @@ get_conections_system ( conection_t **buffer, const int proto )
   conection_t *temp_conections_udp = NULL;
 
   if ( proto & TCP )
-    tot_con_tcp = get_info_conections ( &temp_conections_tcp, TCP );
+    tot_con_tcp = get_info_conections ( &temp_conections_tcp, IPPROTO_TCP );
 
   if ( proto & UDP )
-    tot_con_udp = get_info_conections ( &temp_conections_udp, UDP );
+    tot_con_udp = get_info_conections ( &temp_conections_udp, IPPROTO_UDP );
 
   if ( tot_con_tcp == -1 || tot_con_udp == -1 )
     fatal_error ( "Error get conections system: %s", strerror ( errno ) );

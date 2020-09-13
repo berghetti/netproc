@@ -34,7 +34,7 @@
 #include "ring.h"
 #include "filter.h"
 #include "statistics.h"
-#include "crc32.h"
+// #include "crc32.h"
 #include "sufix.h"
 #include "timer.h"
 #include "show.h"
@@ -118,7 +118,7 @@ main ( int argc, const char **argv )
   double m_timer = start_timer ();
 
   // main loop
-  while ( 1 )
+  while ( true )
     {
       packtes_reads = false;
       fail_process_pkt = false;

@@ -26,10 +26,6 @@
 
 #include "rate.h"  // struct net_stat
 
-// values field protocol struct conection
-#define TCP ( 1 << 0 )
-#define UDP ( 1 << 1 )
-
 typedef struct conection
 {
   struct net_stat net_stat;  // armazena statisticas de rede
