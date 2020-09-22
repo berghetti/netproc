@@ -37,6 +37,8 @@ enum elements_in_schemes
   NAME_PROG_BOLD,
   CONECTIONS,
   TREE,
+  RESUME,
+  RESUME_VALUE,
   TOT_ELEMENTS
 };
 

@@ -183,11 +183,14 @@ main ( int argc, const char **argv )
       packet.lenght = 0;
       add_statistics_in_processes ( processes, tot_process_act, &packet, co );
 
-      if ( timer ( m_timer ) >= ( double ) T_REFRESH )
+      double temp;
+      if ( ( temp = timer ( m_timer ) ) >= ( double ) T_REFRESH )
         {
+          co->running += temp;
           calc_avg_rate ( processes, tot_process_act, co );
 
           show_process ( processes, tot_process_act, co );
+          show_resume( co );
 
           m_timer = restart_timer ();
 
@@ -214,8 +217,8 @@ main ( int argc, const char **argv )
             {
               for ( size_t i = 0; i < nfds; i++ )
                 {
-                  // if ( !poll_set[i].revents )
-                  //   continue;
+                  if ( !poll_set[i].revents )
+                    continue;
 
                   if ( poll_set[i].fd == STDIN_FILENO )
                     running_input ( co );

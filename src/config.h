@@ -38,7 +38,9 @@ struct config_op
   bool translate_host;     // translate ip to name using DNS
   bool translate_service;  // translate port to service
 
+  // internal
   uint8_t tic_tac;  // sinc program, internal control
+  double running;    // time the program is running
 };
 
 struct config_op *

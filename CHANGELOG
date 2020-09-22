@@ -4,6 +4,10 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
+0.4.4 - ???
+   + general information at the top of the screen
+   * scroll
+
 0.4.3 - 2020-09-13
   + simultaneous tracking of TCP and UDP protocols
 

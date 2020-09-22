@@ -17,6 +17,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
+#include <stdint.h>
 #include <errno.h>
 #include <string.h>
 #include <time.h>
@@ -25,6 +27,9 @@
 
 // multiply nanoseconds for this const convert nanoseconds TO seconds
 #define NSTOS 1E-9
+
+// hh:mm:ss
+#define LEN_BUFF_CLOCK 9
 
 inline static void
 get_time ( struct timespec * );
@@ -54,4 +59,17 @@ get_time ( struct timespec *buff_time )
 {
   if ( clock_gettime ( CLOCK_MONOTONIC, buff_time ) == -1 )
     fatal_error ( "clock_gettime: %s", strerror ( errno ) );
+}
+
+char *
+sec2clock(uint64_t secs)
+{
+  static char clock[LEN_BUFF_CLOCK];
+
+  snprintf( clock, LEN_BUFF_CLOCK, "%02d:%02d:%02d",
+            (int) secs / 3600,          // hour
+            (int) (secs % 3600) / 60,   // minute
+            (int) (secs % 3600) % 60 ); // second
+
+  return clock;
 }

@@ -35,6 +35,10 @@ show_process ( const process_t *restrict processes,
                const size_t tot_process,
                const struct config_op *restrict co );
 
+// show general statistics
+void
+show_resume(const struct config_op *);
+
 // inicia a primeira vez a interface "grafica"
 void
 start_ui ( const struct config_op *co );

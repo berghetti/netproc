@@ -20,21 +20,6 @@
 #include <ncurses.h>
 #include "color.h"
 
-// enum schemes
-// {
-//   DEFAULT,
-//   MONO,
-//   TOT_SCHEMES
-// };
-//
-// enum elements_in_schemes
-// {
-//   HEADER,
-//   SELECTED,
-//   NAME_PROG,
-//   TOT_ELEMENTS
-// };
-
 static int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
         [DEFAULT] =
                 {
@@ -46,6 +31,8 @@ static int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
                         [NAME_PROG_BOLD] = A_BOLD | COLOR_PAIR ( 1 ),
                         [CONECTIONS] = A_DIM | COLOR_PAIR ( 4 ),
                         [TREE] = A_BOLD | COLOR_PAIR ( 1 ),
+                        [RESUME] = A_DIM | COLOR_PAIR ( 4 ),
+                        [RESUME_VALUE] = COLOR_PAIR ( 1 ),
                 },
         [MONO] = {
                 [RESET] = A_NORMAL,
@@ -56,6 +43,8 @@ static int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
                 [NAME_PROG_BOLD] = A_BOLD,
                 [CONECTIONS] = A_DIM,
                 [TREE] = A_BOLD,
+                [RESUME] = A_DIM,
+                [RESUME_VALUE] = A_BOLD,
         } };
 
 // const int *color_scheme;

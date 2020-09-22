@@ -24,7 +24,7 @@
 #include "conection.h"
 #include "sort.h"
 
-int
+static int
 compara_processo ( const void *restrict p1,
                    const void *restrict p2,
                    void *restrict mode )
@@ -62,7 +62,7 @@ compara_processo ( const void *restrict p1,
     }
 }
 
-int
+static int
 compara_conexao ( const void *restrict p1,
                   const void *restrict p2,
                   void *restrict mode )
