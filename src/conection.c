@@ -45,7 +45,7 @@ get_info_conections ( conection_t **conection, const int protocol )
 {
   FILE *arq = NULL;
   // char *path_file = NULL;
-  const char *path_file = (protocol == IPPROTO_TCP) ? PATH_TCP : PATH_UDP;
+  const char *path_file = ( protocol == IPPROTO_TCP ) ? PATH_TCP : PATH_UDP;
 
   // switch ( proto )
   //   {

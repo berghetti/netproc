@@ -55,9 +55,9 @@ static int sort_by = RATE_RX;  // ordenação padrão
 static int scroll_x = 0;
 static int scroll_y = LINE_START + 1;
 static int selected = LINE_START + 1;  // posição de linha do item selecionado
-static int tot_rows;      // total linhas exibidas
+static int tot_rows;                   // total linhas exibidas
 
-static int tot_proc_act;   // total de processos com conexão ativa
+static int tot_proc_act;  // total de processos com conexão ativa
 
 // static chtype line_color[COLS_PAD];  // versão otimizada não precisa
 
@@ -79,19 +79,19 @@ start_ui ( const struct config_op *co )
 }
 
 void
-show_resume(const struct config_op *co)
+show_resume ( const struct config_op *co )
 {
   wattrset ( pad, co->color_scheme[RESUME] );
-  mvwprintw( pad, 0, 1, PROG_NAME " - " PROG_VERSION"\n");
+  mvwprintw ( pad, 0, 1, PROG_NAME " - " PROG_VERSION "\n" );
 
-  mvwprintw( pad, 2, 2, "Running: ");
-  wattrset ( pad, co->color_scheme[RESUME_VALUE]);
-  wprintw ( pad, "%s\n", sec2clock( (uint64_t) co->running) );
+  mvwprintw ( pad, 2, 2, "Running: " );
+  wattrset ( pad, co->color_scheme[RESUME_VALUE] );
+  wprintw ( pad, "%s\n", sec2clock ( ( uint64_t ) co->running ) );
 
   wattrset ( pad, co->color_scheme[RESUME] );
-  mvwprintw( pad, 3, 2, "Processes: ");
+  mvwprintw ( pad, 3, 2, "Processes: " );
 
-  wattrset ( pad, co->color_scheme[RESUME_VALUE]);
+  wattrset ( pad, co->color_scheme[RESUME_VALUE] );
   wprintw ( pad, "%d\n", tot_proc_act );
 
   wattrset ( pad, co->color_scheme[RESET] );
@@ -167,12 +167,11 @@ show_process ( const process_t *restrict processes,
         }
     }
 
-
   // clear lines begin cursor end screen, replace wclear()
   wclrtobot ( pad );
 
   // paint item selected
-  if ( tot_rows > LINE_START)
+  if ( tot_rows > LINE_START )
     {
       if ( selected > tot_rows )
         selected = tot_rows;
@@ -185,9 +184,11 @@ show_process ( const process_t *restrict processes,
     }
 
   // update line header
-  pnoutrefresh ( pad, LINE_START, scroll_x, LINE_START, 0, LINE_START, COLS - 1 );
+  pnoutrefresh (
+          pad, LINE_START, scroll_x, LINE_START, 0, LINE_START, COLS - 1 );
 
-  pnoutrefresh ( pad, scroll_y, scroll_x, LINE_START + 1, 0, LINES - 1, COLS - 1 );
+  pnoutrefresh (
+          pad, scroll_y, scroll_x, LINE_START + 1, 0, LINES - 1, COLS - 1 );
 
   // depois de todas as janelas verificadas, imprime todas uma unica vez
   doupdate ();
@@ -264,7 +265,6 @@ show_conections ( const process_t *restrict process,
           waddch ( pad, ACS_HLINE );     // ─
         }
 
-
       wattrset ( pad, co->color_scheme[CONECTIONS] );
       wprintw ( pad, " %s\n", tuple );
 
@@ -330,7 +330,13 @@ show_header ( const struct config_op *co )
 
   // atualiza cabeçalho
   // pnoutrefresh ( pad, LINE_START, scroll_x, 0, 0, 0, COLS - 1 );
-  pnoutrefresh ( pad, LINE_START, scroll_x, LINE_START, scroll_x, LINE_START, COLS - 1 );
+  pnoutrefresh ( pad,
+                 LINE_START,
+                 scroll_x,
+                 LINE_START,
+                 scroll_x,
+                 LINE_START,
+                 COLS - 1 );
 }
 
 // handle input of user while program is running
@@ -352,10 +358,22 @@ running_input ( const struct config_op *co )
                                    : COLS_PAD - COLS;
 
                 // update header
-                pnoutrefresh ( pad, LINE_START, scroll_x, LINE_START, 0, LINE_START, COLS - 1 );
+                pnoutrefresh ( pad,
+                               LINE_START,
+                               scroll_x,
+                               LINE_START,
+                               0,
+                               LINE_START,
+                               COLS - 1 );
 
-                pnoutrefresh ( pad, scroll_y, scroll_x, LINE_START + 1, 0, LINES - 1, COLS - 1 );
-                doupdate();
+                pnoutrefresh ( pad,
+                               scroll_y,
+                               scroll_x,
+                               LINE_START + 1,
+                               0,
+                               LINES - 1,
+                               COLS - 1 );
+                doupdate ();
               }
             else
               beep ();
@@ -366,11 +384,23 @@ running_input ( const struct config_op *co )
               {
                 scroll_x = ( scroll_x - 5 >= 0 ) ? scroll_x - 5 : 0;
 
-                  // update header
-                pnoutrefresh ( pad, LINE_START, scroll_x, LINE_START, 0, LINE_START, COLS - 1 );
+                // update header
+                pnoutrefresh ( pad,
+                               LINE_START,
+                               scroll_x,
+                               LINE_START,
+                               0,
+                               LINE_START,
+                               COLS - 1 );
 
-                pnoutrefresh ( pad, scroll_y, scroll_x, LINE_START + 1, 0, LINES - 1, COLS - 1 );
-                doupdate();
+                pnoutrefresh ( pad,
+                               scroll_y,
+                               scroll_x,
+                               LINE_START + 1,
+                               0,
+                               LINES - 1,
+                               COLS - 1 );
+                doupdate ();
               }
             else
               beep ();
@@ -394,8 +424,13 @@ running_input ( const struct config_op *co )
                 paint_selected ( co );
 
                 // atualiza tela
-                prefresh (
-                        pad, scroll_y, scroll_x,  LINE_START + 1, 0, LINES - 1, COLS - 1 );
+                prefresh ( pad,
+                           scroll_y,
+                           scroll_x,
+                           LINE_START + 1,
+                           0,
+                           LINES - 1,
+                           COLS - 1 );
               }
             else
               beep ();
@@ -405,7 +440,7 @@ running_input ( const struct config_op *co )
             if ( selected - 1 > LINE_START )
               {
                 selected--;
-                if (scroll_y > LINE_START + 1)
+                if ( scroll_y > LINE_START + 1 )
                   scroll_y--;
 
                 // restaura linha atual
@@ -418,8 +453,13 @@ running_input ( const struct config_op *co )
                 paint_selected ( co );
 
                 // atualiza tela
-                prefresh (
-                        pad, scroll_y, scroll_x,  LINE_START + 1, 0, LINES - 1, COLS - 1 );
+                prefresh ( pad,
+                           scroll_y,
+                           scroll_x,
+                           LINE_START + 1,
+                           0,
+                           LINES - 1,
+                           COLS - 1 );
               }
             else
               beep ();

@@ -62,14 +62,16 @@ get_time ( struct timespec *buff_time )
 }
 
 char *
-sec2clock(uint64_t secs)
+sec2clock ( uint64_t secs )
 {
   static char clock[LEN_BUFF_CLOCK];
 
-  snprintf( clock, LEN_BUFF_CLOCK, "%02d:%02d:%02d",
-            (int) secs / 3600,          // hour
-            (int) (secs % 3600) / 60,   // minute
-            (int) (secs % 3600) % 60 ); // second
+  snprintf ( clock,
+             LEN_BUFF_CLOCK,
+             "%02d:%02d:%02d",
+             ( int ) secs / 3600,             // hour
+             ( int ) ( secs % 3600 ) / 60,    // minute
+             ( int ) ( secs % 3600 ) % 60 );  // second
 
   return clock;
 }

@@ -37,7 +37,7 @@ show_process ( const process_t *restrict processes,
 
 // show general statistics
 void
-show_resume(const struct config_op *);
+show_resume ( const struct config_op * );
 
 // inicia a primeira vez a interface "grafica"
 void
