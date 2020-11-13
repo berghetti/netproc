@@ -29,7 +29,7 @@
 #define NSTOS 1E-9
 
 // hh:mm:ss
-#define LEN_BUFF_CLOCK 9
+#define LEN_BUFF_CLOCK 14
 
 inline static void
 get_time ( struct timespec * );
