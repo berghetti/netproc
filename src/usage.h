@@ -22,7 +22,7 @@
 
 #define PROG_NAME "netproc"
 
-#define PROG_VERSION "0.4.2"
+#define PROG_VERSION "0.4.4"
 
 void
 usage ( void );
