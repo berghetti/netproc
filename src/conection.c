@@ -85,7 +85,7 @@ get_info_conections ( conection_t **conection, const int protocol )
     }
 
   uint32_t count = 0;
-  char local_addr[64], rem_addr[64] = { 0 };
+  char local_addr[64], rem_addr[64] = {0};
 
   unsigned int matches, local_port, rem_port;
   unsigned long int inode;

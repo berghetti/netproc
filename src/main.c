@@ -68,7 +68,7 @@ int
 main ( int argc, const char **argv )
 {
   // struct ring ring;
-  struct packet packet = { 0 };
+  struct packet packet = {0};
   struct tpacket_block_desc *pbd;
   struct tpacket3_hdr *ppd;
   struct config_op *co;
@@ -81,7 +81,7 @@ main ( int argc, const char **argv )
 
   atexit ( clear_exit );
 
-  struct sigaction sigact = { .sa_handler = sig_handler };
+  struct sigaction sigact = {.sa_handler = sig_handler};
   sigemptyset ( &sigact.sa_mask );
 
   sigaction ( SIGINT, &sigact, NULL );
@@ -105,8 +105,8 @@ main ( int argc, const char **argv )
 
   const nfds_t nfds = 2;
   struct pollfd poll_set[2] = {
-          { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 },
-          { .fd = sock, .events = POLLIN | POLLPRI, .revents = 0 } };
+          {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0},
+          {.fd = sock, .events = POLLIN | POLLPRI, .revents = 0}};
 
   // first search by processes
   tot_process_act = get_process_active_con ( &processes, tot_process_act, co );

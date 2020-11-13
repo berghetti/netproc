@@ -76,7 +76,7 @@ socket_setnonblocking ( int sock )
 static void
 bind_interface ( int sock, const char *iface )
 {
-  struct sockaddr_ll my_sock = { 0 };
+  struct sockaddr_ll my_sock = {0};
   my_sock.sll_family = AF_PACKET;
   my_sock.sll_protocol = htons ( ETH_P_ALL );
 

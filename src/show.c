@@ -49,7 +49,7 @@
 #define LINE_START 4
 
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
-static chtype line_original[COLS_PAD] = { 0 };
+static chtype line_original[COLS_PAD] = {0};
 
 static int sort_by = RATE_RX;  // ordenação padrão
 static int scroll_x = 0;

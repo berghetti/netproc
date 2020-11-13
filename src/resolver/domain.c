@@ -45,7 +45,7 @@ check_name_resolved ( struct sockaddr_storage *ss,
 void *
 ip2domain_thread ( void *arg )
 {
-  char host_buff[NI_MAXHOST] = { 0 };
+  char host_buff[NI_MAXHOST] = {0};
 
   struct hosts *host = ( struct hosts * ) arg;
   int ret;
@@ -71,7 +71,7 @@ ip2domain_thread ( void *arg )
 int
 ip2domain ( struct sockaddr_storage *ss, char *buff, const size_t buff_len )
 {
-  static struct hosts hosts_cache[MAX_CACHE_ENTRIES] = { 0 };
+  static struct hosts hosts_cache[MAX_CACHE_ENTRIES] = {0};
   static unsigned int tot_hosts_cache = 0;
   static unsigned int index_cache_host = 0;
 

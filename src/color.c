@@ -45,7 +45,7 @@ static int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
                 [TREE] = A_BOLD,
                 [RESUME] = A_DIM,
                 [RESUME_VALUE] = A_BOLD,
-        } };
+        }};
 
 // const int *color_scheme;
 
