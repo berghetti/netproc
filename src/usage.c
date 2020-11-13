@@ -38,7 +38,7 @@ usage ( void )
          " -c            visualization each active connection of the process\n"
          " -h            show this message\n"
          " -i <iface>    specifies an interface, default is all (except interface with network 127.0.0.0/8)\n"
-         " -n            not translate host and service, implicit '-c',\n"
+         " -n            numeric host and service, implicit '-c',\n"
          "               try '-nh' to no translate only host or '-np' to not translate only service\n"
          " -p tcp | udp  specifies a protocol, the default is tcp and udp\n"
          " -si           SI format display, with powers of 1000, default is IEC, with powers of 1024\n"
