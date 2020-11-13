@@ -33,6 +33,7 @@ double
 start_timer ( void );
 
 // translaete seconds in format hh:mm:ss
-char * sec2clock(uint64_t secs);
+char *
+sec2clock ( uint64_t secs );
 
 #endif  // MTIME_H

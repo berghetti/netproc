@@ -89,7 +89,7 @@ set_filter ( int sock, const struct config_op *co )
 
   switch ( co->proto )
     {
-      case (TCP | UDP):
+      case ( TCP | UDP ):
         bpf.len = ELEMENTS_ARRAY ( ip_tcp_udp );
         bpf.filter = ip_tcp_udp;
         break;

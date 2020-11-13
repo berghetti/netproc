@@ -40,7 +40,7 @@ struct config_op
 
   // internal
   uint8_t tic_tac;  // sinc program, internal control
-  double running;    // time the program is running
+  double running;   // time the program is running
 };
 
 struct config_op *
