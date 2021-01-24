@@ -1,5 +1,5 @@
 #binary
-bin/
+bin/*
 
 #gdb
 .gdb_history

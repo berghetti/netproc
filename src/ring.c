@@ -53,7 +53,8 @@ create_ring_buff ( struct ring *ring )
           TPACKET_ALIGN ( TPACKET3_HDRLEN ) + TPACKET_ALIGN ( LEN_FRAME );
   // tamanho inicial de uma pagina de memoria
   ring->req.tp_block_size = sysconf ( _SC_PAGESIZE );
-  // dobra o tamanho do bloco até que caiba um frame_size
+  
+  // dobra o tamanho do bloco até que caiba a quantidade de frames
   while ( ring->req.tp_block_size < ring->req.tp_frame_size * FRAMES_PER_BLOCK )
     {
       ring->req.tp_block_size <<= 1;
