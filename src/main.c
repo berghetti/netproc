@@ -128,6 +128,7 @@ main ( int argc, const char **argv )
           ppd = ( struct tpacket3_hdr * ) ( ( uint8_t * ) pbd +
                                             pbd->hdr.bh1.offset_to_first_pkt );
 
+          // read all frames of block
           for ( size_t i = 0; i < pbd->hdr.bh1.num_pkts; i++,
                        ppd = ( struct tpacket3_hdr * ) ( ( uint8_t * ) ppd +
                                                          ppd->tp_next_offset ) )
@@ -141,7 +142,8 @@ main ( int argc, const char **argv )
               // se não for possivel identificar de qual processo o trafego
               // pertence é sinal que existe um novo processo, ou nova conexão
               // de um processo existente, que ainda não foi mapeado, então
-              // atualizamos a lista de processos com conexões ativas.
+              // anotamos que sera necessario atualizar a lista de processos
+              // com conexões ativas.
               if ( !add_statistics_in_processes (
                            processes, tot_process_act, &packet, co ) )
                 {
@@ -171,7 +173,7 @@ main ( int argc, const char **argv )
               packtes_reads = true;
             }
 
-          // flush block
+          // pass block controller to kernel
           pbd->hdr.bh1.block_status = TP_STATUS_KERNEL;
 
           // rotate block
