@@ -68,7 +68,4 @@ get_process_active_con ( process_t **procs,
 void
 free_process ( process_t *proc, const size_t qtd_proc );
 
-size_t
-strlen_space ( const char *string );
-
 #endif  // PROCESS_H

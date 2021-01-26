@@ -148,6 +148,7 @@ main ( int argc, const char **argv )
               if ( !add_statistics_in_processes (
                            processes, tot_process_act, &packet, co ) )
                 {
+                  // (THIS NOT WORKING)
                   // mas antes de atualizar a lista de processos, checamos
                   // se é um pacote udp e se as conexões UDP
                   // teveram alterações desde a ultima checagem, caso

@@ -83,6 +83,7 @@ get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
 
       if ( count == len_buffer )
         {
+          // doble len buffer
           len_buffer <<= 1;
 
           void *temp;

@@ -130,8 +130,7 @@ get_process_active_con ( process_t **cur_proc,
   // contador de processos com conexões ativas
   size_t tot_process_active_con = 0;
 
-  // armazena o indice que contem os dados referente a conexão
-  // do processo no buffer conections
+  // armazena o total de conexões de um processo
   size_t tot_con_process;
 
   // new process?
@@ -211,7 +210,7 @@ get_process_active_con ( process_t **cur_proc,
               // encontramos de qual processo a conexão pertence
               if ( ( strncmp ( socket, data_fd, len_link ) ) == 0 )
                 {
-                  // salva o indice do array conections_tcp que tem a conexao
+                  // salva o indice do array conections que tem a conexao
                   // do processo para depois pegar os dados desses indices
                   process_have_conection_active = true;
                   index_con_process[tot_con_process++] = c;
@@ -243,7 +242,8 @@ get_process_active_con ( process_t **cur_proc,
               save_statistics ( &processes[tot_process_active_con].net_stat,
                                 &( *cur_proc )[exists_pid].net_stat );
             }
-          else  // processo novo
+          // processo novo
+          else
             {
               get_name_process ( &processes[tot_process_active_con].name,
                                  processes[tot_process_active_con].pid );
@@ -268,7 +268,7 @@ get_process_active_con ( process_t **cur_proc,
           // copia as conexões referente ao processo,
           // se for um processo existente, copia apenas as conexões novas e
           // mantem as atuais ainda ativas com suas estatisticas, sem
-          // altera-las. se for um processo novo copia tudas
+          // altera-las. se for um processo novo copia todas
           copy_conections ( &processes[tot_process_active_con],
                             compiled_conections,
                             ( exists_pid == -1 ) );
@@ -608,8 +608,6 @@ get_name_process ( char **buffer, const pid_t pid )
 
   fclose ( arq );
 
-  // tamanho até null byte ou primeiro espaço
-  // size_t len = strlen_space ( line );
   size_t len = strlen ( line );
 
   // fgets ja coloca null byte
