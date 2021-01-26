@@ -102,6 +102,7 @@ main ( int argc, const char **argv )
 
   setup_ui ( co );
   start_ui ( co );
+  // show_resume ( co );
 
   const nfds_t nfds = 2;
   struct pollfd poll_set[2] = {
@@ -192,7 +193,6 @@ main ( int argc, const char **argv )
           calc_avg_rate ( processes, tot_process_act, co );
 
           show_process ( processes, tot_process_act, co );
-          show_resume ( co );
 
           m_timer = restart_timer ();
 
