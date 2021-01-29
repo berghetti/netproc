@@ -38,6 +38,7 @@
 #include "sufix.h"
 #include "timer.h"
 #include "show.h"
+#include "log.h"
 #include "usage.h"
 #include "m_error.h"
 
@@ -72,6 +73,7 @@ main ( int argc, const char **argv )
   struct tpacket_block_desc *pbd;
   struct tpacket3_hdr *ppd;
   struct config_op *co;
+  FILE *log_file;
   bool packtes_reads;
   bool fail_process_pkt;
   int block_num = 0;
@@ -102,7 +104,6 @@ main ( int argc, const char **argv )
 
   setup_ui ( co );
   start_ui ( co );
-  // show_resume ( co );
 
   const nfds_t nfds = 2;
   struct pollfd poll_set[2] = {
@@ -111,6 +112,11 @@ main ( int argc, const char **argv )
 
   // first search by processes
   tot_process_act = get_process_active_con ( &processes, tot_process_act, co );
+
+  log_file = create_log_file ( co );
+  // start_log_file ( processes, tot_process_act, log_file );
+
+  // start_log_file()
 
   // hash_crc32_udp = get_crc32_udp_conection ();
 
@@ -194,6 +200,8 @@ main ( int argc, const char **argv )
           calc_avg_rate ( processes, tot_process_act, co );
 
           show_process ( processes, tot_process_act, co );
+
+          log_to_file ( processes, tot_process_act, log_file );
 
           m_timer = restart_timer ();
 

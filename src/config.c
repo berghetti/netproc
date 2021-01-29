@@ -29,6 +29,7 @@
 // default options
 static struct config_op co = {
         .iface = NULL,  // all interfaces
+        .path_log = "netproc.log",
         .proto = TCP | UDP,
         .view_si = false,
         .view_bytes = false,

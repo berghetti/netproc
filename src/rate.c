@@ -43,7 +43,7 @@ calc_avg_rate ( process_t *restrict proc,
       sum_pps_rx = 0;
       sum_pps_tx = 0;
 
-      // ... e soma todos os bytes e pacotes recebidos
+      // soma todos os bytes e pacotes recebidos do processo
       for ( size_t j = 0; j < LEN_BUF_CIRC_RATE; j++ )
         {
           sum_bytes_rx += proc[i].net_stat.Bps_rx[j];
@@ -66,6 +66,7 @@ calc_avg_rate ( process_t *restrict proc,
                                            LEN_BUF_CIRC_RATE )
                                : 0;
 
+      // calcula a média de bytes enviados
       proc[i].net_stat.avg_Bps_tx =
               ( sum_bytes_tx ) ? m_round ( ( double ) ( sum_bytes_tx ) /
                                            LEN_BUF_CIRC_RATE )
@@ -95,7 +96,7 @@ calc_avg_rate ( process_t *restrict proc,
                        RATE );
 
       // transforma o total de bytes recebidos em algo legivel
-      // LEN_STR_RATE - 2 porque não vai "/s" no final
+      // LEN_STR_RATE - 2 porque não tem "/s" no final
       human_readable ( proc[i].net_stat.rx_tot,
                        LEN_STR_RATE - 2,
                        proc[i].net_stat.tot_Bps_rx,

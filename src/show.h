@@ -35,7 +35,6 @@ show_process ( const process_t *restrict processes,
                const size_t tot_process,
                const struct config_op *restrict co );
 
-
 // inicia a primeira vez a interface do usuario
 void
 start_ui ( const struct config_op *co );

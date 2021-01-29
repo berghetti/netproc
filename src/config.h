@@ -30,6 +30,7 @@
 struct config_op
 {
   char *iface;             // bind interface
+  char *path_log;          // path to log in file
   int *color_scheme;       // scheme colors
   int proto;               // tcp or udp
   bool view_si;            // SI or IEC prefix

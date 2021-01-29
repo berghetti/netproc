@@ -32,7 +32,7 @@
 // caso valor final obtido seja maior ou igual que accuracy
 // não será impresso casas decimais
 // 1024 é o melhor valor pois só não ira exibir casas decimais quando o fluxo
-// for maior ou igual 1024 ? (? == ultimo array do array sufix),
+// for maior ou igual 1024 ? (? == ultimo elemento do array sufix),
 // atualmento Tib/s, caso o valor fosse 1000, poderiamos ter resultados como
 // 1023 Kb/s, quando seria mais apropriado 1023.50 Kb/s
 #define ACCURACY 1024

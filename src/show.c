@@ -312,7 +312,7 @@ show_process ( const process_t *restrict processes,
           for ( int j = 0; processes[i].name[j]; j++ )
             {
               if ( j >= len_name && j < len_base_name )
-                // pinta somente o nome do programa
+                // destaca somente o nome do programa
                 waddch ( pad,
                          processes[i].name[j] |
                                  co->color_scheme[NAME_PROG_BOLD] );
