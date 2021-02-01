@@ -7,10 +7,12 @@
 #include <stdbool.h>
 
 #include "process.h"
+#include "rate.h"
+#include "human_readable.h"
 #include "m_error.h"
 
 #define PID -10  // negativo alinhado a esquerda
-#define TAXA -13
+#define TAXA -14
 #define PROGRAM -61
 
 static void
@@ -28,13 +30,13 @@ write_process_to_file ( const process_t *restrict processes,
       //   return;
 
       char prog_name[60] = {0};
-      if (!sscanf ( processes[i].name, "%59s", prog_name ))
+      if ( !sscanf ( processes[i].name, "%59s", prog_name ) )
         return;
 
       fprintf ( log_file,
-                "%*d %*s %*s %*s\n",
-                PID,
-                processes[i].pid,
+                "%*s %*s %*s\n",
+                // PID,
+                // processes[i].pid,
                 TAXA,
                 processes[i].net_stat.tx_tot,
                 TAXA,
@@ -43,21 +45,6 @@ write_process_to_file ( const process_t *restrict processes,
                 prog_name );
     }
 }
-
-// static char *
-// get_name_file ( FILE *file )
-// {
-//   char fd_path[255];
-//   char *filename = malloc ( 255 );
-//   ssize_t n;
-//   int fd = fileno ( file );
-//
-//   sprintf ( fd_path, "/proc/self/fd/%d", fd );
-//   n = readlink ( fd_path, filename, 255 );
-//   filename[n] = '\0';
-//
-//   return filename;
-// }
 
 FILE *
 create_log_file ( const struct config_op *co )
@@ -71,9 +58,9 @@ create_log_file ( const struct config_op *co )
                   strerror ( errno ) );
 
   fprintf ( fd,
-            "%*s %*s %*s %*s\n",
-            PID,
-            "PID",
+            "%*s %*s %*s\n",
+            // PID,
+            // "PID",
             TAXA,
             "TOTAL TX",
             TAXA,
@@ -85,9 +72,31 @@ create_log_file ( const struct config_op *co )
   return fd;
 }
 
+static size_t
+filter_active_process ( process_t **buffer,
+                        const process_t *processes,
+                        const size_t tot_process )
+{
+  size_t count = 0;
+
+  if ( !( *buffer = malloc ( tot_process * sizeof ( process_t ) ) ) )
+    fatal_error ( "Error alloc memory: %s", strerror ( errno ) );
+
+  for ( size_t i = 0; i < tot_process; i++ )
+    {
+      if ( !processes[i].net_stat.tot_Bps_rx &&
+           !processes[i].net_stat.tot_Bps_tx )
+        continue;
+
+      ( *buffer )[count++] = processes[i];
+    }
+
+  return count;
+}
+
 int
 log_to_file ( const process_t *restrict processes,
-              size_t tot_process,
+              const size_t tot_process,
               FILE *restrict log_file )
 {
   // bool locate;
@@ -97,58 +106,107 @@ log_to_file ( const process_t *restrict processes,
   // long prev_line = -1;
   pid_t temp_pid = -1;
 
-  // fprintf(stderr, "sizeof *process: %ld\n", sizeof(*processes));
+  char prog_name[60] = {0}, prog_name2[60] = {0};
 
-  process_t *process_temp = calloc ( tot_process, sizeof ( *processes ) );
-  size_t count = 0;
+  // nstats_t total_tx, total_rx;
 
-  rewind ( log_file );
+  process_t *process_filtred = NULL;
+  size_t tot_process_filtred;
+  tot_process_filtred =
+          filter_active_process ( &process_filtred, processes, tot_process );
 
-  // fprintf ( stderr, "write file\n" );
-  // fprintf ( file_tmp, "%s", line );
-
-  // fprintf ( stderr, "debug pid: %d\n", temp_pid );
-  for ( size_t j = 0; j < tot_process; j++ )
+  // join duplicata
+  for ( size_t i = 0; i < tot_process_filtred; i++ )
     {
-      fprintf(stderr, "checking process: \npid: %d\nprocess: %s\n", processes[j].pid, processes[j].name);
-      if ( !processes[j].net_stat.tot_Bps_rx &&
-           !processes[j].net_stat.tot_Bps_tx )
-        continue;
+      // total_tx = total_rx = 0;
+        sscanf ( process_filtred[i].name, "%59s", prog_name );
 
-      // memcpy(&process_temp[count], &processes[j], sizeof ( process_t ));
-      process_temp[count++] = processes[j];
-      fprintf(stderr, "copied process: %s\n", process_temp[count].name);
+      for ( size_t j = 0; j < tot_process_filtred; )
+        {
+          if ( i == j )
+            {
+              j++;
+              continue;
+            }
+
+
+          sscanf ( process_filtred[j].name, "%59s", prog_name2 );
+
+          fprintf ( stderr, "testando %s e %s\n", prog_name, prog_name2 );
+
+          // strcmp
+          if ( !strncmp ( prog_name, prog_name2, strlen ( prog_name ) ) )
+            {
+              fprintf ( stderr, "%s\n", "match" );
+
+              process_filtred[i].net_stat.tot_Bps_tx +=
+                      process_filtred[j].net_stat.tot_Bps_tx;
+
+              human_readable ( process_filtred[i].net_stat.tx_tot,
+                               sizeof ( process_filtred[i].net_stat.tx_tot ),
+                               process_filtred[i].net_stat.tot_Bps_tx,
+                               TOTAL );
+
+              process_filtred[i].net_stat.tot_Bps_rx +=
+                      process_filtred[j].net_stat.tot_Bps_rx;
+
+              human_readable ( process_filtred[i].net_stat.rx_tot,
+                               sizeof ( process_filtred[i].net_stat.rx_tot ),
+                               process_filtred[i].net_stat.tot_Bps_rx,
+                               TOTAL );
+
+              // fprintf ( stderr, "rx_rate %s\n",
+              // process_filtred[i].net_stat.rx_rate );
+              //
+              if ( j + 1 < tot_process_filtred )
+                {
+                  process_filtred[j] = process_filtred[tot_process_filtred-- - 1];
+                  continue;
+                }
+
+
+              // tot_process_filtred--;
+            }
+
+            j++;
+        }
     }
 
-  // fprintf ( stderr, "count1: %d\n", count);
-
+  rewind ( log_file );
   // skip header
   getline ( &line, &len, log_file );
 
   while ( ( nread = getline ( &line, &len, log_file ) ) != -1 )
     {
-      sscanf ( line, "%d", &temp_pid );
+      // sscanf ( line, "%*d %*d %59s", prog_name );
+      sscanf ( line, "%*28c%59s", prog_name );
 
-      fprintf(stderr, "line: %s\n",line);
+      fprintf ( stderr, "line: %s\n", line );
       // fprintf ( stderr, "debug pid: %d\n", temp_pid );
-      for ( size_t i = 0; i < count; i++ )
+      for ( size_t i = 0; i < tot_process_filtred; i++ )
         {
-          fprintf ( stderr, "debug t_pid: %d\n", temp_pid );
-          fprintf ( stderr, "debug p_pid: %d\n", process_temp[i].pid );
-          if ( temp_pid == process_temp[i].pid )
+          // fprintf ( stderr, "debug t_pid: %d\n", temp_pid );
+          // fprintf ( stderr, "debug p_pid: %d\n", process_filtred[i].pid );
+
+          sscanf ( process_filtred[i].name, "%59s", prog_name2 );
+
+          fprintf (
+                  stderr, "testando in file %s e %s\n", prog_name, prog_name2 );
+
+          if ( !strncmp ( prog_name, prog_name2, strlen ( prog_name ) ) )
             {
-              // fprintf ( stderr, "math line: %s\n", line );
+              fprintf ( stderr, "%s\n", "match file" );
 
               // back to begin line (all lines has lenght fixed)
               fseek ( log_file, -( nread ), SEEK_CUR );
 
-              write_process_to_file ( &process_temp[i], 1, log_file );
+              write_process_to_file ( &process_filtred[i], 1, log_file );
 
               // remove already inserted process
-              if ( i + 1 < count )
-                process_temp[i] = process_temp[count - 1];
+              if ( i + 1 < tot_process_filtred )
+                process_filtred[i] = process_filtred[tot_process_filtred - 1];
 
-              --count;
+              tot_process_filtred--;
 
               break;
             }
@@ -157,17 +215,18 @@ log_to_file ( const process_t *restrict processes,
 
   free ( line );
 
-  // fprintf ( stderr, "count2: %d\n", count);
-  if ( count )
+  fprintf ( stderr, "tot_process_filtred2: %lu\n", tot_process_filtred );
+  if ( tot_process_filtred )
     {
-      // for (size_t i = 0; i < count; i++) {
-      //     fprintf(stderr, "escrevendo: \npid: %d\nprocess: %s\n", process_temp[i].pid, process_temp[i].name);
+      // for (size_t i = 0; i < tot_process_filtred; i++) {
+      //     fprintf(stderr, "escrevendo: \npid: %d\nprocess: %s\n",
+      //     process_filtred[i].pid, process_filtred[i].name);
+      //      write_process_to_file ( &process_filtred[i], 1, log_file );
       // }
-        write_process_to_file ( process_temp, count, log_file );
+      write_process_to_file ( process_filtred, tot_process_filtred, log_file );
     }
 
-
-  free(process_temp);
+  free ( process_filtred );
 
   return 1;
 }

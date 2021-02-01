@@ -1,9 +1,1 @@
-PID        TOTAL TX      TOTAL RX      PROGRAM                                                      
-30047      3.80 Kib      4.64 Kib      /usr/lib/firefox-esr/firefox-esr                             
-2171       129.77 Kib    589.85 Kib    /opt/google/chrome/chrome                                    
-569        11.28 Kib     11.28 Kib     /usr/bin/anydesk                                             
-30330      6.67 Kib      7.78 Kib      transmission-gtk                                             
-527        160 b         0             avahi-daemon:                                                
-2122       2.91 Kib      0             /opt/google/chrome/chrome                                    
-6358       340.77 Kib    7.02 Mib      /usr/lib/firefox-esr/firefox-esr                             
-5440       198 b         303 b         /usr/share/atom/atom                                         
+TOTAL TX       TOTAL RX       PROGRAM                                                      
