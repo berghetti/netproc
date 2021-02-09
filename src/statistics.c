@@ -54,6 +54,9 @@ add_statistics_in_processes ( process_t *restrict processes,
           processes[i].net_stat.pps_rx[id_buff_circ] = 0;
           processes[i].net_stat.pps_tx[id_buff_circ] = 0;
 
+          processes[i].net_stat.bytes_last_sec_rx = 0;
+          processes[i].net_stat.bytes_last_sec_tx = 0;
+
           // zera estatisticas da conexões tambem
           if ( co->view_conections )
             {
@@ -99,6 +102,8 @@ add_statistics_in_processes ( process_t *restrict processes,
                   processes[i].net_stat.pps_rx[id_buff_circ]++;
                   processes[i].net_stat.Bps_rx[id_buff_circ] += pkt->lenght;
 
+                  processes[i].net_stat.bytes_last_sec_rx += pkt->lenght;
+
                   processes[i].net_stat.tot_Bps_rx += pkt->lenght;
 
                   // adicionado estatisticas exclusica da conexão
@@ -113,6 +118,8 @@ add_statistics_in_processes ( process_t *restrict processes,
                 {  // estatisticas geral do processo
                   processes[i].net_stat.pps_tx[id_buff_circ]++;
                   processes[i].net_stat.Bps_tx[id_buff_circ] += pkt->lenght;
+
+                  processes[i].net_stat.bytes_last_sec_tx += pkt->lenght;
 
                   processes[i].net_stat.tot_Bps_tx += pkt->lenght;
 

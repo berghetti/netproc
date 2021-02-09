@@ -113,7 +113,7 @@ main ( int argc, const char **argv )
   // first search by processes
   tot_process_act = get_process_active_con ( &processes, tot_process_act, co );
 
-  log_file = create_log_file ( co );
+  log_file = create_log_file ( processes, tot_process_act, co );
   // start_log_file ( processes, tot_process_act, log_file );
 
   // start_log_file()
