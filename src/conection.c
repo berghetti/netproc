@@ -47,20 +47,6 @@ get_info_conections ( conection_t **conection, const int protocol )
   // char *path_file = NULL;
   const char *path_file = ( protocol == IPPROTO_TCP ) ? PATH_TCP : PATH_UDP;
 
-  // switch ( proto )
-  //   {
-  //     case TCP:
-  //       path_file = PATH_TCP;
-  //       protocol = IPPROTO_TCP;
-  //       break;
-  //     case UDP:
-  //       path_file = PATH_UDP;
-  //       protocol = IPPROTO_UDP;
-  //       break;
-  //     default:
-  //       fatal_error ( "Invalid protocol get conections" );
-  //   }
-
   if ( !( arq = fopen ( path_file, "r" ) ) )
     return -1;
 
