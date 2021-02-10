@@ -112,7 +112,8 @@ main ( int argc, const char **argv )
 
   sock = create_socket ( co );
 
-  log_file = setup_log_file ( co );
+  if ( co->log )
+    log_file = setup_log_file ( co );
 
   create_ring ( sock, &ring );
 
@@ -128,15 +129,6 @@ main ( int argc, const char **argv )
   struct pollfd poll_set[2] = {
           {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0},
           {.fd = sock, .events = POLLIN | POLLPRI, .revents = 0}};
-
-  // struct resources_to_free resorces = {
-  //   .log_file = log_file,
-  //   .buff_log_file = log_file_buffer,
-  //   .sock = sock,
-  //   .processes = processes,
-  //   .tot_processes = tot_process_act,
-  //   .ring = &ring,
-  //   .exit_status = EXIT_SUCCESS};
 
   // first search by processes
   tot_process_act = get_process_active_con ( &processes, tot_process_act, co );
@@ -224,8 +216,12 @@ main ( int argc, const char **argv )
 
           show_process ( processes, tot_process_act, co );
 
-          // log_to_file ( processes, tot_process_act, log_file );
-          log_to_file ( processes, tot_process_act, &log_file_buffer, &len_log_file_buffer, log_file);
+          if ( co->log )
+            log_to_file ( processes,
+                          tot_process_act,
+                          &log_file_buffer,
+                          &len_log_file_buffer,
+                          log_file );
 
           m_timer = restart_timer ();
 
@@ -274,7 +270,7 @@ main ( int argc, const char **argv )
       if ( prog_exit )
         free_resources_and_exit (
                 ( struct resources_to_free ){.log_file = log_file,
-                                              .buff_log_file = log_file_buffer,
+                                             .buff_log_file = log_file_buffer,
                                              .sock = sock,
                                              .processes = processes,
                                              .tot_processes = tot_process_act,
@@ -288,7 +284,6 @@ main ( int argc, const char **argv )
 static void
 free_resources_and_exit ( struct resources_to_free res )
 {
-  fprintf ( stderr, "limapndo %d processos\n", res.tot_processes );
   close_socket ( res.sock );
 
   free_ring ( res.ring );
@@ -296,7 +291,7 @@ free_resources_and_exit ( struct resources_to_free res )
   if ( res.log_file )
     fclose ( res.log_file );
 
-  free(res.buff_log_file);
+  free ( res.buff_log_file );
 
   if ( res.tot_processes )
     free_process ( res.processes, res.tot_processes );

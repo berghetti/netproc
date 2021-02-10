@@ -4,12 +4,13 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
-0.4.???
+0.??.???
     * header information
+    + option -f, allows save process statistics to a file
 
 0.4.4 - 2020-11-13
    + general information at the top of the screen
-   * scroll
+   * scroll using arrow keys
 
 0.4.3 - 2020-09-13
   + simultaneous tracking of TCP and UDP protocols

@@ -20,10 +20,6 @@
 #ifndef USAGE_H
 #define USAGE_H
 
-#define PROG_NAME "netproc"
-
-#define PROG_VERSION "0.4.4"
-
 void
 usage ( void );
 

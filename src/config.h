@@ -23,6 +23,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define PROG_NAME "netproc"
+#define PROG_NAME_LOG PROG_NAME".log"
+
+#define PROG_VERSION "0.4.4"
+
 // values field proto in struct config_op
 #define TCP ( 1 << 0 )
 #define UDP ( 1 << 1 )
@@ -33,6 +38,7 @@ struct config_op
   char *path_log;          // path to log in file
   int *color_scheme;       // scheme colors
   int proto;               // tcp or udp
+  bool log;                // log in file
   bool view_si;            // SI or IEC prefix
   bool view_bytes;         // view in bytes or bits
   bool view_conections;    // show conections each process
@@ -42,8 +48,6 @@ struct config_op
   // internal
   uint8_t tic_tac;  // sinc program, internal control
   double running;   // time the program is running
-
-  
 };
 
 struct config_op *

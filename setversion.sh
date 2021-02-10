@@ -9,5 +9,4 @@ Example:
   exit 1
 fi
 
-sed -i "s/PROG_VERSION[ \t]\+\"\(.\+\)\"/PROG_VERSION \"$1\"/"  src/usage.h
-
+sed -i "s/PROG_VERSION[ \t]\+\"\(.\+\)\"/PROG_VERSION \"$1\"/"  src/config.h

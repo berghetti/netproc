@@ -34,7 +34,6 @@ else
 	CFLAGS+= -O2 -march=native -Wall -Wextra
 endif
 
-# biblioteca terminfo
 LDLIBS=-lncurses -lpthread
 
 #.c files
@@ -42,7 +41,8 @@ C_SOURCE=$(wildcard $(SRC)/*.c)
 C_SOURCE+=$(wildcard $(SRC)/resolver/*.c)
 #
 # .h files
-#H_SOURCE=$(wildcard *.h)
+H_SOURCE=$(wildcard $(SRC)/*.h)
+H_SOURCE+=$(wildcard $(SRC)/resolver/*.h)
 #
 # Object files
 # todos arquivos .c trocado a extensão para .o
@@ -59,14 +59,10 @@ all: $(BIN)/$(PROG_NAME)
 $(BIN)/$(PROG_NAME): $(OBJECTS)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-# caso especial do main.c que não possui .h
-$(SRC)/main.o: $(SRC)/main.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
-
 # mascara generica para compilar arquivos .o
-# quando usa regra implicita não compila quando o .h é alterado
-# não sei porque...
-%.o: %.c %.h
+# utiliza todos os arquivos headers como dependencia,
+# caso algum seja atualizado, todo os objetos são recompilados
+%.o: %.c $(H_SOURCE)
 	 $(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 clean:

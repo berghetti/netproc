@@ -17,8 +17,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "usage.h"
 #include <stdio.h>
+#include "config.h"
 
 void
 show_version ( void )
@@ -36,6 +36,7 @@ usage ( void )
          "Options:\n"
          " -B            view in bytes, default in bits\n"
          " -c            visualization each active connection of the process\n"
+         " -f \"file\"     save statistics in file, file name is optional, default is " PROG_NAME_LOG "\n"
          " -h            show this message\n"
          " -i <iface>    specifies an interface, default is all (except interface with network 127.0.0.0/8)\n"
          " -n            numeric host and service, implicit '-c',\n"

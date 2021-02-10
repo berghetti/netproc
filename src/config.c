@@ -17,6 +17,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <stdlib.h>  // exit
 #include <string.h>  // strncmp
 #include <unistd.h>  // EXIT_*
@@ -29,7 +30,8 @@
 // default options
 static struct config_op co = {
         .iface = NULL,  // all interfaces
-        .path_log = "netproc.log",
+        .path_log = PROG_NAME_LOG,
+        .log = false,
         .proto = TCP | UDP,
         .view_si = false,
         .view_bytes = false,
@@ -57,6 +59,17 @@ parse_options ( int argc, const char **argv )
                 break;
               case 'c':
                 co.view_conections = true;
+                break;
+              case 'f':
+                co.log = true;
+
+                // optional name file
+                if ( *(argv + 1) && *( *(argv + 1) ) != '-' )
+                  {
+                    co.path_log = ( char * ) *++argv;
+                    argc--;
+                  }
+
                 break;
               case 'h':
                 usage ();

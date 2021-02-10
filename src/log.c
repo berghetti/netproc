@@ -9,18 +9,8 @@
 #include "human_readable.h"
 #include "m_error.h"
 
-
-
 // qts of process firt len buffer processes to file log
 #define FIRST_LEN_LOG 12
-
-// typedef struct log_processes
-// {
-//   char name[PROGRAM];
-//   nstats_t tot_Bps_rx;  // trafego total
-//   nstats_t tot_Bps_tx;
-// } log_processes;
-
 
 static void
 alloc_processes_log ( struct log_processes **buff, const size_t len )
@@ -69,8 +59,6 @@ setup_log_file ( const struct config_op *co )
                   co->path_log,
                   strerror ( errno ) );
 
-  // alloc_processes_log ( &process_filtred, max_process_log );
-
   fprintf ( fd,
             "%*s%*s%*s\n",
             -TAXA,
@@ -104,7 +92,7 @@ update_log_process ( const process_t *new_proc,
 
   for ( size_t i = 0; i < len_proc; i++ )
     {
-      sscanf ( new_proc[i].name, "%60s",  buffer_name );
+      sscanf ( new_proc[i].name, "%60s", buffer_name );
 
       len_name = strlen ( buffer_name );
       locate = false;
@@ -128,9 +116,9 @@ update_log_process ( const process_t *new_proc,
       // add new process in buffer
       if ( !locate )
         {
-          if ( *len_buff == max_len_buff_log || !max_len_buff_log)
+          if ( *len_buff == max_len_buff_log || !max_len_buff_log )
             {
-              if (!max_len_buff_log)
+              if ( !max_len_buff_log )
                 max_len_buff_log = FIRST_LEN_LOG;
 
               max_len_buff_log <<= 1;  // double
@@ -143,15 +131,9 @@ update_log_process ( const process_t *new_proc,
 
           ( *buff_log )[*len_buff].tot_Bps_rx = new_proc[i].net_stat.tot_Bps_rx;
           ( *buff_log )[*len_buff].tot_Bps_tx = new_proc[i].net_stat.tot_Bps_tx;
-          (*len_buff)++;
+          ( *len_buff )++;
         }
     }
-}
-
-void
-free_buff_file()
-{
-
 }
 
 int
@@ -161,9 +143,6 @@ log_to_file ( process_t *restrict processes,
               size_t *len_buffer_log,
               FILE *restrict log_file )
 {
-  // static log_processes *process_filtred = NULL;
-  // static size_t len_buffer_log = 0;
-
   update_log_process (
           processes, tot_process, process_filtred, len_buffer_log );
 
