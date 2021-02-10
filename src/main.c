@@ -53,9 +53,6 @@
 // 1 segundo = 1000 milisegundos
 #define TIMEOUT_POLL 1000
 
-// static void
-// clear_exit ( void );
-
 static void
 sig_handler ( int );
 
@@ -67,6 +64,7 @@ static int prog_exit = 0;
 struct resources_to_free
 {
   FILE *log_file;
+  log_processes *buff_log_file;
   process_t *processes;
   uint32_t tot_processes;
   struct ring *ring;
@@ -85,9 +83,14 @@ main ( int argc, const char **argv )
   struct tpacket3_hdr *ppd;
   struct config_op *co;
 
-  FILE *log_file = NULL;
   process_t *processes = NULL;
-  uint32_t tot_process_act = 0;
+  size_t tot_process_act = 0;
+
+  // feature log in file
+  FILE *log_file = NULL;
+  log_processes *log_file_buffer = NULL;
+  size_t len_log_file_buffer = 0;
+
   int sock;
 
   bool packtes_reads;
@@ -96,8 +99,6 @@ main ( int argc, const char **argv )
   // int tot_blocks = 64; == ring.req.tp_block_nr
   int rp;
   // hash_t hash_crc32_udp, hash_tmp;
-
-  // atexit ( free_resources_and_exit );
 
   struct sigaction sigact = {.sa_handler = sig_handler};
   sigemptyset ( &sigact.sa_mask );
@@ -111,7 +112,7 @@ main ( int argc, const char **argv )
 
   sock = create_socket ( co );
 
-  // log_file = setup_log_file ( co );
+  log_file = setup_log_file ( co );
 
   create_ring ( sock, &ring );
 
@@ -127,6 +128,15 @@ main ( int argc, const char **argv )
   struct pollfd poll_set[2] = {
           {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0},
           {.fd = sock, .events = POLLIN | POLLPRI, .revents = 0}};
+
+  // struct resources_to_free resorces = {
+  //   .log_file = log_file,
+  //   .buff_log_file = log_file_buffer,
+  //   .sock = sock,
+  //   .processes = processes,
+  //   .tot_processes = tot_process_act,
+  //   .ring = &ring,
+  //   .exit_status = EXIT_SUCCESS};
 
   // first search by processes
   tot_process_act = get_process_active_con ( &processes, tot_process_act, co );
@@ -215,6 +225,7 @@ main ( int argc, const char **argv )
           show_process ( processes, tot_process_act, co );
 
           // log_to_file ( processes, tot_process_act, log_file );
+          log_to_file ( processes, tot_process_act, &log_file_buffer, &len_log_file_buffer, log_file);
 
           m_timer = restart_timer ();
 
@@ -249,6 +260,7 @@ main ( int argc, const char **argv )
                       if ( running_input ( co ) == P_EXIT )
                         free_resources_and_exit ( ( struct resources_to_free ){
                                 .log_file = log_file,
+                                .buff_log_file = log_file_buffer,
                                 .sock = sock,
                                 .processes = processes,
                                 .tot_processes = tot_process_act,
@@ -262,6 +274,7 @@ main ( int argc, const char **argv )
       if ( prog_exit )
         free_resources_and_exit (
                 ( struct resources_to_free ){.log_file = log_file,
+                                              .buff_log_file = log_file_buffer,
                                              .sock = sock,
                                              .processes = processes,
                                              .tot_processes = tot_process_act,
@@ -283,6 +296,8 @@ free_resources_and_exit ( struct resources_to_free res )
   if ( res.log_file )
     fclose ( res.log_file );
 
+  free(res.buff_log_file);
+
   if ( res.tot_processes )
     free_process ( res.processes, res.tot_processes );
 
@@ -290,19 +305,6 @@ free_resources_and_exit ( struct resources_to_free res )
 
   exit ( res.exit_status );
 }
-
-// static void
-// clear_exit ( void )
-// {
-//   close_socket ( sock );
-//
-//   free_ring ( &ring );
-//
-//   if ( tot_process_act )
-//     free_process ( processes, tot_process_act );
-//
-//   restore_terminal ();
-// }
 
 static void
 sig_handler ( int sig )
