@@ -53,27 +53,43 @@
 // 1 segundo = 1000 milisegundos
 #define TIMEOUT_POLL 1000
 
-static void
-clear_exit ( void );
+// static void
+// clear_exit ( void );
 
 static void
 sig_handler ( int );
 
-static process_t *processes = NULL;
-static uint32_t tot_process_act = 0;
+// handled by function sig_handler
+// if != 0 program exit
+static int prog_exit = 0;
 
-static int sock;
-static struct ring ring;
+// all resources that needed free on program exit
+struct resources_to_free
+{
+  FILE *log_file;
+  process_t *processes;
+  uint32_t tot_processes;
+  struct ring *ring;
+  int sock;
+  int exit_status;
+};
+
+static void free_resources_and_exit ( struct resources_to_free );
 
 int
 main ( int argc, const char **argv )
 {
-  // struct ring ring;
   struct packet packet = {0};
+  struct ring ring = {0};
   struct tpacket_block_desc *pbd;
   struct tpacket3_hdr *ppd;
   struct config_op *co;
-  FILE *log_file;
+
+  FILE *log_file = NULL;
+  process_t *processes = NULL;
+  uint32_t tot_process_act = 0;
+  int sock;
+
   bool packtes_reads;
   bool fail_process_pkt;
   int block_num = 0;
@@ -81,7 +97,7 @@ main ( int argc, const char **argv )
   int rp;
   // hash_t hash_crc32_udp, hash_tmp;
 
-  atexit ( clear_exit );
+  // atexit ( free_resources_and_exit );
 
   struct sigaction sigact = {.sa_handler = sig_handler};
   sigemptyset ( &sigact.sa_mask );
@@ -94,6 +110,8 @@ main ( int argc, const char **argv )
   co = parse_options ( argc, argv );
 
   sock = create_socket ( co );
+
+  // log_file = setup_log_file ( co );
 
   create_ring ( sock, &ring );
 
@@ -112,11 +130,6 @@ main ( int argc, const char **argv )
 
   // first search by processes
   tot_process_act = get_process_active_con ( &processes, tot_process_act, co );
-
-  log_file = create_log_file ( processes, tot_process_act, co );
-  // start_log_file ( processes, tot_process_act, log_file );
-
-  // start_log_file()
 
   // hash_crc32_udp = get_crc32_udp_conection ();
 
@@ -201,7 +214,7 @@ main ( int argc, const char **argv )
 
           show_process ( processes, tot_process_act, co );
 
-          log_to_file ( processes, tot_process_act, log_file );
+          // log_to_file ( processes, tot_process_act, log_file );
 
           m_timer = restart_timer ();
 
@@ -232,27 +245,64 @@ main ( int argc, const char **argv )
                     continue;
 
                   if ( poll_set[i].fd == STDIN_FILENO )
-                    running_input ( co );
+                    {
+                      if ( running_input ( co ) == P_EXIT )
+                        free_resources_and_exit ( ( struct resources_to_free ){
+                                .log_file = log_file,
+                                .sock = sock,
+                                .processes = processes,
+                                .tot_processes = tot_process_act,
+                                .ring = &ring,
+                                .exit_status = EXIT_SUCCESS} );
+                    }
                 }
             }
         }
+
+      if ( prog_exit )
+        free_resources_and_exit (
+                ( struct resources_to_free ){.log_file = log_file,
+                                             .sock = sock,
+                                             .processes = processes,
+                                             .tot_processes = tot_process_act,
+                                             .ring = &ring,
+                                             .exit_status = prog_exit} );
     }
 
   return EXIT_SUCCESS;
 }
 
 static void
-clear_exit ( void )
+free_resources_and_exit ( struct resources_to_free res )
 {
-  close_socket ( sock );
+  fprintf ( stderr, "limapndo %d processos\n", res.tot_processes );
+  close_socket ( res.sock );
 
-  free_ring ( &ring );
+  free_ring ( res.ring );
 
-  if ( tot_process_act )
-    free_process ( processes, tot_process_act );
+  if ( res.log_file )
+    fclose ( res.log_file );
+
+  if ( res.tot_processes )
+    free_process ( res.processes, res.tot_processes );
 
   restore_terminal ();
+
+  exit ( res.exit_status );
 }
+
+// static void
+// clear_exit ( void )
+// {
+//   close_socket ( sock );
+//
+//   free_ring ( &ring );
+//
+//   if ( tot_process_act )
+//     free_process ( processes, tot_process_act );
+//
+//   restore_terminal ();
+// }
 
 static void
 sig_handler ( int sig )
@@ -260,5 +310,5 @@ sig_handler ( int sig )
   // "The return value of a simple command is its exit status,
   //  or 128+n if the command is terminated by signal n"
   // by man bash
-  exit ( 128 + sig );
+  prog_exit = 128 + sig;
 }

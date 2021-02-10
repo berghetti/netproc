@@ -360,7 +360,7 @@ show_process ( const process_t *restrict processes,
 }
 
 // handle input of user while program is running
-void
+int
 running_input ( const struct config_op *co )
 {
   int ch;
@@ -493,7 +493,10 @@ running_input ( const struct config_op *co )
             break;
           case 'q':
           case 'Q':
-            exit ( EXIT_SUCCESS );
+            // exit ( EXIT_SUCCESS );
+            return P_EXIT;
         }
     }
+
+  return P_CONTINE;
 }

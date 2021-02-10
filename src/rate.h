@@ -35,8 +35,9 @@
 // escolhido o padrão SI, com base 10, o valor sera dividido por 1000 ou 1024
 // para que possa ser apresentado de forma "legivel por humanos", assim sempre
 // teremos algo como: 1023 B/s, 1023.99 KB/s, 1023.99 Mib/s, 1023.99 Gib/s, ou
-// 8388608 TiB/s :o então no pior caso teremos umas string com tamanhao de 14
-// bytes ja incluido null byte.
+// 8388608 TiB/s (isso é um programa de rede, voltado para hosts e não
+// roteadores dificilmente teremos trafego maior que isso...), então no pior
+// caso teremos umas string com tamanhao de 14 bytes ja incluido null byte.
 #define LEN_STR_RATE 14
 
 typedef uint64_t nstats_t;

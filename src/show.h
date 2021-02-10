@@ -39,8 +39,12 @@ show_process ( const process_t *restrict processes,
 void
 start_ui ( const struct config_op *co );
 
+// return of running_input
+#define P_EXIT 1
+#define P_CONTINE 0
+
 // handle input of user while program is running
-void
+int
 running_input ( const struct config_op *co );
 
 #endif  // SHOW_H
