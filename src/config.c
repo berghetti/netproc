@@ -113,9 +113,9 @@ parse_options ( int argc, const char **argv )
                     usage ();
                     exit ( EXIT_FAILURE );
                   }
-                else if ( !strncasecmp ( *argv, "tcp", sizeof ( "tcp" ) ) )
+                else if ( !strncasecmp ( *argv, "tcp", strlen ( "tcp" ) ) )
                   co.proto &= TCP;
-                else if ( !strncasecmp ( *argv, "udp", sizeof ( "udp" ) ) )
+                else if ( !strncasecmp ( *argv, "udp", strlen ( "udp" ) ) )
                   co.proto &= UDP;
                 else
                   {

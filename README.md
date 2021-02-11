@@ -11,7 +11,7 @@ tool to monitor network traffic based on processes
     $ sudo apt install build-essential libncurses5-dev
 
     [Red Hat Based]
-    yum install gcc make ncurses-devel
+    $ sudo yum install gcc make ncurses-devel
 
 #### [Install]
     $ git clone https://github.com/berghetti/netproc.git
@@ -30,17 +30,17 @@ tool to monitor network traffic based on processes
      -c            visualization each active connection of the process
      -f "file"     save statistics in file, file name is optional, default is netproc.log
      -h            show this message
-     -i <iface>    specifies an interface, default is all
-     -n            not translate host and service, implicit '-c',
+     -i <iface>    specifies an interface, default is all (except interface with network 127.0.0.0/8)
+     -n            numeric host and service, implicit '-c',
                    try '-nh' to no translate only host or '-np' to not translate only service
+     -p tcp | udp  specifies a protocol, the default is tcp and udp
      -si           SI format display, with powers of 1000, default is IEC, with powers of 1024
-     -u            tracks udp traffic, default is tcp
      -v            show version
 
     when running press:
      arrow keys    scroll
      s             change column-based sort
-     q		   exit
+     q             exit
 
 #### [uninstall]
     $ sudo make uninstall
