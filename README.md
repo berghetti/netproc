@@ -8,7 +8,10 @@ tool to monitor network traffic based on processes
 
 #### [Dependences]
     [Debian based]
-    $ sudo apt install libncurses5-dev
+    $ sudo apt install build-essential libncurses5-dev
+
+    [Red Hat Based]
+    yum install gcc make ncurses-devel
 
 #### [Install]
     $ git clone https://github.com/berghetti/netproc.git
@@ -25,6 +28,7 @@ tool to monitor network traffic based on processes
     Options:
      -B            view in bytes, default in bits
      -c            visualization each active connection of the process
+     -f "file"     save statistics in file, file name is optional, default is netproc.log
      -h            show this message
      -i <iface>    specifies an interface, default is all
      -n            not translate host and service, implicit '-c',
