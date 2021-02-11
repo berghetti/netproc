@@ -1,9 +1,10 @@
 
 /*
- *  Copyright (C) 2020 Mayco S. Berghetti
+ *  Copyright (C) 2020-2021 Mayco S. Berghetti
  *
+ *  This file is part of Netproc.
  *
- *  This program is free software: you can redistribute it and/or modify
+ *  Netproc is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
@@ -99,7 +100,6 @@ main ( int argc, const char **argv )
   int block_num = 0;
   // int tot_blocks = 64; == ring.req.tp_block_nr
   int rp;
-  // hash_t hash_crc32_udp, hash_tmp;
 
   struct sigaction sigact = {.sa_handler = sig_handler};
   sigemptyset ( &sigact.sa_mask );
@@ -170,24 +170,6 @@ main ( int argc, const char **argv )
               if ( !add_statistics_in_processes (
                            processes, tot_process_act, &packet, co ) )
                 {
-                  // (THIS NOT WORKING)
-                  // mas antes de atualizar a lista de processos, checamos
-                  // se é um pacote udp e se as conexões UDP
-                  // teveram alterações desde a ultima checagem, caso
-                  // não tenha alteração, nao tem porque atualizar a lista de
-                  // processos, que é um processo caro.
-                  // isso é necessario porque alguns aplicavos não mantem uma
-                  // conexão UDP por tempo suficiente para o kernel listar
-                  // if ( packet.protocol == IPPROTO_UDP )
-                  //   {
-                  //     hash_tmp = get_crc32_udp_conection ();
-                  //
-                  //     if ( hash_crc32_udp == hash_tmp )
-                  //       continue;
-                  //
-                  //     hash_crc32_udp = hash_tmp;
-                  //   }
-
                   // mark to update processes
                   fail_process_pkt = true;
 
