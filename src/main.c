@@ -64,7 +64,8 @@ static int prog_exit = 0;
 struct resources_to_free
 {
   FILE *log_file;
-  log_processes *buff_log_file;
+  log_processes *buff_log;
+  size_t len_log;
   process_t *processes;
   uint32_t tot_processes;
   struct ring *ring;
@@ -256,7 +257,8 @@ main ( int argc, const char **argv )
                       if ( running_input ( co ) == P_EXIT )
                         free_resources_and_exit ( ( struct resources_to_free ){
                                 .log_file = log_file,
-                                .buff_log_file = log_file_buffer,
+                                .buff_log = log_file_buffer,
+                                .len_log = len_log_file_buffer,
                                 .sock = sock,
                                 .processes = processes,
                                 .tot_processes = tot_process_act,
@@ -267,10 +269,12 @@ main ( int argc, const char **argv )
             }
         }
 
+      // exit signal
       if ( prog_exit )
         free_resources_and_exit (
                 ( struct resources_to_free ){.log_file = log_file,
-                                             .buff_log_file = log_file_buffer,
+                                             .buff_log = log_file_buffer,
+                                             .len_log = len_log_file_buffer,
                                              .sock = sock,
                                              .processes = processes,
                                              .tot_processes = tot_process_act,
@@ -288,10 +292,9 @@ free_resources_and_exit ( struct resources_to_free res )
 
   free_ring ( res.ring );
 
-  if ( res.log_file )
-    fclose ( res.log_file );
+  free_log ( res.log_file, res.buff_log, res.len_log );
 
-  free ( res.buff_log_file );
+  // free ( res.buff_log_file );
 
   if ( res.tot_processes )
     free_process ( res.processes, res.tot_processes );

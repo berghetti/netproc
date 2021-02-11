@@ -64,7 +64,7 @@ parse_options ( int argc, const char **argv )
                 co.log = true;
 
                 // optional name file
-                if ( *(argv + 1) && *( *(argv + 1) ) != '-' )
+                if ( *( argv + 1 ) && *( *( argv + 1 ) ) != '-' )
                   {
                     co.path_log = ( char * ) *++argv;
                     argc--;

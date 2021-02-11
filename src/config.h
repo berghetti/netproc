@@ -24,7 +24,7 @@
 #include <stdbool.h>
 
 #define PROG_NAME "netproc"
-#define PROG_NAME_LOG PROG_NAME".log"
+#define PROG_NAME_LOG PROG_NAME ".log"
 
 #define PROG_VERSION "0.4.4"
 
