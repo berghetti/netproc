@@ -6,6 +6,7 @@ Legend:
 
 0.??.???
     * header information
+    - bin folder not present (necessary to compilation)
     + option -f, allows save process statistics to a file
 
 0.4.4 - 2020-11-13
