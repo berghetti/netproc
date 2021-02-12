@@ -8,6 +8,7 @@ Legend:
     * header information show more fast
     - bin folder not present (necessary to compilation)
     + option -f, allows save process statistics to a file
+    + header information total processes pps and rate bps
 
 0.4.4 - 2020-11-13
    + general information at the top of the screen
