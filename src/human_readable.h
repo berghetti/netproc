@@ -30,7 +30,7 @@
 // TOTAL sufix
 enum mode
 {
-  RATE,
+  RATE = 1,
   TOTAL
 };
 

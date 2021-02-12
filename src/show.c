@@ -34,6 +34,8 @@
 #include "show.h"
 #include "usage.h"
 #include "sort.h"
+#include "rate.h"     // type nstats_t
+#include "human_readable.h"
 
 // tamanho representação textual porta da camada de transporte
 #define PORTLEN 5  // 65535
@@ -41,7 +43,7 @@
 // espaçamento entre as colunas
 #define PID -5  // negativo alinhado a esquerda
 #define PPS 6
-#define RATE 13
+#define J_RATE 13
 
 // espaçamento da estatistica até a tupla
 #define TUPLE 16 - IF_NAMESIZE
@@ -59,6 +61,10 @@ static int selected = LINE_START + 1;  // posição de linha do item selecionado
 static int tot_rows;                   // total linhas exibidas
 
 static int tot_proc_act = 0;  // total de processos com conexão ativa
+
+// statistics total in current time
+static nstats_t cur_rate_tx, cur_rate_rx;
+static nstats_t cur_pps_tx, cur_pps_rx;
 
 // static chtype line_color[COLS_PAD];  // versão otimizada não precisa
 
@@ -91,18 +97,50 @@ paint_selected ( const struct config_op *co )
 static void
 show_resume ( const struct config_op *co )
 {
+  char rate_tx[LEN_STR_RATE] = {0}, rate_rx[LEN_STR_RATE] = {0};
+
+  human_readable(rate_tx, LEN_STR_RATE, cur_rate_tx, RATE);
+  human_readable(rate_rx, LEN_STR_RATE, cur_rate_rx, RATE);
+
+
   wattrset ( pad, co->color_scheme[RESUME] );
   mvwprintw ( pad, 0, 1, PROG_NAME " - " PROG_VERSION "\n" );
-  mvwprintw ( pad, 2, 1, "Running: " );
 
+
+  wmove(pad, 2, 1);
+  wclrtoeol(pad); // erase the current line
+  wprintw ( pad, "Running: " );
   wattrset ( pad, co->color_scheme[RESUME_VALUE] );
-  wprintw ( pad, "%s\n", sec2clock ( ( uint64_t ) co->running ) );
+  wprintw ( pad, "%s", sec2clock ( ( uint64_t ) co->running ) );
+
 
   wattrset ( pad, co->color_scheme[RESUME] );
-  mvwprintw ( pad, 3, 1, "Processes: " );
-
+  mvwprintw ( pad, 2, 25, "pps tx: " );
   wattrset ( pad, co->color_scheme[RESUME_VALUE] );
-  wprintw ( pad, "%d\n", tot_proc_act );
+  wprintw ( pad, "%ld", cur_pps_tx );
+  wattrset ( pad, co->color_scheme[RESUME] );
+  mvwprintw ( pad, 2, 40, "rate tx: " );
+  wattrset ( pad, co->color_scheme[RESUME_VALUE] );
+  wprintw ( pad, "%s", rate_tx );
+
+
+  wattrset ( pad, co->color_scheme[RESUME] );
+  wmove(pad, 3, 1);
+  wprintw ( pad, "Processes: " );
+  wclrtoeol(pad); // erase the current line
+  wattrset ( pad, co->color_scheme[RESUME_VALUE] );
+  wprintw ( pad, "%d", tot_proc_act );
+
+
+  wattrset ( pad, co->color_scheme[RESUME] );
+  mvwprintw ( pad, 3, 25, "pps rx: " );
+  wattrset ( pad, co->color_scheme[RESUME_VALUE] );
+  wprintw ( pad, "%d", cur_pps_rx );
+  wattrset ( pad, co->color_scheme[RESUME] );
+  mvwprintw ( pad, 3, 40, "rate rx: " );
+  wattrset ( pad, co->color_scheme[RESUME_VALUE] );
+  wprintw ( pad, "%s", rate_rx );
+
 
   wattrset ( pad, co->color_scheme[RESET] );
 
@@ -204,9 +242,9 @@ show_conections ( const process_t *restrict process,
                 process->conection[i].net_stat.avg_pps_tx,
                 PPS,
                 process->conection[i].net_stat.avg_pps_rx,
-                RATE,
+                J_RATE,
                 process->conection[i].net_stat.tx_rate,
-                RATE,
+                J_RATE,
                 process->conection[i].net_stat.rx_rate );
 
       if ( if_indextoname ( process->conection[i].if_index, iface_buff ) )
@@ -272,6 +310,8 @@ show_process ( const process_t *restrict processes,
 
   tot_proc_act = 0;
 
+  cur_rate_tx = cur_rate_rx = cur_pps_tx = cur_pps_rx = 0;
+
   sort ( ( process_t * ) processes, tot_process, sort_by );
 
   wmove ( pad, LINE_START + 1, 0 );  // move second line after header
@@ -284,6 +324,12 @@ show_process ( const process_t *restrict processes,
           tot_rows++;
           tot_proc_act++;
 
+          cur_rate_tx += processes[i].net_stat.avg_Bps_tx;
+          cur_rate_rx += processes[i].net_stat.avg_Bps_rx;
+
+          cur_pps_tx += processes[i].net_stat.avg_pps_tx;
+          cur_pps_rx += processes[i].net_stat.avg_pps_rx;
+
           wprintw ( pad,
                     " %*d %*ld %*ld %*s %*s %*s %*s ",
                     PID,
@@ -292,13 +338,13 @@ show_process ( const process_t *restrict processes,
                     processes[i].net_stat.avg_pps_tx,
                     PPS,
                     processes[i].net_stat.avg_pps_rx,
-                    RATE,
+                    J_RATE,
                     processes[i].net_stat.tx_rate,
-                    RATE,
+                    J_RATE,
                     processes[i].net_stat.rx_rate,
-                    RATE,
+                    J_RATE,
                     processes[i].net_stat.tx_tot,
-                    RATE,
+                    J_RATE,
                     processes[i].net_stat.rx_tot );
 
           // wprintw ( pad, "%s", processes[i].name );

@@ -5,7 +5,7 @@ Legend:
 ! Known issue / missing feature
 
 0.??.???
-    * header information
+    * header information show more fast
     - bin folder not present (necessary to compilation)
     + option -f, allows save process statistics to a file
 
