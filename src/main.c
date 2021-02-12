@@ -274,7 +274,8 @@ free_resources_and_exit ( struct resources_to_free res )
 
   free_ring ( res.ring );
 
-  free_log ( res.log_file, res.buff_log, res.len_log );
+  if (res.log_file)
+    free_log ( res.log_file, res.buff_log, res.len_log );
 
   // free ( res.buff_log_file );
 
