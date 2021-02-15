@@ -57,11 +57,9 @@ write_process_to_file ( struct log_processes *restrict processes,
       if ( !processes[i].tot_Bps_rx && !processes[i].tot_Bps_tx )
         continue;
 
-      human_readable (
-              tx_tot, sizeof tx_tot, processes[i].tot_Bps_tx, TOTAL );
+      human_readable ( tx_tot, sizeof tx_tot, processes[i].tot_Bps_tx, TOTAL );
 
-      human_readable (
-              rx_tot, sizeof rx_tot, processes[i].tot_Bps_rx, TOTAL );
+      human_readable ( rx_tot, sizeof rx_tot, processes[i].tot_Bps_rx, TOTAL );
 
       fprintf ( log_file,
                 "%*s%*s%s\n",

@@ -73,7 +73,9 @@ get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
   size_t count = 0;
 
   size_t len_buffer = TOT_PROCESS_BEGIN;
-  *buffer = calloc ( len_buffer, sizeof ( **buffer ) );
+  // *buffer = calloc ( len_buffer, sizeof ( **buffer ) );
+  *buffer =
+          malloc ( len_buffer * sizeof ( **buffer ) );  // calloc is necessary?
   if ( !*buffer )
     return -1;
 
@@ -95,9 +97,10 @@ get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
           *buffer = temp;
 
           // initialize new space of memory
-          memset ( &( *buffer )[count],
-                   0,
-                   ( len_buffer - count ) * sizeof ( **buffer ) );
+          // FIXME: its necessary?
+          // memset ( &( *buffer )[count],
+          //          0,
+          //          ( len_buffer - count ) * sizeof ( **buffer ) );
         }
     }
 

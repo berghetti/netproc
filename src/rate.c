@@ -84,7 +84,6 @@ calc_avg_rate ( process_t *restrict proc,
                       ? m_round ( ( double ) sum_pps_tx / LEN_BUF_CIRC_RATE )
                       : 0;
 
-
       // calcula taxa individual de cada conexão
       if ( co->view_conections )
         calc_avg_rate_conection ( &proc[i], co );
@@ -141,6 +140,5 @@ calc_avg_rate_conection ( process_t *restrict process,
               ( sum_pps_tx )
                       ? m_round ( ( double ) sum_pps_tx / LEN_BUF_CIRC_RATE )
                       : 0;
-
     }
 }

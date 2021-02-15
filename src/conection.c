@@ -72,7 +72,8 @@ get_info_conections ( conection_t **conection, const int protocol )
     }
 
   uint32_t count = 0;
-  char local_addr[64], rem_addr[64] = {0};
+  // char local_addr[64] = {0}, rem_addr[64] = {0};
+  char local_addr[9] = {0}, rem_addr[9] = {0};  // enough for ipv4
 
   unsigned int matches, local_port, rem_port;
   unsigned long int inode;
@@ -87,7 +88,7 @@ get_info_conections ( conection_t **conection, const int protocol )
       // clang-format on
 
       matches = sscanf ( line,
-                         "%*d: %64[0-9A-Fa-f]:%X %64[0-9A-Fa-f]:%X %*X "
+                         "%*d: %8[0-9A-Fa-f]:%X %8[0-9A-Fa-f]:%X %*X "
                          "%*X:%*X %*X:%*X %*X %*d %*d %lu %*512s\n",
                          local_addr,
                          &local_port,

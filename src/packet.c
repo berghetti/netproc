@@ -136,7 +136,7 @@ parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
 
   // fprintf(stderr, "ll->sll_pkttype - %d\n", ll->sll_pkttype);
   // fprintf(stderr, "ll->sll_hatype - %d\n", ll->sll_hatype);
-  // // fprintf(stderr, "l2->h_proto - %x\n", ntohs(l2->h_proto));
+  // fprintf(stderr, "l2->h_proto - %x\n", ntohs(l2->h_proto));
   //
   // fprintf ( stderr, "l3->proto - %d\n", l3->protocol );
   // fprintf(stderr, "l4->dest - %x\n", ntohs(l4->dest));

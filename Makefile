@@ -23,8 +23,8 @@ SRC=./src
 BIN=./bin
 
 CC=gcc
-CPPFLAGS=
-CFLAGS=
+# CPPFLAGS=
+# CFLAGS=
 
 # environment var
 ifdef DEBUG
