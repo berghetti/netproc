@@ -166,8 +166,8 @@ get_process_active_con ( process_t **cur_proc,
 
       // falha ao pegar file descriptos do processo,
       // troca de processo
-      if ( total_fd_process <= 0 )
-        goto CLEANUP;
+      if ( total_fd_process == -1 )
+        continue;
 
       // passa por todos file descriptors do processo
       for ( int id_fd = 0; id_fd < total_fd_process; id_fd++ )
@@ -187,9 +187,9 @@ get_process_active_con ( process_t **cur_proc,
 
           data_fd[len_link] = '\0';
 
-          // caso o link nao tenha a palavra socket
+          // caso o link nao comece com a palavra socket
           // vai para proximo fd do processo
-          if ( !strstr ( data_fd, "socket" ) )
+          if ( strncmp ( data_fd, "socket", 6 ) )
             continue;
 
           // compara o fd do processo com todos os inodes - conexões -
@@ -220,13 +220,13 @@ get_process_active_con ( process_t **cur_proc,
 
         }  // for id_fd
 
+      free ( fds_p );
+
       if ( process_have_conection_active || process_have_conection_history )
         {
           // obtem informações do processo
           processes[tot_process_active_con].pid = process_pids[index_pd];
-          // processes[tot_process_active_con].total_fd = total_fd_process;
           processes[tot_process_active_con].total_conections = tot_con_process;
-          // tot_con_tcp_process + tot_con_udp_process;
 
           // processo ja existe no buffer principal
           if ( exists_pid != -1 )
@@ -279,10 +279,6 @@ get_process_active_con ( process_t **cur_proc,
           // contabiliza total de processos que possuem conexao ativa
           tot_process_active_con++;
         }
-
-    CLEANUP:
-      if ( fds_p )
-        free ( fds_p );
 
     }  // for process
 
@@ -582,50 +578,29 @@ free_dead_process ( process_t *restrict cur_procs,
 }
 
 // armazena o nome do processo no buffer e retorna
-// o tamanho do nome do processo incluindo null bytes ou espaço,
+// o tamanho do nome do processo,
 // função cuida da alocação de memoria para o nome do processo
 static int
 get_name_process ( char **buffer, const pid_t pid )
 {
-  char path_cmdline[MAX_NAME];
-  snprintf ( path_cmdline, MAX_NAME, "/proc/%d/cmdline", pid );
+  char path_cmdline[MAX_CMDLINE];
+  size_t len = 0;
+  ssize_t read;
+  snprintf ( path_cmdline, MAX_CMDLINE, "/proc/%d/cmdline", pid );
 
-  FILE *arq = NULL;
-  arq = fopen ( path_cmdline, "r" );
-
-  if ( arq == NULL )
+  FILE *arq;
+  if ( !( arq = fopen ( path_cmdline, "r" ) ) )
     {
       error ( "Open file, %s", strerror ( errno ) );
       return -1;
     }
 
-  char line[MAX_NAME];
-  if ( !fgets ( line, MAX_NAME, arq ) )
-    {
-      fclose ( arq );
-      error ( "Read file, %s", strerror ( errno ) );
-      return -1;
-    }
+  *buffer = NULL;
+
+  if ( ( read = getline ( buffer, &len, arq ) ) == -1 )
+    error ( "Read file, %s", strerror ( errno ) );
 
   fclose ( arq );
 
-  size_t len = strlen ( line );
-
-  // fgets ja coloca null byte
-  // line[len] = '\0';
-
-  *buffer = calloc ( 1, len + 1 );
-
-  if ( !*buffer )
-    {
-      error ( "Alloc buffer name, %s", strerror ( errno ) );
-      return -1;
-    }
-
-  // copia a string junto com null byte
-  size_t i;
-  for ( i = 0; i < len + 1; i++ )
-    ( *buffer )[i] = line[i];
-
-  return i;
+  return read;
 }

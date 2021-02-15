@@ -94,7 +94,7 @@ get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
           // work with data that have
           if ( !temp )
             goto END;
-            // return -1;
+          // return -1;
 
           *buffer = temp;
 
@@ -106,7 +106,7 @@ get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
         }
     }
 
-  END:
+END:
   closedir ( dir );
 
   return count;

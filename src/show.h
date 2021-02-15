@@ -27,7 +27,9 @@
 // tamanho fixo de caracteres até a coluna program
 #define PROGRAM 77
 
-#define COLS_PAD PROGRAM + MAX_NAME
+#define MAX_NAME_PROGRAM 255
+
+#define COLS_PAD PROGRAM + MAX_NAME_PROGRAM
 #define LINES_PAD 1000
 
 // exibe os processos e suas estatisticas de rede

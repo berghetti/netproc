@@ -35,8 +35,11 @@
 // sizeof ("socket:[99999999]") + 3 safe
 #define MAX_NAME_SOCKET 9 + 8 + 3
 
-// tamanho maximo do nome de um processo
-#define MAX_NAME 255
+// tamanho maximo do nome de um processo a ser exibido
+// #define MAX_NAME 255
+
+// /proc/%d/cmdline
+#define MAX_CMDLINE 20
 
 // maxpid = 2^22 = 4194304 = 7 chars
 //   6  +  7  + 4 + 7
