@@ -41,6 +41,9 @@
 // caso teremos umas string com tamanhao de 14 bytes ja incluido null byte.
 #define LEN_STR_RATE 14
 
+// não tem "/s" no final
+#define LEN_STR_TOTAL LEN_STR_RATE - 2
+
 typedef uint64_t nstats_t;
 
 struct net_stat
@@ -49,11 +52,11 @@ struct net_stat
   nstats_t pps_tx[LEN_BUF_CIRC_RATE];
   nstats_t Bps_rx[LEN_BUF_CIRC_RATE];  // bytes/bits por segundos, amostras
   nstats_t Bps_tx[LEN_BUF_CIRC_RATE];
-  char rx_rate[LEN_STR_RATE];  // taxa de download final
-  char tx_rate[LEN_STR_RATE];  // taxa de upload final
-  char rx_tot[LEN_STR_RATE];   // total de bytes recebidos
-  char tx_tot[LEN_STR_RATE];   //                enviados
-  nstats_t avg_Bps_rx;         // média de bytes/bits por segundos
+  // char rx_rate[LEN_STR_RATE];  // taxa de download final
+  // char tx_rate[LEN_STR_RATE];  // taxa de upload final
+  // char rx_tot[LEN_STR_RATE];   // total de bytes recebidos
+  // char tx_tot[LEN_STR_RATE];   //                enviados
+  nstats_t avg_Bps_rx;  // média de bytes/bits por segundos
   nstats_t avg_Bps_tx;
   nstats_t avg_pps_rx;  // média de pacotes por segundos
   nstats_t avg_pps_tx;

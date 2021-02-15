@@ -48,8 +48,8 @@ write_process_to_file ( struct log_processes *restrict processes,
                         const size_t tot_process,
                         FILE *restrict log_file )
 {
-  char rx_tot[LEN_STR_RATE - 2];
-  char tx_tot[LEN_STR_RATE - 2];
+  char rx_tot[LEN_STR_TOTAL];
+  char tx_tot[LEN_STR_TOTAL];
 
   for ( size_t i = 0; i < tot_process; i++ )
     {
@@ -58,10 +58,10 @@ write_process_to_file ( struct log_processes *restrict processes,
         continue;
 
       human_readable (
-              tx_tot, LEN_STR_RATE - 2, processes[i].tot_Bps_tx, TOTAL );
+              tx_tot, sizeof tx_tot, processes[i].tot_Bps_tx, TOTAL );
 
       human_readable (
-              rx_tot, LEN_STR_RATE - 2, processes[i].tot_Bps_rx, TOTAL );
+              rx_tot, sizeof rx_tot, processes[i].tot_Bps_rx, TOTAL );
 
       fprintf ( log_file,
                 "%*s%*s%s\n",
@@ -82,13 +82,7 @@ setup_log_file ( const struct config_op *co )
                   co->path_log,
                   strerror ( errno ) );
 
-  fprintf ( fd,
-            "%*s%*s%s\n",
-            -TAXA,
-            "TOTAL TX",
-            -TAXA,
-            "TOTAL RX",
-            "PROGRAM" );
+  fprintf ( fd, "%*s%*s%s\n", -TAXA, "TOTAL TX", -TAXA, "TOTAL RX", "PROGRAM" );
 
   return fd;
 }
@@ -133,7 +127,7 @@ update_log_process ( const process_t *new_proc,
                       new_proc[i].net_stat.bytes_last_sec_tx;
 
               // only one process with same name exist in this buffer
-              break ;
+              break;
             }
         }
 
@@ -149,15 +143,11 @@ update_log_process ( const process_t *new_proc,
               alloc_processes_log ( buff_log, max_len_buff_log );
             }
 
-          // strncpy ( ( *buff_log )[*len_buff].name,
-          //           buffer_name,
-          //           sizeof ( ( *buff_log )[*len_buff].name ) );
           ( *buff_log )[*len_buff].name = strndup ( buffer_name, len_name + 1 );
 
           ( *buff_log )[*len_buff].tot_Bps_rx = new_proc[i].net_stat.tot_Bps_rx;
           ( *buff_log )[*len_buff].tot_Bps_tx = new_proc[i].net_stat.tot_Bps_tx;
           ( *len_buff )++;
-
         }
 
       free ( buffer_name );
@@ -170,9 +160,8 @@ free_log ( FILE *file, log_processes *log, size_t len )
   fclose ( file );
   log_processes *temp = log;
 
-  while(len--)
-      free( temp++->name );
-
+  while ( len-- )
+    free ( temp++->name );
 
   free ( log );
 }

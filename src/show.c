@@ -34,7 +34,7 @@
 #include "show.h"
 #include "usage.h"
 #include "sort.h"
-#include "rate.h"     // type nstats_t
+#include "rate.h"  // type nstats_t
 #include "human_readable.h"
 
 // tamanho representação textual porta da camada de transporte
@@ -99,20 +99,17 @@ show_resume ( const struct config_op *co )
 {
   char rate_tx[LEN_STR_RATE] = {0}, rate_rx[LEN_STR_RATE] = {0};
 
-  human_readable(rate_tx, LEN_STR_RATE, cur_rate_tx, RATE);
-  human_readable(rate_rx, LEN_STR_RATE, cur_rate_rx, RATE);
-
+  human_readable ( rate_tx, LEN_STR_RATE, cur_rate_tx, RATE );
+  human_readable ( rate_rx, LEN_STR_RATE, cur_rate_rx, RATE );
 
   wattrset ( pad, co->color_scheme[RESUME] );
   mvwprintw ( pad, 0, 1, PROG_NAME " - " PROG_VERSION "\n" );
 
-
-  wmove(pad, 2, 1);
-  wclrtoeol(pad); // erase the current line
+  wmove ( pad, 2, 1 );
+  wclrtoeol ( pad );  // erase the current line
   wprintw ( pad, "Running: " );
   wattrset ( pad, co->color_scheme[RESUME_VALUE] );
   wprintw ( pad, "%s", sec2clock ( ( uint64_t ) co->running ) );
-
 
   wattrset ( pad, co->color_scheme[RESUME] );
   mvwprintw ( pad, 2, 25, "pps tx: " );
@@ -123,14 +120,12 @@ show_resume ( const struct config_op *co )
   wattrset ( pad, co->color_scheme[RESUME_VALUE] );
   wprintw ( pad, "%s", rate_tx );
 
-
   wattrset ( pad, co->color_scheme[RESUME] );
-  wmove(pad, 3, 1);
+  wmove ( pad, 3, 1 );
   wprintw ( pad, "Processes: " );
-  wclrtoeol(pad); // erase the current line
+  wclrtoeol ( pad );  // erase the current line
   wattrset ( pad, co->color_scheme[RESUME_VALUE] );
   wprintw ( pad, "%d", tot_proc_act );
-
 
   wattrset ( pad, co->color_scheme[RESUME] );
   mvwprintw ( pad, 3, 25, "pps rx: " );
@@ -140,7 +135,6 @@ show_resume ( const struct config_op *co )
   mvwprintw ( pad, 3, 40, "rate rx: " );
   wattrset ( pad, co->color_scheme[RESUME_VALUE] );
   wprintw ( pad, "%s", rate_rx );
-
 
   wattrset ( pad, co->color_scheme[RESET] );
 
@@ -216,6 +210,8 @@ show_conections ( const process_t *restrict process,
   char iface_buff[IF_NAMESIZE];
   char *iface;
 
+  char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
+
   for ( i = 0; i < process->total_conections; i++ )
     {
       tot_rows++;
@@ -233,6 +229,16 @@ show_conections ( const process_t *restrict process,
       // faz a tradução de ip:porta para nome-reverso:serviço
       tuple = translate ( &process->conection[i], co );
 
+      human_readable ( tx_rate,
+                       sizeof tx_rate,
+                       process->conection[i].net_stat.avg_Bps_tx,
+                       RATE );
+
+      human_readable ( rx_rate,
+                       sizeof rx_rate,
+                       process->conection[i].net_stat.avg_Bps_rx,
+                       RATE );
+
       wattrset ( pad, co->color_scheme[CONECTIONS] );
       wprintw ( pad,
                 " %*s %*ld %*ld %*s %*s ",
@@ -243,9 +249,9 @@ show_conections ( const process_t *restrict process,
                 PPS,
                 process->conection[i].net_stat.avg_pps_rx,
                 J_RATE,
-                process->conection[i].net_stat.tx_rate,
+                tx_rate,
                 J_RATE,
-                process->conection[i].net_stat.rx_rate );
+                rx_rate );
 
       if ( if_indextoname ( process->conection[i].if_index, iface_buff ) )
         iface = iface_buff;
@@ -312,6 +318,9 @@ show_process ( const process_t *restrict processes,
 
   cur_rate_tx = cur_rate_rx = cur_pps_tx = cur_pps_rx = 0;
 
+  char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
+  char tx_tot[LEN_STR_TOTAL], rx_tot[LEN_STR_TOTAL];
+
   sort ( ( process_t * ) processes, tot_process, sort_by );
 
   wmove ( pad, LINE_START + 1, 0 );  // move second line after header
@@ -324,11 +333,32 @@ show_process ( const process_t *restrict processes,
           tot_rows++;
           tot_proc_act++;
 
+          // update total show in resume
           cur_rate_tx += processes[i].net_stat.avg_Bps_tx;
           cur_rate_rx += processes[i].net_stat.avg_Bps_rx;
 
           cur_pps_tx += processes[i].net_stat.avg_pps_tx;
           cur_pps_rx += processes[i].net_stat.avg_pps_rx;
+
+          human_readable ( tx_rate,
+                           sizeof tx_rate,
+                           processes[i].net_stat.avg_Bps_tx,
+                           RATE );
+
+          human_readable ( rx_rate,
+                           sizeof rx_rate,
+                           processes[i].net_stat.avg_Bps_rx,
+                           RATE );
+
+          human_readable ( tx_tot,
+                           LEN_STR_RATE,
+                           processes[i].net_stat.tot_Bps_tx,
+                           TOTAL );
+
+          human_readable ( rx_tot,
+                           LEN_STR_RATE,
+                           processes[i].net_stat.tot_Bps_rx,
+                           TOTAL );
 
           wprintw ( pad,
                     " %*d %*ld %*ld %*s %*s %*s %*s ",
@@ -339,13 +369,13 @@ show_process ( const process_t *restrict processes,
                     PPS,
                     processes[i].net_stat.avg_pps_rx,
                     J_RATE,
-                    processes[i].net_stat.tx_rate,
+                    tx_rate,
                     J_RATE,
-                    processes[i].net_stat.rx_rate,
+                    rx_rate,
                     J_RATE,
-                    processes[i].net_stat.tx_tot,
+                    tx_tot,
                     J_RATE,
-                    processes[i].net_stat.rx_tot );
+                    rx_tot );
 
           // wprintw ( pad, "%s", processes[i].name );
 
@@ -371,6 +401,7 @@ show_process ( const process_t *restrict processes,
 
           waddch ( pad, '\n' );
 
+          // option -c and process with traffic at the moment
           if ( co->view_conections & ( processes[i].net_stat.avg_Bps_rx ||
                                        processes[i].net_stat.avg_Bps_tx ) )
             show_conections ( &processes[i], co );
