@@ -19,7 +19,7 @@ tool to monitor network traffic based on processes
     $ make
     $ sudo make install
 
-##### Fast install
+##### [Fast install]
     $ git clone https://github.com/berghetti/netproc.git; cd netproc; make; sudo make install
 
 #### [Options / usage]
@@ -41,6 +41,9 @@ tool to monitor network traffic based on processes
      arrow keys    scroll
      s             change column-based sort
      q             exit
+
+#### [Running without root]
+    $ sudo setcap "cap_net_admin,cap_net_raw+pe" /usr/local/sbin/netproc
 
 #### [uninstall]
     $ sudo make uninstall
