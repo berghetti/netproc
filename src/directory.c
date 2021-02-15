@@ -91,8 +91,10 @@ get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
 
           void *temp;
           temp = realloc ( *buffer, len_buffer * sizeof ( **buffer ) );
+          // work with data that have
           if ( !temp )
-            return -1;
+            goto END;
+            // return -1;
 
           *buffer = temp;
 
@@ -104,6 +106,7 @@ get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
         }
     }
 
+  END:
   closedir ( dir );
 
   return count;
