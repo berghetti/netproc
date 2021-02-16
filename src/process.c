@@ -364,12 +364,16 @@ process_copy ( process_t *restrict proc,
                process_t *restrict new_procs,
                const size_t new_tot_proc )
 {
-  // memset(proc, 0, new_tot_proc * sizeof(process_t));
-  for ( size_t i = 0; i < new_tot_proc; i++ )
-    {
-      // copia conteudo do buffer temporario para buffer principal
-      *( proc + i ) = *( new_procs + i );
-    }
+
+  while(new_tot_proc--)
+    *proc++ = *new_procs++;
+
+
+  // for ( size_t i = 0; i < new_tot_proc; i++ )
+  //   {
+  //     // copia conteudo do buffer temporario para buffer principal
+  //     *( proc + i ) = *( new_procs + i );
+  //   }
 }
 
 // copia as conexões verificando se a conexão ja for existente
@@ -452,7 +456,7 @@ alloc_memory_process ( process_t **proc, const size_t len )
   // se o espaço alocado para os processos estiver três vezes maior que o
   // necessario no momento, diminui 1/3 do espaço alocado, ainda mantendo o
   // dobro do necessario, assim temos a oportunidade de economizar memória e
-  // evitar muitos reallocs
+  // tambem evitar muitos reallocs
   else if ( len > max_n_proc || max_n_proc >= len * 3 )
     {
       void *p;
@@ -524,7 +528,7 @@ alloc_memory_conections ( process_t *new_st_processes,
       new_st_processes->conection = p;
       new_st_processes->max_n_con = new_len;
     }
-  // apenas reutiliza a memoria ja alocada, espaço é atual esta ok...
+  // apenas reutiliza a memoria ja alocada, espaço atual esta ok...
   else
     {
       new_st_processes->conection = current_st_processes->conection;
@@ -535,19 +539,19 @@ alloc_memory_conections ( process_t *new_st_processes,
 // verifica se o pid ja existe no buffer.
 // retorna o indice do buffer em que o pid foi encontrado
 // ou -1 caso o pid não seja localizado
-// @param pid_t search_pid, o pid a ser buscado
+// @param pid_t pid, o pid a ser buscado
 // @param ponteiro process_t procs, o buffer a procurar
 // @param size_t len_procs, tamanho do buffer procs
 static int
-search_pid ( const pid_t search_pid,
+search_pid ( const pid_t pid,
              const process_t *procs,
-             const size_t len_procs )
+             size_t len_procs )
 {
   if ( !procs )
     return -1;
 
   for ( size_t i = 0; i < len_procs; i++ )
-    if ( procs[i].pid == search_pid )
+    if ( procs[i].pid == pid )
       return i;
 
   return -1;
@@ -565,11 +569,9 @@ free_dead_process ( process_t *restrict cur_procs,
 {
   for ( size_t i = 0; i < len_cur_procs; i++ )
     {
-      int id = search_pid ( cur_procs[i].pid, new_procs, len_new_procs );
-
-      // processo não localizado
+      // se processo não localizado
       // liberando memoria alocada para seus atributos
-      if ( id == -1 )
+      if ( -1 == ( search_pid ( cur_procs[i].pid, new_procs, len_new_procs ) ) )
         {
           free ( cur_procs[i].name );
           free ( cur_procs[i].conection );
