@@ -262,7 +262,7 @@ main ( int argc, const char **argv )
                                              .tot_processes = tot_process_act,
                                              .ring = &ring,
                                              .exit_status = prog_exit} );
-    }
+    } // main loop
 
   return EXIT_SUCCESS;
 }

@@ -144,7 +144,7 @@ get_process_active_con ( process_t **cur_proc,
       process_have_conection_history = false;
       process_have_conection_active = false;
       tot_con_process = 0;
-      fds_p = NULL;
+      // fds_p = NULL;
       // compiled_conections = NULL;
 
       // verifica se o pid atual, consta na buffer principal
@@ -358,23 +358,14 @@ save_statistics ( struct net_stat *restrict stat_dst,
 }
 
 // copia os processos com conexões ativos para
-// o buffer principal, mantendo as estatisticas
-// dos processos que não são novos e possem
+// o buffer principal
 static void
 process_copy ( process_t *restrict proc,
                process_t *restrict new_procs,
                size_t new_tot_proc )
 {
-
   while(new_tot_proc--)
     *proc++ = *new_procs++;
-
-
-  // for ( size_t i = 0; i < new_tot_proc; i++ )
-  //   {
-  //     // copia conteudo do buffer temporario para buffer principal
-  //     *( proc + i ) = *( new_procs + i );
-  //   }
 }
 
 // copia as conexões verificando se a conexão ja for existente
