@@ -18,7 +18,7 @@
 
 PROG_NAME=netproc
 
-PATH_INSTALL=/usr/local/sbin
+PATH_INSTALL=$(DESTDIR)/usr/local/sbin
 SRC=./src
 BIN=./bin
 
