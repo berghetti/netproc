@@ -71,7 +71,6 @@ struct resources_to_free
   uint32_t tot_processes;
   struct ring *ring;
   int sock;
-  int exit_status;
 };
 
 static void free_resources ( struct resources_to_free );
@@ -298,8 +297,7 @@ EXIT:
                                        .sock = sock,
                                        .processes = processes,
                                        .tot_processes = tot_process_act,
-                                       .ring = &ring,
-                                       .exit_status = prog_exit} );
+                                       .ring = &ring} );
 
   return prog_exit;
 }
@@ -319,7 +317,6 @@ free_resources ( struct resources_to_free res )
     free_process ( res.processes, res.tot_processes );
 
   restore_terminal ();
-
 }
 
 static void
