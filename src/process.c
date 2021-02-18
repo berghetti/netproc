@@ -108,11 +108,14 @@ get_process_active_con ( process_t **cur_proc,
   conection_t *conections;
   int total_conections = get_conections_system ( &conections, co->proto );
 
+  if ( -1 == total_conections )
+    return -1;
+
   int *index_con_process =
           malloc ( total_conections * sizeof ( *index_con_process ) );
-  if ( !index_con_process && total_conections )
+  if ( !index_con_process && total_conections > 0 )
     {
-      ERROR_DEBUG ( "Alloc memory index: \"%\"", strerror ( errno ) );
+      ERROR_DEBUG ( "Alloc memory index: \"%s\"", strerror ( errno ) );
       return -1;
     }
 

@@ -290,7 +290,7 @@ main ( int argc, const char **argv )
 
 EXIT:
 
-  free_resources(
+  free_resources (
           ( struct resources_to_free ){.log_file = log_file,
                                        .buff_log = log_file_buffer,
                                        .len_log = len_log_file_buffer,
