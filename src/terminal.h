@@ -28,16 +28,16 @@
 extern WINDOW *pad;
 
 // carrega os parametros do terminal
-void
+bool
 setup_terminal ( void );
+
+// start ncurses
+bool
+setup_ui ( struct config_op *co );
 
 // volta configurações original do terminal
 void
 restore_terminal ( void );
-
-// start ncurses
-void
-setup_ui ( struct config_op *co );
 
 // limpa a tela, podendo tambem limpar o buffer do scroll se disponivel
 // void

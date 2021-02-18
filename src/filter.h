@@ -21,7 +21,9 @@
 #ifndef FILTER_H
 #define FILTER_H
 
-void
+#include <stdbool.h>
+
+bool
 set_filter ( int sock, const struct config_op *co );
 
 #endif  // FILTER_H

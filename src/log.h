@@ -21,6 +21,8 @@
 #ifndef LOG_FILE
 #define LOG_FILE
 
+#include <stdbool.h>
+
 #include "process.h"
 #include "rate.h"
 
@@ -34,7 +36,7 @@ typedef struct log_processes
 FILE *
 setup_log_file ( const struct config_op * );
 
-int
+bool
 log_to_file ( process_t *restrict processes,
               const size_t tot_process,
               log_processes **process_filtred,

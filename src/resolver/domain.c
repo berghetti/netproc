@@ -75,14 +75,12 @@ ip2domain ( struct sockaddr_storage *ss, char *buff, const size_t buff_len )
   static unsigned int tot_hosts_cache = 0;
   static unsigned int index_cache_host = 0;
 
-  // static struct thread_arg t_arg;
   pthread_t tid;
 
   int nr = check_name_resolved ( ss, hosts_cache, tot_hosts_cache );
   if ( nr >= 0 )
     {
       // cache hit
-
       strncpy ( buff, hosts_cache[nr].fqdn, buff_len );
       return 1;
     }
@@ -124,7 +122,7 @@ ip2domain ( struct sockaddr_storage *ss, char *buff, const size_t buff_len )
                             NULL,
                             ip2domain_thread,
                             ( void * ) &hosts_cache[index_cache_host] ) )
-        fatal_error ( "pthread_create: \"%s\"", strerror ( errno ) );
+        ERROR_DEBUG ( "pthread_create: \"%s\"", strerror ( errno ) );
 
       UPDATE_TOT_HOSTS_IN_CACHE ( tot_hosts_cache );
       UPDATE_INDEX_CACHE ( index_cache_host );

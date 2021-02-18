@@ -101,11 +101,17 @@ get_info_conections ( conection_t **conection, const int protocol )
 
       if ( 1 !=
            sscanf ( local_addr, "%x", &( *conection )[count].local_address ) )
-        fatal_error ( "Error converting ip address: %s", strerror ( errno ) );
+        {
+          ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
+          return -1;
+        }
 
       if ( 1 !=
            sscanf ( rem_addr, "%x", &( *conection )[count].remote_address ) )
-        fatal_error ( "Error converting ip address: %s", strerror ( errno ) );
+        {
+          ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
+          return -1;
+        }
 
       ( *conection )[count].local_port = local_port;
       ( *conection )[count].remote_port = rem_port;
@@ -122,8 +128,10 @@ get_info_conections ( conection_t **conection, const int protocol )
           temp = realloc ( *conection,
                            len_buff_conections * sizeof ( **conection ) );
           if ( !temp )
-            fatal_error ( "Alloc memory conections: \"%s\"",
-                          strerror ( errno ) );
+            {
+              ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
+              return -1;
+            }
 
           *conection = temp;
 
@@ -140,6 +148,7 @@ get_info_conections ( conection_t **conection, const int protocol )
   return count;
 }
 
+// return total conections or -1 on failure
 int
 get_conections_system ( conection_t **buffer, const int proto )
 {
@@ -159,12 +168,18 @@ get_conections_system ( conection_t **buffer, const int proto )
     tot_con_udp = get_info_conections ( &temp_conections_udp, IPPROTO_UDP );
 
   if ( tot_con_tcp == -1 || tot_con_udp == -1 )
-    fatal_error ( "Error get conections system: %s", strerror ( errno ) );
+    {
+      ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
+      return -1;
+    }
 
   tot_con = tot_con_tcp + tot_con_udp;
   *buffer = calloc ( tot_con, sizeof ( **buffer ) );
   if ( !*buffer )
-    fatal_error ( "Calloc: %s", strerror ( errno ) );
+    {
+      ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
+      return -1;
+    }
 
   for ( i = 0; i < tot_con_tcp; i++ )
     ( *buffer )[i] = temp_conections_tcp[i];

@@ -18,7 +18,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>           // malloc
+#include <stdlib.h>  // malloc
+#include <stdbool.h>
 #include <arpa/inet.h>        // htons
 #include <errno.h>            // variable errno
 #include <linux/if_ether.h>   // defined ETH_P_ALL
@@ -33,10 +34,10 @@
 #include "sock.h"
 #include "m_error.h"
 
-static void
+static bool
 socket_setnonblocking ( int sock );
 
-static void
+static bool
 bind_interface ( int sock, const char *iface );
 
 int
@@ -45,11 +46,16 @@ create_socket ( const struct config_op *co )
   int sock;
 
   if ( ( sock = socket ( AF_PACKET, SOCK_RAW, htons ( ETH_P_ALL ) ) ) == -1 )
-    fatal_error ( "Error create socket: %s", strerror ( errno ) );
+    {
+      ERROR_DEBUG ( "Error create socket: %s", strerror ( errno ) );
+      return -1;
+    }
 
-  socket_setnonblocking ( sock );
+  if ( !socket_setnonblocking ( sock ) )
+    return -1;
 
-  bind_interface ( sock, co->iface );
+  if ( !bind_interface ( sock, co->iface ) )
+    return -1;
 
   return sock;
 }
@@ -61,20 +67,28 @@ close_socket ( int sock )
     close ( sock );
 }
 
-static void
+static bool
 socket_setnonblocking ( int sock )
 {
   int flag;
 
   if ( ( flag = fcntl ( sock, F_GETFL ) ) == -1 )
-    fatal_error ( "Cannot get socket flags: \"%s\"", strerror ( errno ) );
+    {
+      ERROR_DEBUG ( "Cannot get socket flags: \"%s\"", strerror ( errno ) );
+      return false;
+    }
 
   if ( fcntl ( sock, F_SETFL, flag | O_NONBLOCK ) == -1 )
-    fatal_error ( "Cannot set socket to non-blocking mode: \"%s\"",
-                  strerror ( errno ) );
+    {
+      ERROR_DEBUG ( "Cannot set socket to non-blocking mode: \"%s\"",
+                    strerror ( errno ) );
+      return false;
+    }
+
+  return true;
 }
 
-static void
+static bool
 bind_interface ( int sock, const char *iface )
 {
   struct sockaddr_ll my_sock = {0};
@@ -87,9 +101,17 @@ bind_interface ( int sock, const char *iface )
   else
     {
       if ( !( my_sock.sll_ifindex = if_nametoindex ( iface ) ) )
-        fatal_error ( "Interface: %s", strerror ( errno ) );
+        {
+          ERROR_DEBUG ( "%s", strerror ( errno ) );
+          return false;
+        }
     }
 
   if ( bind ( sock, ( struct sockaddr * ) &my_sock, sizeof ( my_sock ) ) == -1 )
-    fatal_error ( "Error bind interface %s", strerror ( errno ) );
+    {
+      ERROR_DEBUG ( "Error bind interface %s", strerror ( errno ) );
+      return false;
+    }
+
+  return true;
 }

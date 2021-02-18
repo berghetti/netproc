@@ -27,6 +27,20 @@
 #define ERROR "[ERROR]"
 #define FATAL "[FATAL]"
 
+#ifndef NDEBUG
+#define DEBUG 1
+#else
+#define DEBUG 0
+#endif
+
+#define ERROR_DEBUG( fmt, ... )                                    \
+  do                                                               \
+    {                                                              \
+      if ( DEBUG )                                                 \
+        error ( "%s:%d - " fmt, __FILE__, __LINE__, __VA_ARGS__ ); \
+    }                                                              \
+  while ( 0 )
+
 // exibe mensagem na saida de erro padrão
 void
 error ( const char *msg, ... );

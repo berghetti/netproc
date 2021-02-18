@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <assert.h>
+#include <stdbool.h>
 #include <linux/filter.h>
 #include <sys/socket.h>  // setsockopt
 
@@ -28,7 +28,7 @@
 
 #define ELEMENTS_ARRAY( x ) ( sizeof ( x ) / sizeof ( x[0] ) )
 
-void
+bool
 set_filter ( int sock, const struct config_op *co )
 {
   // pass only tcp or udp, block net address 127.*
@@ -103,11 +103,17 @@ set_filter ( int sock, const struct config_op *co )
         bpf.filter = ip_udp;
         break;
       default:
-        fatal_error ( "Protocol filter bpf invalid" );
+        ERROR_DEBUG ( "%s", "Protocol filter bpf invalid" );
+        return false;
     }
 
   if ( setsockopt (
                sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof ( bpf ) ) ==
        -1 )
-    fatal_error ( "config filter: %s", strerror ( errno ) );
+    {
+      ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
+      return false;
+    }
+
+  return true;
 }

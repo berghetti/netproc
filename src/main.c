@@ -59,7 +59,7 @@ sig_handler ( int );
 
 // handled by function sig_handler
 // if != 0 program exit
-static int prog_exit = 0;
+static volatile sig_atomic_t prog_exit = 0;
 
 // all resources that needed free on program exit
 struct resources_to_free
@@ -74,7 +74,7 @@ struct resources_to_free
   int exit_status;
 };
 
-static void free_resources_and_exit ( struct resources_to_free );
+static void free_resources ( struct resources_to_free );
 
 int
 main ( int argc, const char **argv )
@@ -86,7 +86,7 @@ main ( int argc, const char **argv )
   struct config_op *co;
 
   process_t *processes = NULL;
-  size_t tot_process_act = 0;
+  ssize_t tot_process_act = 0;
 
   // feature log in file
   FILE *log_file = NULL;
@@ -101,47 +101,86 @@ main ( int argc, const char **argv )
   // int tot_blocks = 64; == ring.req.tp_block_nr
   int rp;
 
-  struct sigaction sigact = {.sa_handler = sig_handler};
-  sigemptyset ( &sigact.sa_mask );
-
-  sigaction ( SIGINT, &sigact, NULL );
-  sigaction ( SIGTERM, &sigact, NULL );
-
-  setup_terminal ();
+  double m_timer;
 
   co = parse_options ( argc, argv );
 
-  sock = create_socket ( co );
+  if ( !setup_terminal () )
+    fatal_error ( "Error setup terminal" );
 
-  if ( co->log )
-    log_file = setup_log_file ( co );
+  if ( -1 == ( sock = create_socket ( co ) ) )
+    fatal_error ( "Error create socket" );
 
-  create_ring ( sock, &ring );
+  if ( co->log && !( log_file = setup_log_file ( co ) ) )
+    {
+      close_socket ( sock );
+      fatal_error ( "Error setup file to file" );
+    }
+
+  if ( !setup_ring ( sock, &ring ) )
+    {
+      close_socket ( sock );
+      free_log ( log_file, NULL, 0 );
+      fatal_error ( "Error setup ring" );
+    }
 
   // set filter BPF
-  set_filter ( sock, co );
+  if ( !set_filter ( sock, co ) )
+    {
+      close_socket ( sock );
+      free_log ( log_file, NULL, 0 );
+      free_ring ( &ring );
+      fatal_error ( "Error set filter network" );
+    }
 
   define_sufix ( co );
 
-  setup_ui ( co );
+  if ( !setup_ui ( co ) )
+    {
+      close_socket ( sock );
+      free_log ( log_file, NULL, 0 );
+      free_ring ( &ring );
+      fatal_error ( "Error setup user interface" );
+    }
+
   start_ui ( co );
+
+  // first search by processes
+  tot_process_act = get_process_active_con ( &processes, tot_process_act, co );
+  if ( tot_process_act == -1 )
+    {
+      close_socket ( sock );
+      free_log ( log_file, NULL, 0 );
+      free_ring ( &ring );
+      restore_terminal ();
+      fatal_error ( "Error get processes" );
+    }
+
+  if ( -1 == ( m_timer = start_timer () ) )
+    {
+      close_socket ( sock );
+      free_log ( log_file, NULL, 0 );
+      free_ring ( &ring );
+      restore_terminal ();
+      free_process ( processes, tot_process_act );
+      fatal_error ( "Error start timer" );
+    }
 
   const nfds_t nfds = 2;
   struct pollfd poll_set[2] = {
           {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0},
           {.fd = sock, .events = POLLIN | POLLPRI, .revents = 0}};
 
-  // first search by processes
-  tot_process_act = get_process_active_con ( &processes, tot_process_act, co );
+  struct sigaction sigact = {.sa_handler = sig_handler};
+  sigemptyset ( &sigact.sa_mask );
 
-  // hash_crc32_udp = get_crc32_udp_conection ();
+  sigaction ( SIGINT, &sigact, NULL );
+  sigaction ( SIGTERM, &sigact, NULL );
 
   pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
 
-  double m_timer = start_timer ();
-
   // main loop
-  while ( true )
+  while ( !prog_exit )
     {
       packtes_reads = false;
       fail_process_pkt = false;
@@ -199,21 +238,25 @@ main ( int argc, const char **argv )
 
           show_process ( processes, tot_process_act, co );
 
-          if ( co->log )
-            log_to_file ( processes,
-                          tot_process_act,
-                          &log_file_buffer,
-                          &len_log_file_buffer,
-                          log_file );
+          if ( co->log && !log_to_file ( processes,
+                                         tot_process_act,
+                                         &log_file_buffer,
+                                         &len_log_file_buffer,
+                                         log_file ) )
+            {
+              goto EXIT;
+            }
 
-          m_timer = restart_timer ();
+          if ( -1 == ( m_timer = restart_timer () ) )
+            goto EXIT;
 
           TIC_TAC ( co->tic_tac );
 
           // update processes case necessary
-          if ( fail_process_pkt )
-            tot_process_act =
-                    get_process_active_con ( &processes, tot_process_act, co );
+          if ( fail_process_pkt &&
+               -1 == ( tot_process_act = get_process_active_con (
+                               &processes, tot_process_act, co ) ) )
+            goto EXIT;
         }
 
       if ( !packtes_reads )
@@ -225,7 +268,10 @@ main ( int argc, const char **argv )
               if ( errno == EINTR )
                 continue;
               else
-                fatal_error ( "poll: \"%s\"", strerror ( errno ) );
+                {
+                  ERROR_DEBUG ( "poll: \"%s\"", strerror ( errno ) );
+                  goto EXIT;
+                }
             }
           else if ( rp > 0 )
             {
@@ -234,42 +280,34 @@ main ( int argc, const char **argv )
                   if ( !poll_set[i].revents )
                     continue;
 
-                  if ( poll_set[i].fd == STDIN_FILENO )
-                    {
-                      if ( running_input ( co ) == P_EXIT )
-                        free_resources_and_exit ( ( struct resources_to_free ){
-                                .log_file = log_file,
-                                .buff_log = log_file_buffer,
-                                .len_log = len_log_file_buffer,
-                                .sock = sock,
-                                .processes = processes,
-                                .tot_processes = tot_process_act,
-                                .ring = &ring,
-                                .exit_status = EXIT_SUCCESS} );
-                    }
+                  if ( poll_set[i].fd == STDIN_FILENO &&
+                       running_input ( co ) == P_EXIT )
+                    goto EXIT;
                 }
             }
         }
 
-      // exit signal
-      if ( prog_exit )
-        free_resources_and_exit (
-                ( struct resources_to_free ){.log_file = log_file,
-                                             .buff_log = log_file_buffer,
-                                             .len_log = len_log_file_buffer,
-                                             .sock = sock,
-                                             .processes = processes,
-                                             .tot_processes = tot_process_act,
-                                             .ring = &ring,
-                                             .exit_status = prog_exit} );
-    } // main loop
+    }  // main loop
 
-  return EXIT_SUCCESS;
+EXIT:
+
+  free_resources(
+          ( struct resources_to_free ){.log_file = log_file,
+                                       .buff_log = log_file_buffer,
+                                       .len_log = len_log_file_buffer,
+                                       .sock = sock,
+                                       .processes = processes,
+                                       .tot_processes = tot_process_act,
+                                       .ring = &ring,
+                                       .exit_status = prog_exit} );
+
+  return prog_exit;
 }
 
 static void
-free_resources_and_exit ( struct resources_to_free res )
+free_resources ( struct resources_to_free res )
 {
+  fprintf ( stderr, "%s\n", "saindo...." );
   close_socket ( res.sock );
 
   free_ring ( res.ring );
@@ -277,14 +315,11 @@ free_resources_and_exit ( struct resources_to_free res )
   if ( res.log_file )
     free_log ( res.log_file, res.buff_log, res.len_log );
 
-  // free ( res.buff_log_file );
-
   if ( res.tot_processes )
     free_process ( res.processes, res.tot_processes );
 
   restore_terminal ();
 
-  exit ( res.exit_status );
 }
 
 static void

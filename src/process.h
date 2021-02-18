@@ -62,7 +62,7 @@ typedef struct process
 
 // inicializa a estrutura process_t com os processos ativos e
 // retorna a quantidade processos armazenados
-int
+ssize_t
 get_process_active_con ( process_t **procs,
                          const size_t tot_process_act_old,
                          const struct config_op *co );

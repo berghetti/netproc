@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <errno.h>
 #include <string.h>
 #include <time.h>
@@ -32,14 +33,24 @@
 // hh:mm:ss
 #define LEN_BUFF_CLOCK 14
 
-inline static void
-get_time ( struct timespec * );
+static inline bool
+get_time ( struct timespec *buff_time )
+{
+  if ( clock_gettime ( CLOCK_MONOTONIC, buff_time ) == -1 )
+    {
+      ERROR_DEBUG ( "%s", strerror ( errno ) );
+      return false;
+    }
+
+  return true;
+}
 
 double
 start_timer ( void )
 {
   struct timespec time;
-  get_time ( &time );
+  if ( !get_time ( &time ) )
+    return -1;
 
   return ( double ) time.tv_sec + ( time.tv_nsec * NSTOS );
 }
@@ -48,18 +59,10 @@ double
 timer ( const float old_time )
 {
   struct timespec new_time;
-  get_time ( &new_time );
+  if ( !get_time ( &new_time ) )
+    return -1;
 
-  double dif = ( new_time.tv_sec + ( new_time.tv_nsec * NSTOS ) ) - old_time;
-
-  return dif;
-}
-
-inline static void
-get_time ( struct timespec *buff_time )
-{
-  if ( clock_gettime ( CLOCK_MONOTONIC, buff_time ) == -1 )
-    fatal_error ( "clock_gettime: %s", strerror ( errno ) );
+  return ( new_time.tv_sec + ( new_time.tv_nsec * NSTOS ) ) - old_time;
 }
 
 char *

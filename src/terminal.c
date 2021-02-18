@@ -18,6 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
 #include <term.h>    // setupterm, tputs, tigetstr
 #include <unistd.h>  // STDOUT_FILENO
 #include <ncurses.h>
@@ -30,7 +31,7 @@
 WINDOW *pad;
 
 // carrega informações do terminal a associa a stdout
-void
+bool
 setup_terminal ( void )
 {
   // ainda necessario para exibir correr em mensagens de erro
@@ -40,25 +41,32 @@ setup_terminal ( void )
       switch ( err )
         {
           case 1:
-            fatal_error ( "terminal is hardcopy" );
+            ERROR_DEBUG ( "%s", "terminal is hardcopy" );
             break;
           case -1:
-            fatal_error ( "no terminfo database" );
+            ERROR_DEBUG ( "%s", "no terminfo database" );
             break;
           case 0:
-            fatal_error ( "unknown terminal" );
+            ERROR_DEBUG ( "%s", "unknown terminal" );
         }
+      return false;
     }
+
+  return true;
 }
 
-void
+bool
 setup_ui ( struct config_op *co )
 {
   initscr ();
   cbreak ();  // disable buffering to get keypad
   noecho ();
 
-  pad = newpad ( LINES_PAD, COLS_PAD );
+  if ( !( pad = newpad ( LINES_PAD, COLS_PAD ) ) )
+    {
+      ERROR_DEBUG ( "%s", strerror ( errno ) );
+      return false;
+    }
 
   nodelay ( pad, TRUE );  // no gelay getch()
   keypad ( pad, TRUE );   // get arrow key
@@ -66,6 +74,8 @@ setup_ui ( struct config_op *co )
   curs_set ( 0 );  // cursor invisible
 
   co->color_scheme = define_color_scheme ();
+
+  return true;
 }
 
 void

@@ -95,7 +95,8 @@ endef
 install:
 	@$(call checkifroot)
 	@$(call checkbin, $(BIN)/$(PROG_NAME))
-	@cp $(BIN)/$(PROG_NAME) $(PATH_INSTALL); \
+	@ install -d $(PATH_INSTALL)
+	@ install $(BIN)/$(PROG_NAME) $(PATH_INSTALL); \
 	echo "Instaled in "$(PATH_INSTALL)"/"$(PROG_NAME)
 
 uninstall:

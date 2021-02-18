@@ -23,7 +23,8 @@
 #include <stdarg.h>  // va_*
 #include <stdio.h>
 #include <stdlib.h>
-#include <term.h>  // tputs
+#include <term.h>    // tputs
+#include <signal.h>  // raise
 #include <unistd.h>
 
 #include "m_error.h"

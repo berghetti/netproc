@@ -47,13 +47,23 @@
 // timeout in miliseconds
 #define TIMEOUT_FRAME 65
 
-static void
+static bool
 create_ring_buff ( struct ring *ring )
 {
+  long page_size;
+
   ring->req.tp_frame_size =
           TPACKET_ALIGN ( TPACKET3_HDRLEN ) + TPACKET_ALIGN ( LEN_FRAME );
+
   // tamanho inicial de uma pagina de memoria
-  ring->req.tp_block_size = sysconf ( _SC_PAGESIZE );
+  errno = 0;
+  if ( -1 == ( page_size = sysconf ( _SC_PAGESIZE ) ) )
+    {
+      ERROR_DEBUG ( "%s", ( errno ? strerror ( errno ) : "Error sysconf" ) );
+      return false;
+    }
+
+  ring->req.tp_block_size = page_size;
 
   // dobra o tamanho do bloco até que caiba a quantidade de frames
   while ( ring->req.tp_block_size < ring->req.tp_frame_size * FRAMES_PER_BLOCK )
@@ -66,9 +76,11 @@ create_ring_buff ( struct ring *ring )
   ring->req.tp_frame_nr = ring->req.tp_block_nr * frames_per_block;
   ring->req.tp_retire_blk_tov = TIMEOUT_FRAME;
   ring->req.tp_feature_req_word = 0;
+
+  return true;
 }
 
-static void
+static bool
 config_ring ( int sock, struct ring *ring, int version )
 {
   // set version TPACKET
@@ -77,7 +89,10 @@ config_ring ( int sock, struct ring *ring, int version )
                     PACKET_VERSION,
                     &version,
                     sizeof ( version ) ) == -1 )
-    fatal_error ( "setsockopt version: %s", strerror ( errno ) );
+    {
+      ERROR_DEBUG ( "%s", strerror ( errno ) );
+      return false;
+    }
 
   // set conf buffer tpacket
   if ( setsockopt ( sock,
@@ -85,10 +100,15 @@ config_ring ( int sock, struct ring *ring, int version )
                     PACKET_RX_RING,
                     &ring->req,
                     sizeof ( ring->req ) ) == -1 )
-    fatal_error ( "setsockopt: %s", strerror ( errno ) );
+    {
+      ERROR_DEBUG ( "%s", strerror ( errno ) );
+      return false;
+    }
+
+  return true;
 }
 
-static void
+static bool
 map_buff ( int sock, struct ring *ring )
 {
   size_t rx_ring_size = ring->req.tp_block_nr * ring->req.tp_block_size;
@@ -96,27 +116,40 @@ map_buff ( int sock, struct ring *ring )
           mmap ( 0, rx_ring_size, PROT_READ | PROT_WRITE, MAP_SHARED, sock, 0 );
 
   if ( ring->map == MAP_FAILED )
-    fatal_error ( "mmap: %s", strerror ( errno ) );
+    {
+      ERROR_DEBUG ( "%s", strerror ( errno ) );
+      return false;
+    }
 
   ring->rd = calloc ( sizeof ( *ring->rd ), ring->req.tp_block_nr );
   if ( !ring->rd )
-    fatal_error ( "calloc: %s", strerror ( errno ) );
+    {
+      ERROR_DEBUG ( "%s", strerror ( errno ) );
+      return false;
+    }
 
   for ( size_t i = 0; i < ring->req.tp_block_nr; ++i )
     {
       ring->rd[i].iov_base = ring->map + ( i * ring->req.tp_block_size );
       ring->rd[i].iov_len = ring->req.tp_block_size;
     }
+
+  return true;
 }
 
-void
-create_ring ( int sock, struct ring *ring )
+bool
+setup_ring ( int sock, struct ring *ring )
 {
-  create_ring_buff ( ring );
+  if ( !create_ring_buff ( ring ) )
+    return false;
 
-  config_ring ( sock, ring, TPACKET_V3 );
+  if ( !config_ring ( sock, ring, TPACKET_V3 ) )
+    return false;
 
-  map_buff ( sock, ring );
+  if ( !map_buff ( sock, ring ) )
+    return false;
+
+  return true;
 }
 
 void

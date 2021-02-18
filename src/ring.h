@@ -21,7 +21,9 @@
 #ifndef RING_H
 #define RING_H
 
-#include <sys/uio.h>  // struct iovec
+#include <stdbool.h>
+#include <sys/uio.h>          // struct iovec
+#include <linux/if_packet.h>  // strct tpacket_req3
 
 struct ring
 {
@@ -30,8 +32,8 @@ struct ring
   uint8_t *map;
 };
 
-void
-create_ring ( int sock, struct ring *ring );
+bool
+setup_ring ( int sock, struct ring *ring );
 
 void
 free_ring ( struct ring *ring );

@@ -36,11 +36,16 @@
 // TAXA + TAXA + PROGRAM + '\n'
 #define LEN_HEADER TAXA * 2 + 7 + 1
 
-static void
+static void *
 alloc_processes_log ( struct log_processes **buff, const size_t len )
 {
   if ( !( *buff = realloc ( *buff, len * sizeof ( **buff ) ) ) )
-    fatal_error ( "Error (re)alloc memory: %s", strerror ( errno ) );
+    {
+      ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
+      return NULL;
+    }
+
+  return *buff;
 }
 
 static void
@@ -76,9 +81,12 @@ setup_log_file ( const struct config_op *co )
 {
   FILE *fd = fopen ( co->path_log, "w+" );
   if ( !fd )
-    fatal_error ( "Error open/create file '%s': %s",
-                  co->path_log,
-                  strerror ( errno ) );
+    {
+      ERROR_DEBUG ( "Error open/create file '%s': %s",
+                    co->path_log,
+                    strerror ( errno ) );
+      return NULL;
+    }
 
   fprintf ( fd, "%*s%*s%s\n", -TAXA, "TOTAL TX", -TAXA, "TOTAL RX", "PROGRAM" );
 
@@ -91,7 +99,7 @@ setup_log_file ( const struct config_op *co )
 // ja esta presente no buffer espelho do arquivo de log
 // se estiver present incrementa as estaticias de rede desse processo, caso não
 // adiciona ao buffer ( e consequentement sera exibido no arquivo de log)
-static void
+static bool
 update_log_process ( const process_t *new_proc,
                      const size_t len_proc,
                      log_processes **buff_log,
@@ -101,8 +109,6 @@ update_log_process ( const process_t *new_proc,
   char *buffer_name = NULL;
   size_t len_name;
   bool locate;
-
-  // fprintf(stderr, "tot buff %ld\n", *len_buff);
 
   for ( size_t i = 0; i < len_proc; i++ )
     {
@@ -138,7 +144,8 @@ update_log_process ( const process_t *new_proc,
                 max_len_buff_log = FIRST_LEN_LOG;
 
               max_len_buff_log <<= 1;  // double
-              alloc_processes_log ( buff_log, max_len_buff_log );
+              if ( !alloc_processes_log ( buff_log, max_len_buff_log ) )
+                return false;
             }
 
           ( *buff_log )[*len_buff].name = strndup ( buffer_name, len_name + 1 );
@@ -150,6 +157,8 @@ update_log_process ( const process_t *new_proc,
 
       free ( buffer_name );
     }
+
+  return true;
 }
 
 void
@@ -158,25 +167,30 @@ free_log ( FILE *file, log_processes *log, size_t len )
   fclose ( file );
   log_processes *temp = log;
 
-  while ( len-- )
+  if ( !log )
+    return;
+
+  while ( len-- > 0 )
     free ( temp++->name );
 
   free ( log );
 }
 
-int
+bool
 log_to_file ( process_t *restrict processes,
               const size_t tot_process,
               log_processes **process_filtred,
               size_t *len_buffer_log,
               FILE *restrict log_file )
 {
-  update_log_process (
-          processes, tot_process, process_filtred, len_buffer_log );
+  if ( !update_log_process (
+               processes, tot_process, process_filtred, len_buffer_log ) )
+    return false;
 
   // set file one line below header
   fseek ( log_file, LEN_HEADER, SEEK_SET );
   write_process_to_file ( *process_filtred, *len_buffer_log, log_file );
 
-  return 1;
+  return true;
+  ;
 }
