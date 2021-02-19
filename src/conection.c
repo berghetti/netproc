@@ -159,16 +159,14 @@ get_conections_system ( conection_t **buffer, const int proto )
 {
   int tot_con_tcp = 0;
   int tot_con_udp = 0;
-  int tot_con = 0;
-  int temp = 0;
-  int i;
 
-  conection_t *temp_conections_tcp = NULL;
-  conection_t *temp_conections_udp = NULL;
+  conection_t *temp_conections_tcp, *temp_conections_udp;
+  conection_t *p_buff, *p_conn;
 
   if ( proto & TCP )
     {
-      if ( -1 == (tot_con_tcp = get_info_conections ( &temp_conections_tcp, IPPROTO_TCP ) ) )
+      if ( -1 == ( tot_con_tcp = get_info_conections ( &temp_conections_tcp,
+                                                       IPPROTO_TCP ) ) )
         {
           ERROR_DEBUG ( "%s", "backtrace" );
           return -1;
@@ -177,27 +175,30 @@ get_conections_system ( conection_t **buffer, const int proto )
 
   if ( proto & UDP )
     {
-      if ( -1 == (tot_con_udp = get_info_conections ( &temp_conections_udp, IPPROTO_UDP ) ) )
+      if ( -1 == ( tot_con_udp = get_info_conections ( &temp_conections_udp,
+                                                       IPPROTO_UDP ) ) )
         {
           ERROR_DEBUG ( "%s", "backtrace" );
           return -1;
         }
     }
 
-  tot_con = tot_con_tcp + tot_con_udp;
-  *buffer = calloc ( tot_con, sizeof ( **buffer ) );
+  *buffer = calloc ( tot_con_tcp + tot_con_udp, sizeof ( **buffer ) );
   if ( !*buffer )
     {
       ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
       return -1;
     }
 
-  for ( i = 0; i < tot_con_tcp; i++ )
-    ( *buffer )[i] = temp_conections_tcp[i];
+  p_buff = *buffer;
+  
+  p_conn = temp_conections_tcp;
+  while(tot_con_tcp--)
+    *p_buff++ = *p_conn++;
 
-  temp += tot_con_tcp;
-  for ( i = 0; i < tot_con_udp; i++ )
-    ( *buffer + temp )[i] = temp_conections_udp[i];
+  p_conn = temp_conections_udp;
+  while(tot_con_udp--)
+    *p_buff++ = *p_conn++;
 
   free ( temp_conections_tcp );
   free ( temp_conections_udp );

@@ -35,7 +35,6 @@
 static bool
 is_number ( const char *string );
 
-
 // retorna o total de diretorios encontrados, -1 em caso de falha.
 int
 get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
