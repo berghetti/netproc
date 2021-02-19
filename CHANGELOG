@@ -4,11 +4,14 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
+0.5.??
+  * show the name of the process and its arguments
+
 0.5.0 - 2021-02-12
-    - bin folder not present (necessary to compilation)
-    * header information show more fast
-    + option -f, allows save process statistics to a file
-    + header now reports total rate pps and total rate bps
+  - bin folder not present (necessary to compilation)
+  * header information show more fast
+  + option -f, allows save process statistics to a file
+  + header now reports total rate pps and total rate bps
 
 0.4.4 - 2020-11-13
    + general information at the top of the screen

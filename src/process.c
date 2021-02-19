@@ -96,7 +96,7 @@ get_process_active_con ( process_t **cur_proc,
   int total_process = get_numeric_directory2 ( &process_pids, PROCESS_DIR );
   if ( total_process == -1 )
     {
-      ERROR_DEBUG ( "%s", "Error get PIDs of processes" );
+      ERROR_DEBUG ( "%s", "backtrace" );
       return -1;
     }
 
@@ -112,7 +112,10 @@ get_process_active_con ( process_t **cur_proc,
   int total_conections = get_conections_system ( &conections, co->proto );
 
   if ( -1 == total_conections )
-    return -1;
+    {
+      ERROR_DEBUG ( "%s", "backtrace" );
+      return -1;
+    }
 
   int *index_con_process =
           malloc ( total_conections * sizeof ( *index_con_process ) );
@@ -681,7 +684,6 @@ get_name_process ( char **buffer, const pid_t pid )
 
   // warranty in case realloc fail
   temp = *buffer;
-  size_t t = total_read;
 
   // run (total_read -1) times
   while ( --total_read )

@@ -18,6 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <errno.h>
 #include <ctype.h>      // isdigit
 #include <dirent.h>     // *dir
 #include <stdbool.h>    // type boolean
@@ -26,7 +27,7 @@
 #include <string.h>     // memset
 #include <sys/types.h>  // *dir
 
-#include <stdio.h>
+#include "m_error.h"
 
 // len init buffer
 #define TOT_PROCESS_BEGIN 512
@@ -34,33 +35,8 @@
 static bool
 is_number ( const char *string );
 
-// recebe o nome de um diretorio, um buffer para armazenar
-// os nomes dos diretorios que são numericos e um tamanho maximo do buffer.
+
 // retorna o total de diretorios encontrados, -1 em caso de falha.
-int
-get_numeric_directory ( uint32_t *restrict buffer,
-                        const size_t lenght,
-                        const char *restrict path_dir )
-{
-  DIR *dir;
-
-  if ( ( dir = opendir ( path_dir ) ) == NULL )
-    return -1;
-
-  struct dirent *directory = NULL;
-  uint32_t count = 0;
-
-  while ( ( directory = readdir ( dir ) ) && count < lenght )
-    if ( is_number ( directory->d_name ) )
-      buffer[count++] = atoi ( directory->d_name );
-
-  closedir ( dir );
-
-  return count;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// version with management of memory auto
 int
 get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
 {

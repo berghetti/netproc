@@ -49,7 +49,10 @@ get_info_conections ( conection_t **conection, const int protocol )
   const char *path_file = ( protocol == IPPROTO_TCP ) ? PATH_TCP : PATH_UDP;
 
   if ( !( arq = fopen ( path_file, "r" ) ) )
-    return -1;
+    {
+      ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
+      return -1;
+    }
 
   char *line = NULL;
   size_t len = 0;
@@ -59,6 +62,7 @@ get_info_conections ( conection_t **conection, const int protocol )
     {
       free ( line );
       fclose ( arq );
+      ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
       return -1;
     }
 
@@ -68,6 +72,7 @@ get_info_conections ( conection_t **conection, const int protocol )
     {
       free ( line );
       fclose ( arq );
+      ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
       return -1;
     }
 
@@ -162,15 +167,21 @@ get_conections_system ( conection_t **buffer, const int proto )
   conection_t *temp_conections_udp = NULL;
 
   if ( proto & TCP )
-    tot_con_tcp = get_info_conections ( &temp_conections_tcp, IPPROTO_TCP );
+    {
+      if ( -1 == (tot_con_tcp = get_info_conections ( &temp_conections_tcp, IPPROTO_TCP ) ) )
+        {
+          ERROR_DEBUG ( "%s", "backtrace" );
+          return -1;
+        }
+    }
 
   if ( proto & UDP )
-    tot_con_udp = get_info_conections ( &temp_conections_udp, IPPROTO_UDP );
-
-  if ( tot_con_tcp == -1 || tot_con_udp == -1 )
     {
-      ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-      return -1;
+      if ( -1 == (tot_con_tcp = get_info_conections ( &temp_conections_tcp, IPPROTO_UDP ) ) )
+        {
+          ERROR_DEBUG ( "%s", "backtrace" );
+          return -1;
+        }
     }
 
   tot_con = tot_con_tcp + tot_con_udp;
