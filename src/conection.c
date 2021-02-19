@@ -177,7 +177,7 @@ get_conections_system ( conection_t **buffer, const int proto )
 
   if ( proto & UDP )
     {
-      if ( -1 == (tot_con_tcp = get_info_conections ( &temp_conections_tcp, IPPROTO_UDP ) ) )
+      if ( -1 == (tot_con_udp = get_info_conections ( &temp_conections_udp, IPPROTO_UDP ) ) )
         {
           ERROR_DEBUG ( "%s", "backtrace" );
           return -1;
