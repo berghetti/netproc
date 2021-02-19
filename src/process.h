@@ -39,7 +39,7 @@
 // #define MAX_NAME 255
 
 // /proc/%d/cmdline
-#define MAX_CMDLINE 20
+#define MAX_CMDLINE 25
 
 // maxpid = 2^22 = 4194304 = 7 chars
 //   6  +  7  + 4 + 7

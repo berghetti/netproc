@@ -305,7 +305,8 @@ EXIT:
 static void
 free_resources ( struct resources_to_free res )
 {
-  fprintf ( stderr, "%s\n", "saindo...." );
+  restore_terminal ();
+
   close_socket ( res.sock );
 
   free_ring ( res.ring );
@@ -315,8 +316,6 @@ free_resources ( struct resources_to_free res )
 
   if ( res.tot_processes )
     free_process ( res.processes, res.tot_processes );
-
-  restore_terminal ();
 }
 
 static void

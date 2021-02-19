@@ -21,8 +21,11 @@
 #include <errno.h>    // variable errno
 #include <stdbool.h>  // type boolean
 #include <stdio.h>
-#include <string.h>  // memset
-#include <unistd.h>  // readliink
+#include <string.h>     // memset
+#include <unistd.h>     // readliink, read
+#include <sys/types.h>  // open
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "config.h"
 #include "process.h"  // process_t
@@ -613,26 +616,77 @@ static int
 get_name_process ( char **buffer, const pid_t pid )
 {
   char path_cmdline[MAX_CMDLINE];
-  size_t len = 0;
-  ssize_t read;
+  char prog_name[4096];
+  char *p1 = prog_name;
+  char *p2;
+  size_t max_read = 4096;
+  size_t total_read = 0;
+  ssize_t b_read;
+  int fd;
   snprintf ( path_cmdline, MAX_CMDLINE, "/proc/%d/cmdline", pid );
 
-  FILE *arq;
-  if ( !( arq = fopen ( path_cmdline, "r" ) ) )
+  // FILE *arq;
+  // if ( !( arq = fopen ( path_cmdline, "r" ) ) )
+  //   {
+  //     ERROR_DEBUG ( "%s", strerror ( errno ) );
+  //     return -1;
+  //   }
+
+  if ( -1 == ( fd = open ( path_cmdline, O_RDONLY ) ) )
+    return -1;
+
+  while ( max_read > 0 )
+    {
+      b_read = read ( fd, p1, max_read );
+      if ( b_read == -1 )
+        {
+          if ( errno == EINTR )
+            continue;
+          else
+            {
+              ERROR_DEBUG ( "%s", strerror ( errno ) );
+              return -1;
+            }
+        }
+
+      if ( b_read )
+        {
+          p1 += b_read;
+          max_read -= b_read;
+          total_read += b_read;
+        }
+      else
+        break;
+    }
+
+  close ( fd );
+
+  if ( !( *buffer = malloc ( total_read + 1 ) ) )
     {
       ERROR_DEBUG ( "%s", strerror ( errno ) );
       return -1;
     }
 
-  *buffer = NULL;
-
-  if ( ( read = getline ( buffer, &len, arq ) ) == -1 )
+  p1 = prog_name;
+  p2 = *buffer;
+  while ( total_read-- )
     {
-      ERROR_DEBUG ( "%s", strerror ( errno ) );
-      return -1;
+      if ( *p1 == '\0' || *p1 == '\n' )
+        *p1 = ' ';
+
+      *p2++ = *p1++;
     }
 
-  fclose ( arq );
+  *--p2 = '\0';
 
-  return read;
+  // *buffer = NULL;
+  //
+  // if ( ( read = getline ( buffer, &len, arq ) ) == -1 )
+  //   {
+  //     ERROR_DEBUG ( "%s", strerror ( errno ) );
+  //     return -1;
+  //   }
+  // fclose ( arq );
+
+  return 1;
 }
