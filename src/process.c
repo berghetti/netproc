@@ -609,36 +609,16 @@ free_dead_process ( process_t *restrict cur_procs,
     }
 }
 
-// armazena o nome do processo no buffer e retorna
-// o tamanho do nome do processo,
-// função cuida da alocação de memoria para o nome do processo
-static int
-get_name_process ( char **buffer, const pid_t pid )
+static ssize_t
+full_read ( const int fd, void *buffer, size_t count )
 {
-  char path_cmdline[MAX_CMDLINE];
-  char prog_name[4096];
-  char *p1 = prog_name;
-  char *p2;
-  size_t max_read = 4096;
-  size_t total_read = 0;
-  ssize_t b_read;
-  int fd;
-  snprintf ( path_cmdline, MAX_CMDLINE, "/proc/%d/cmdline", pid );
+  ssize_t bytes_read;
+  ssize_t total_read = 0;
 
-  // FILE *arq;
-  // if ( !( arq = fopen ( path_cmdline, "r" ) ) )
-  //   {
-  //     ERROR_DEBUG ( "%s", strerror ( errno ) );
-  //     return -1;
-  //   }
-
-  if ( -1 == ( fd = open ( path_cmdline, O_RDONLY ) ) )
-    return -1;
-
-  while ( max_read > 0 )
+  while ( count > 0 )
     {
-      b_read = read ( fd, p1, max_read );
-      if ( b_read == -1 )
+      bytes_read = read ( fd, buffer, count );
+      if ( bytes_read == -1 )
         {
           if ( errno == EINTR )
             continue;
@@ -648,45 +628,71 @@ get_name_process ( char **buffer, const pid_t pid )
               return -1;
             }
         }
-
-      if ( b_read )
+      else if ( bytes_read )
         {
-          p1 += b_read;
-          max_read -= b_read;
-          total_read += b_read;
+          buffer = ( char * ) buffer + bytes_read;
+          count -= bytes_read;
+          total_read += bytes_read;
         }
       else
         break;
     }
 
-  close ( fd );
+  return total_read;
+}
 
-  if ( !( *buffer = malloc ( total_read + 1 ) ) )
+// armazena o nome do processo no buffer e retorna
+// o tamanho do nome do processo,
+// função cuida da alocação de memoria para o nome do processo
+static int
+get_name_process ( char **buffer, const pid_t pid )
+{
+  char path_cmdline[MAX_CMDLINE];
+  char *temp;
+  ssize_t total_read;
+  int fd;
+
+  snprintf ( path_cmdline, MAX_CMDLINE, "/proc/%d/cmdline", pid );
+
+  if ( -1 == ( fd = open ( path_cmdline, O_RDONLY ) ) )
     {
       ERROR_DEBUG ( "%s", strerror ( errno ) );
       return -1;
     }
 
-  p1 = prog_name;
-  p2 = *buffer;
-  while ( total_read-- )
+  // FIXME: that's enough?
+  if ( !( *buffer = malloc ( 4096 ) ) )
     {
-      if ( *p1 == '\0' || *p1 == '\n' )
-        *p1 = ' ';
-
-      *p2++ = *p1++;
+      ERROR_DEBUG ( "%s", strerror ( errno ) );
+      return -1;
     }
 
-  *--p2 = '\0';
+  if ( -1 == ( total_read = full_read ( fd, *buffer, 4096 ) ) )
+    {
+      free ( *buffer );
+      return -1;
+    }
 
-  // *buffer = NULL;
-  //
-  // if ( ( read = getline ( buffer, &len, arq ) ) == -1 )
-  //   {
-  //     ERROR_DEBUG ( "%s", strerror ( errno ) );
-  //     return -1;
-  //   }
-  // fclose ( arq );
+  close ( fd );
+
+  // decreases excess memory
+  if ( NULL != ( temp = realloc ( *buffer, total_read ) ) )
+    *buffer = temp;
+
+  // warranty in case realloc fail
+  temp = *buffer;
+  size_t t = total_read;
+
+  // run (total_read -1) times
+  while ( --total_read )
+    {
+      if ( *temp == '\0' || *temp == '\n' )
+        *temp = ' ';
+
+      temp++;
+    }
+
+  *temp = '\0';
 
   return 1;
 }
