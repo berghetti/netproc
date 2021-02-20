@@ -7,7 +7,7 @@
  *  Netproc is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -159,6 +159,7 @@ get_conections_system ( conection_t **buffer, const int proto )
 {
   int tot_con_tcp = 0;
   int tot_con_udp = 0;
+  int tot_con;
 
   conection_t *temp_conections_tcp, *temp_conections_udp;
   conection_t *p_buff, *p_conn;
@@ -183,7 +184,8 @@ get_conections_system ( conection_t **buffer, const int proto )
         }
     }
 
-  *buffer = calloc ( tot_con_tcp + tot_con_udp, sizeof ( **buffer ) );
+  tot_con = tot_con_tcp + tot_con_udp;
+  *buffer = calloc ( tot_con, sizeof ( **buffer ) );
   if ( !*buffer )
     {
       ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
@@ -191,7 +193,7 @@ get_conections_system ( conection_t **buffer, const int proto )
     }
 
   p_buff = *buffer;
-  
+
   p_conn = temp_conections_tcp;
   while(tot_con_tcp--)
     *p_buff++ = *p_conn++;
