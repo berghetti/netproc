@@ -26,6 +26,7 @@
 #include <sys/types.h>  // open
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <netinet/tcp.h>  // cods tcp state (TCP_ESTABLISHED, TCP_TIME_WAIT...)
 
 #include "config.h"
 #include "process.h"  // process_t
@@ -217,10 +218,10 @@ get_process_active_con ( process_t **cur_proc,
           // test conections of process
           for ( int c = 0; c < total_conections; c++ )
             {
-              // connection in TCP_TIME_WAIT state, test next conection
-              // reference:
-              // https://github.com/torvalds/linux/blob/master/include/net/tcp_states.h
-              if ( conections[c].inode == 0 )
+              // when a connection has the status TCP_TIME_WAIT the inode is 0
+              // so there is no way easy to track the process for this
+              // connection
+              if ( conections[c].state == TCP_TIME_WAIT )
                 continue;
 
               snprintf ( socket,

@@ -27,16 +27,18 @@
 
 #include "rate.h"  // struct net_stat
 
+// stores the information exported by the kernel in /proc/net/tcp | udp
 typedef struct conection
 {
-  struct net_stat net_stat;  // armazena statisticas de rede
-  uint32_t if_index;
+  struct net_stat net_stat;  // isso é atribuido em src/statistics.c
+  uint32_t if_index;         // isso é atribuido em src/statistics.c
   uint32_t inode;
   uint32_t local_address;
   uint32_t remote_address;
   uint16_t local_port;
   uint16_t remote_port;
   uint8_t protocol;
+  uint8_t state;
 } conection_t;
 
 int

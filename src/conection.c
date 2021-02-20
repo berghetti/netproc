@@ -20,7 +20,7 @@
 
 #include <errno.h>  // variable errno
 #include <stdbool.h>
-#include <stdio.h>
+#include <stdio.h>     // FILE *
 #include <string.h>    // strlen, strerror
 #include <linux/in.h>  // IPPROTO_UDP | IPPROTO_TCP
 
@@ -81,10 +81,11 @@ get_info_conections ( conection_t **conection, const int protocol )
 
   uint32_t count = 0;
   // char local_addr[64] = {0}, rem_addr[64] = {0};
-  char local_addr[9] = {0}, rem_addr[9] = {0};  // enough for ipv4
+  char local_addr[10] = {0}, rem_addr[10] = {0};  // enough for ipv4
 
-  unsigned int matches, local_port, rem_port;
+  unsigned int local_port, rem_port, state;
   unsigned long int inode;
+  int matches;
 
   while ( ( getline ( &line, &len, arq ) ) != -1 )
     {
@@ -96,16 +97,21 @@ get_info_conections ( conection_t **conection, const int protocol )
       // clang-format on
 
       matches = sscanf ( line,
-                         "%*d: %8[0-9A-Fa-f]:%X %8[0-9A-Fa-f]:%X %*X "
-                         "%*X:%*X %*X:%*X %*X %*d %*d %lu %*512s\n",
+                         "%*d: %9[0-9A-Fa-f]:%X %9[0-9A-Fa-f]:%X %X"
+                         " %*X:%*X %*X:%*X %*X %*d %*d %lu %*512s\n",
                          local_addr,
                          &local_port,
                          rem_addr,
                          &rem_port,
+                         &state,
                          &inode );
 
-      if ( matches != 5 )
-        return -1;
+      if ( matches != 6 )
+        {
+          ERROR_DEBUG ( "Error read file conections\"%s\"",
+                        strerror ( errno ) );
+          return -1;
+        }
 
       if ( 1 !=
            sscanf ( local_addr, "%x", &( *conection )[count].local_address ) )
@@ -123,6 +129,7 @@ get_info_conections ( conection_t **conection, const int protocol )
 
       ( *conection )[count].local_port = local_port;
       ( *conection )[count].remote_port = rem_port;
+      ( *conection )[count].state = state;
       ( *conection )[count].inode = inode;
       ( *conection )[count].protocol = protocol;
 
@@ -164,7 +171,7 @@ get_conections_system ( conection_t **buffer, const int proto )
   int tot_con_udp = 0;
   int tot_con;
 
-  conection_t *temp_conections_tcp, *temp_conections_udp;
+  conection_t *temp_conections_tcp = NULL, *temp_conections_udp = NULL;
   conection_t *p_buff, *p_conn;
 
   if ( proto & TCP )
@@ -198,15 +205,18 @@ get_conections_system ( conection_t **buffer, const int proto )
   p_buff = *buffer;
 
   p_conn = temp_conections_tcp;
-  while(tot_con_tcp--)
+  while ( tot_con_tcp-- )
     *p_buff++ = *p_conn++;
 
   p_conn = temp_conections_udp;
-  while(tot_con_udp--)
+  while ( tot_con_udp-- )
     *p_buff++ = *p_conn++;
 
-  free ( temp_conections_tcp );
-  free ( temp_conections_udp );
+  if (temp_conections_tcp)
+    free ( temp_conections_tcp );
+
+  if (temp_conections_udp)
+    free ( temp_conections_udp );
 
   return tot_con;
 }

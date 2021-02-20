@@ -30,6 +30,10 @@
 #define IPPROTO_UDP 17
 #endif
 
+#ifndef IPPROTO_TCP
+#define IPPROTO_TCP 6
+#endif
+
 // values of packet.direction
 #define PKT_DOWN 1
 #define PKT_UPL 2

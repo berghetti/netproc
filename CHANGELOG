@@ -5,6 +5,7 @@ Legend:
 ! Known issue / missing feature
 
 0.5.??
+  - connection port number was being displayed incorrectly
   * show the name of the process and its arguments
 
 0.5.0 - 2021-02-12

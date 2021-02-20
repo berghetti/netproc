@@ -20,6 +20,7 @@
 
 #include <stdbool.h>
 #include <net/if.h>
+#include <netinet/tcp.h>  // cods tcp state (TCP_ESTABLISHED, TCP_TIME_WAIT...)
 
 #include "config.h"
 #include "packet.h"
@@ -97,6 +98,23 @@ add_statistics_in_processes ( process_t *restrict processes,
               locate = true;
 
               processes[i].conection[j].if_index = pkt->if_index;
+
+              /*
+               * udp connections have no state, however the kernel tries
+               * to correlate udp packets into connections, when it is able
+               * to assign the virtual state TCP_ESTABLISHED, when it is unable
+               * to assign the state TCP_CLOSE, and it ends up not exporting
+               * some data in /proc/net/udp, but we can "retrieve" that
+               * information from the captured packet
+               */
+              if ( processes[i].conection[j].protocol == IPPROTO_UDP &&
+                   processes[i].conection[j].state == TCP_CLOSE )
+                {
+                  processes[i].conection[j].local_address = pkt->local_address;
+                  processes[i].conection[j].remote_address =
+                          pkt->remote_address;
+                  processes[i].conection[j].remote_port = pkt->remote_port;
+                }
 
               if ( pkt->direction == PKT_DOWN )
                 {  // estatisticas geral do processo
