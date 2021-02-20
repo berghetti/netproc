@@ -217,7 +217,9 @@ get_process_active_con ( process_t **cur_proc,
           // test conections of process
           for ( int c = 0; c < total_conections; c++ )
             {
-              // connection in TIME_WAIT state, test next conection
+              // connection in TCP_TIME_WAIT state, test next conection
+              // reference:
+              // https://github.com/torvalds/linux/blob/master/include/net/tcp_states.h
               if ( conections[c].inode == 0 )
                 continue;
 

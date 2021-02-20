@@ -28,6 +28,9 @@
 #include "config.h"  // define TCP | UDP
 #include "m_error.h"
 
+// references
+// https://www.kernel.org/doc/Documentation/networking/proc_net_tcp.txt
+
 // caminho do arquivo onde o kernel
 // fornece as conexoes TCP e UDP
 #define PATH_TCP "/proc/net/tcp"
