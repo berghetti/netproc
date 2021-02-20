@@ -48,7 +48,17 @@ static int
 get_info_conections ( conection_t **conection, const int protocol )
 {
   FILE *arq = NULL;
-  // char *path_file = NULL;
+  char *line = NULL;
+  size_t len = 0;
+
+  int ret;
+
+  char local_addr[10] = {0}, rem_addr[10] = {0};  // enough for ipv4
+
+  unsigned int local_port, rem_port, state;
+  unsigned long int inode;
+  int matches;
+
   const char *path_file = ( protocol == IPPROTO_TCP ) ? PATH_TCP : PATH_UDP;
 
   if ( !( arq = fopen ( path_file, "r" ) ) )
@@ -57,36 +67,24 @@ get_info_conections ( conection_t **conection, const int protocol )
       return -1;
     }
 
-  char *line = NULL;
-  size_t len = 0;
-
   // ignore header in first line
   if ( ( getline ( &line, &len, arq ) ) == -1 )
     {
-      free ( line );
-      fclose ( arq );
       ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-      return -1;
+      ret = -1;
+      goto EXIT;
     }
 
   size_t len_buff_conections = TOT_CONECTIONS_BEGIN;
   *conection = calloc ( len_buff_conections, sizeof ( **conection ) );
   if ( !*conection )
     {
-      free ( line );
-      fclose ( arq );
       ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-      return -1;
+      ret = -1;
+      goto EXIT;
     }
 
-  uint32_t count = 0;
-  // char local_addr[64] = {0}, rem_addr[64] = {0};
-  char local_addr[10] = {0}, rem_addr[10] = {0};  // enough for ipv4
-
-  unsigned int local_port, rem_port, state;
-  unsigned long int inode;
-  int matches;
-
+  ret = 0;
   while ( ( getline ( &line, &len, arq ) ) != -1 )
     {
       // clang-format off
@@ -110,32 +108,34 @@ get_info_conections ( conection_t **conection, const int protocol )
         {
           ERROR_DEBUG ( "Error read file conections\"%s\"",
                         strerror ( errno ) );
-          return -1;
+          ret = -1;
+          goto EXIT;
         }
 
       if ( 1 !=
-           sscanf ( local_addr, "%x", &( *conection )[count].local_address ) )
+           sscanf ( local_addr, "%x", &( *conection )[ret].local_address ) )
         {
           ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-          return -1;
+          ret = -1;
+          goto EXIT;
         }
 
-      if ( 1 !=
-           sscanf ( rem_addr, "%x", &( *conection )[count].remote_address ) )
+      if ( 1 != sscanf ( rem_addr, "%x", &( *conection )[ret].remote_address ) )
         {
           ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-          return -1;
+          ret = -1;
+          goto EXIT;
         }
 
-      ( *conection )[count].local_port = local_port;
-      ( *conection )[count].remote_port = rem_port;
-      ( *conection )[count].state = state;
-      ( *conection )[count].inode = inode;
-      ( *conection )[count].protocol = protocol;
+      ( *conection )[ret].local_port = local_port;
+      ( *conection )[ret].remote_port = rem_port;
+      ( *conection )[ret].state = state;
+      ( *conection )[ret].inode = inode;
+      ( *conection )[ret].protocol = protocol;
 
-      count++;
+      ret++;
 
-      if ( count == len_buff_conections )
+      if ( ( size_t ) ret == len_buff_conections )
         {
           len_buff_conections <<= 1;
 
@@ -145,22 +145,24 @@ get_info_conections ( conection_t **conection, const int protocol )
           if ( !temp )
             {
               ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-              return -1;
+              ret = -1;
+              goto EXIT;
             }
 
           *conection = temp;
 
           // initialize new space of memory (important)
-          memset ( &( *conection )[count],
+          memset ( &( *conection )[ret],
                    0,
-                   ( len_buff_conections - count ) * sizeof ( **conection ) );
+                   ( len_buff_conections - ret ) * sizeof ( **conection ) );
         }
     }
 
+EXIT:
   free ( line );
   fclose ( arq );
 
-  return count;
+  return ret;
 }
 
 // return total conections or -1 on failure
@@ -180,7 +182,8 @@ get_conections_system ( conection_t **buffer, const int proto )
                                                        IPPROTO_TCP ) ) )
         {
           ERROR_DEBUG ( "%s", "backtrace" );
-          return -1;
+          tot_con = -1;
+          goto EXIT;
         }
     }
 
@@ -190,7 +193,8 @@ get_conections_system ( conection_t **buffer, const int proto )
                                                        IPPROTO_UDP ) ) )
         {
           ERROR_DEBUG ( "%s", "backtrace" );
-          return -1;
+          tot_con = -1;
+          goto EXIT;
         }
     }
 
@@ -199,7 +203,8 @@ get_conections_system ( conection_t **buffer, const int proto )
   if ( !*buffer )
     {
       ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-      return -1;
+      tot_con = -1;
+      goto EXIT;
     }
 
   p_buff = *buffer;
@@ -212,10 +217,11 @@ get_conections_system ( conection_t **buffer, const int proto )
   while ( tot_con_udp-- )
     *p_buff++ = *p_conn++;
 
-  if (temp_conections_tcp)
+EXIT:
+  if ( temp_conections_tcp )
     free ( temp_conections_tcp );
 
-  if (temp_conections_udp)
+  if ( temp_conections_udp )
     free ( temp_conections_udp );
 
   return tot_con;
