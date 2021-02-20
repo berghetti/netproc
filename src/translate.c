@@ -45,11 +45,11 @@ translate ( const conection_t *restrict con,
   char r_host[NI_MAXHOST], r_service[NI_MAXSERV];
 
   l_sock.sin_family = AF_INET;
-  l_sock.sin_port = htons ( con->local_port );
+  l_sock.sin_port = con->local_port;
   l_sock.sin_addr.s_addr = con->local_address;
 
   r_sock.sin_family = AF_INET;
-  r_sock.sin_port = htons ( con->remote_port );
+  r_sock.sin_port = con->remote_port;
   r_sock.sin_addr.s_addr = con->remote_address;
 
   if ( co->translate_host )
