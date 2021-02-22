@@ -328,86 +328,74 @@ show_process ( const process_t *restrict processes,
     {
       // só exibe o processo se tiver fluxo de rede
       // ou se modo verboso ligado
-      if ( co->verbose || processes[i].net_stat.tot_Bps_rx ||
-           processes[i].net_stat.tot_Bps_tx )
+      if ( !co->verbose && !( processes[i].net_stat.tot_Bps_rx ||
+                              processes[i].net_stat.tot_Bps_tx ) )
+        continue;
+
+      tot_rows++;
+      tot_proc_act++;
+
+      // update total show in resume
+      cur_rate_tx += processes[i].net_stat.avg_Bps_tx;
+      cur_rate_rx += processes[i].net_stat.avg_Bps_rx;
+
+      cur_pps_tx += processes[i].net_stat.avg_pps_tx;
+      cur_pps_rx += processes[i].net_stat.avg_pps_rx;
+
+      human_readable (
+              tx_rate, sizeof tx_rate, processes[i].net_stat.avg_Bps_tx, RATE );
+
+      human_readable (
+              rx_rate, sizeof rx_rate, processes[i].net_stat.avg_Bps_rx, RATE );
+
+      human_readable (
+              tx_tot, sizeof tx_tot, processes[i].net_stat.tot_Bps_tx, TOTAL );
+
+      human_readable (
+              rx_tot, sizeof rx_tot, processes[i].net_stat.tot_Bps_rx, TOTAL );
+
+      wprintw ( pad,
+                " %*d %*ld %*ld %*s %*s %*s %*s ",
+                PID,
+                processes[i].pid,
+                PPS,
+                processes[i].net_stat.avg_pps_tx,
+                PPS,
+                processes[i].net_stat.avg_pps_rx,
+                J_RATE,
+                tx_rate,
+                J_RATE,
+                rx_rate,
+                J_RATE,
+                tx_tot,
+                J_RATE,
+                rx_tot );
+
+      // wprintw ( pad, "%s", processes[i].name );
+
+      // "/usr/bin/programa-nome" --any_parameters
+      len_base_name = strlen_space ( processes[i].name );
+
+      // programa-nome
+      len_name = find_last_char ( processes[i].name, len_base_name, '/' ) + 1;
+
+      for ( int j = 0; processes[i].name[j] && j < MAX_NAME_PROGRAM - 1; j++ )
         {
-          tot_rows++;
-          tot_proc_act++;
-
-          // update total show in resume
-          cur_rate_tx += processes[i].net_stat.avg_Bps_tx;
-          cur_rate_rx += processes[i].net_stat.avg_Bps_rx;
-
-          cur_pps_tx += processes[i].net_stat.avg_pps_tx;
-          cur_pps_rx += processes[i].net_stat.avg_pps_rx;
-
-          human_readable ( tx_rate,
-                           sizeof tx_rate,
-                           processes[i].net_stat.avg_Bps_tx,
-                           RATE );
-
-          human_readable ( rx_rate,
-                           sizeof rx_rate,
-                           processes[i].net_stat.avg_Bps_rx,
-                           RATE );
-
-          human_readable ( tx_tot,
-                           LEN_STR_RATE,
-                           processes[i].net_stat.tot_Bps_tx,
-                           TOTAL );
-
-          human_readable ( rx_tot,
-                           LEN_STR_RATE,
-                           processes[i].net_stat.tot_Bps_rx,
-                           TOTAL );
-
-          wprintw ( pad,
-                    " %*d %*ld %*ld %*s %*s %*s %*s ",
-                    PID,
-                    processes[i].pid,
-                    PPS,
-                    processes[i].net_stat.avg_pps_tx,
-                    PPS,
-                    processes[i].net_stat.avg_pps_rx,
-                    J_RATE,
-                    tx_rate,
-                    J_RATE,
-                    rx_rate,
-                    J_RATE,
-                    tx_tot,
-                    J_RATE,
-                    rx_tot );
-
-          // wprintw ( pad, "%s", processes[i].name );
-
-          // "/usr/bin/programa-nome" --any_parameters
-          len_base_name = strlen_space ( processes[i].name );
-
-          // programa-nome
-          len_name =
-                  find_last_char ( processes[i].name, len_base_name, '/' ) + 1;
-
-          for ( int j = 0; processes[i].name[j] && j < MAX_NAME_PROGRAM - 1;
-                j++ )
-            {
-              if ( j >= len_name && j < len_base_name )
-                // destaca somente o nome do programa
-                waddch ( pad,
-                         processes[i].name[j] |
-                                 co->color_scheme[NAME_PROG_BOLD] );
-              else
-                // pinta todo o caminho do programa e parametros
-                waddch ( pad,
-                         processes[i].name[j] | co->color_scheme[NAME_PROG] );
-            }
-
-          waddch ( pad, '\n' );
-
-          // option -c and process with traffic at the moment
-          if ( co->view_conections & ( processes[i].net_stat.avg_Bps_rx ||
-                                       processes[i].net_stat.avg_Bps_tx ) )
-            show_conections ( &processes[i], co );
+          if ( j >= len_name && j < len_base_name )
+            // destaca somente o nome do programa
+            waddch ( pad,
+                     processes[i].name[j] | co->color_scheme[NAME_PROG_BOLD] );
+          else
+            // pinta todo o caminho do programa e parametros
+            waddch ( pad, processes[i].name[j] | co->color_scheme[NAME_PROG] );
         }
+
+      waddch ( pad, '\n' );
+
+      // option -c and process with traffic at the moment
+      if ( co->view_conections & ( processes[i].net_stat.avg_Bps_rx ||
+                                   processes[i].net_stat.avg_Bps_tx ) )
+        show_conections ( &processes[i], co );
     }
 
   // clear lines begin cursor end screen, replace wclear()
