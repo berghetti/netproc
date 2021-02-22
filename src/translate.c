@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include <netdb.h>      // NI_MAXHOST, NI_MAXSERV
 #include <arpa/inet.h>  // htons
+#include <linux/in.h>   // IPPROTO_UDP | IPPROTO_TCP
 
 #include "translate.h"
 #include "resolver/sock_util.h"
@@ -39,7 +40,7 @@ translate ( const conection_t *restrict con,
   static char tuple[LEN_TUPLE] = {0};
   struct sockaddr_in l_sock, r_sock;  // local_socket and remote_socket
 
-  char *proto = ( co->proto & UDP ) ? "udp" : "tcp";
+  const char *proto = ( con->protocol == IPPROTO_UDP ) ? "udp" : "tcp";
 
   char l_host[NI_MAXHOST], l_service[NI_MAXSERV];
   char r_host[NI_MAXHOST], r_service[NI_MAXSERV];
@@ -49,36 +50,46 @@ translate ( const conection_t *restrict con,
   l_sock.sin_addr.s_addr = con->local_address;
 
   r_sock.sin_family = AF_INET;
-  r_sock.sin_port = htons (con->remote_port );
+  r_sock.sin_port = con->remote_port;
   r_sock.sin_addr.s_addr = con->remote_address;
 
   if ( co->translate_host )
     {
-      ip2domain ( ( struct sockaddr_storage * ) &l_sock, l_host, NI_MAXHOST );
-      ip2domain ( ( struct sockaddr_storage * ) &r_sock, r_host, NI_MAXHOST );
+      ip2domain ( ( struct sockaddr_storage * ) &l_sock,
+                  l_host,
+                  sizeof ( l_host ) );
+      ip2domain ( ( struct sockaddr_storage * ) &r_sock,
+                  r_host,
+                  sizeof ( r_host ) );
     }
   else
     {
-      sockaddr_ntop (
-              ( struct sockaddr_storage * ) &l_sock, l_host, NI_MAXHOST );
-      sockaddr_ntop (
-              ( struct sockaddr_storage * ) &r_sock, r_host, NI_MAXHOST );
+      sockaddr_ntop ( ( struct sockaddr_storage * ) &l_sock,
+                      l_host,
+                      sizeof ( l_host ) );
+      sockaddr_ntop ( ( struct sockaddr_storage * ) &r_sock,
+                      r_host,
+                      sizeof ( r_host ) );
     }
 
   if ( co->translate_service )
     {
-      fprintf(stderr, "%s\n", "translate port");
-      port2serv ( l_sock.sin_port, proto, l_service, NI_MAXSERV );
-      port2serv ( r_sock.sin_port, proto, r_service, NI_MAXSERV );
+      if ( !port2serv (
+                   l_sock.sin_port, proto, l_service, sizeof ( l_service ) ) )
+        snprintf ( l_service, sizeof ( l_service ), "%u", con->local_port );
+
+      if ( !port2serv (
+                   r_sock.sin_port, proto, r_service, sizeof ( r_service ) ) )
+        snprintf ( r_service, sizeof ( r_service ), "%u", con->remote_port );
     }
   else
     {
-      snprintf ( l_service, NI_MAXSERV, "%u", con->local_port );
-      snprintf ( r_service, NI_MAXSERV, "%u", con->remote_port );
+      snprintf ( l_service, sizeof ( l_service ), "%u", con->local_port );
+      snprintf ( r_service, sizeof ( r_service ), "%u", con->remote_port );
     }
 
   snprintf ( tuple,
-             LEN_TUPLE,
+             sizeof ( tuple ),
              "%s:%s <-> %s:%s",
              l_host,
              l_service,

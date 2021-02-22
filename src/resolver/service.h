@@ -3,7 +3,7 @@
 
 int
 port2serv ( unsigned short int port,
-            char *proto,
+            const char *proto,
             char *buf,
             const size_t buf_len );
 

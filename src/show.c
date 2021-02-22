@@ -386,7 +386,8 @@ show_process ( const process_t *restrict processes,
           len_name =
                   find_last_char ( processes[i].name, len_base_name, '/' ) + 1;
 
-          for ( int j = 0; processes[i].name[j] && j < MAX_NAME_PROGRAM - 1; j++ )
+          for ( int j = 0; processes[i].name[j] && j < MAX_NAME_PROGRAM - 1;
+                j++ )
             {
               if ( j >= len_name && j < len_base_name )
                 // destaca somente o nome do programa
