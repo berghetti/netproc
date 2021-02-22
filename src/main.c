@@ -102,7 +102,7 @@ main ( int argc, char **argv )
 
   double m_timer;
 
-  co = parse_options2 ( argc, argv );
+  co = parse_options ( argc, argv );
   // co = parse_options ( argc, argv );
 
   if ( !setup_terminal () )

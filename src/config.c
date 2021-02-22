@@ -26,7 +26,6 @@
 #include "config.h"
 #include "conection.h"
 #include "usage.h"
-#include "m_error.h"
 
 // default options
 static struct config_op co = {
@@ -39,6 +38,7 @@ static struct config_op co = {
         .view_conections = false,
         .translate_host = true,
         .translate_service = true,
+        .verbose = false,
 
         // internal control sinc of program, NOT REMOVE
         .tic_tac = 0,
@@ -46,9 +46,10 @@ static struct config_op co = {
 };
 
 struct config_op *
-parse_options2 ( int argc, char **argv )
+parse_options ( int argc, char **argv )
 {
   char *arg;
+  char *prev;
 
   // skip arg 0
   argc--;
@@ -57,12 +58,14 @@ parse_options2 ( int argc, char **argv )
   arg = *argv++;
   while ( argc-- )
     {
-      fprintf ( stderr, "%s\n", arg );
-
       if ( !strcmp ( arg, "-B" ) || !strcmp ( arg, "--bytes" ) )
-        co.view_bytes = true;
+        {
+          co.view_bytes = true;
+        }
       else if ( !strcmp ( arg, "-c" ) )
-        co.view_conections = true;
+        {
+          co.view_conections = true;
+        }
       else if ( !strcmp ( arg, "-f" ) || !strcmp ( arg, "--file" ) )
         {
           co.log = true;
@@ -81,12 +84,13 @@ parse_options2 ( int argc, char **argv )
         }
       else if ( !strcmp ( arg, "-i" ) || !strcmp ( arg, "--interface" ) )
         {
+          prev = arg;
           arg = *argv;
           if ( !arg || ( *arg == '-' || !strncmp ( arg, "--", 2 ) ) )
             {
-              error ( "Argument '-i, --interface' requere interface name" );
-              usage ();
-              exit ( EXIT_FAILURE );
+              fprintf (
+                      stderr, "Argument '%s' requere interface name\n", prev );
+              goto FAIL;
             }
 
           co.iface = arg;
@@ -95,7 +99,6 @@ parse_options2 ( int argc, char **argv )
         }
       else if ( !strcmp ( arg, "-n" ) )
         {
-          fprintf ( stderr, "%s\n", "traduzindo -n" );
           // implict
           co.view_conections = true;
 
@@ -104,139 +107,69 @@ parse_options2 ( int argc, char **argv )
         }
       else if ( !strcmp ( arg, "-nh" ) )
         {
-          fprintf ( stderr, "%s\n", "traduzindo -nh" );
           // implict
           co.view_conections = true;
 
-          // no translate only service (port)
+          // no translate only host
           co.translate_host = false;
         }
       else if ( !strcmp ( arg, "-np" ) )
         {
-          fprintf ( stderr, "%s\n", "traduzindo -np" );
           // implict
           co.view_conections = true;
 
           // no translate only service (port)
           co.translate_service = false;
         }
+      else if ( !strcmp ( arg, "-p" ) || !strcmp ( arg, "--protocol" ) )
+        {
+          prev = arg;
+          arg = *argv;
+
+          if ( !arg || ( *arg == '-' || !strncmp ( arg, "--", 2 ) ) )
+            {
+              fprintf ( stderr, "Argument '%s' requere udp or tcp\n", prev );
+              goto FAIL;
+            }
+          else if ( !strcasecmp ( arg, "tcp" ) )
+            co.proto &= TCP;
+          else if ( !strcasecmp ( arg, "udp" ) )
+            co.proto &= UDP;
+          else
+            {
+              fprintf ( stderr, "invalid protocol in argument '%s'\n", prev );
+              goto FAIL;
+            }
+
+          argc--;
+          argv++;
+        }
+      else if ( !strcmp ( arg, "--si" ) )
+        {
+          co.view_si = true;
+        }
+      else if ( !strcmp ( arg, "-v" ) || !strcmp ( arg, "--verbose" ) )
+        {
+          co.verbose = true;
+        }
+      else if ( !strcmp ( arg, "-V" ) || !strcmp ( arg, "--version" ) )
+        {
+          show_version ();
+          exit ( EXIT_SUCCESS );
+        }
+
       else
         {
-          error ( "Invalid argument '%s'", arg );
-          usage ();
-          exit ( EXIT_FAILURE );
+          fprintf ( stderr, "Invalid argument '%s'\n", arg );
+          goto FAIL;
         }
 
       arg = *argv++;
     }
 
   return &co;
-}
-
-struct config_op *
-parse_options ( int argc, char **argv )
-{
-  // parse options
-  while ( --argc )
-    {
-      if ( *++argv && **argv == '-' )
-        {
-          switch ( *( *argv + 1 ) )
-            {
-              case 'B':
-                co.view_bytes = true;
-                break;
-              case 'c':
-                co.view_conections = true;
-                break;
-              case 'f':
-                co.log = true;
-
-                // optional name file
-                if ( *( argv + 1 ) && *( *( argv + 1 ) ) != '-' )
-                  {
-                    co.path_log = ( char * ) *++argv;
-                    argc--;
-                  }
-
-                break;
-              case 'h':
-                usage ();
-                exit ( EXIT_SUCCESS );
-                break;
-              case 'i':
-                if ( !( *++argv ) || **argv == '-' )
-                  {
-                    error ( "Argument '-i' requere interface name" );
-                    usage ();
-                    exit ( EXIT_FAILURE );
-                  }
-
-                co.iface = ( char * ) *argv;
-                argc--;
-                break;
-              case 'n':
-                // view conections implict
-                co.view_conections = true;
-
-                if ( *( *argv + 2 ) && *( *argv + 2 ) == 'h' )
-                  {
-                    co.translate_host = false;
-                    break;
-                  }
-                else if ( *( *argv + 2 ) && *( *argv + 2 ) == 'p' )
-                  {
-                    co.translate_service = false;
-                    break;
-                  }
-                else if ( ( *( *argv + 2 ) ) )
-                  goto FAIL;
-
-                co.translate_host = false;
-                break;
-              case 'p':
-
-                if ( !( *++argv ) || **argv == '-' )
-                  {
-                    error ( "Argument '-p' requere protocol tcp or udp" );
-                    usage ();
-                    exit ( EXIT_FAILURE );
-                  }
-                else if ( !strncasecmp ( *argv, "tcp", strlen ( "tcp" ) ) )
-                  co.proto &= TCP;
-                else if ( !strncasecmp ( *argv, "udp", strlen ( "udp" ) ) )
-                  co.proto &= UDP;
-                else
-                  {
-                    error ( "invalid protocol in argument '-p'" );
-                    usage ();
-                    exit ( EXIT_FAILURE );
-                  }
-
-                argc--;
-                break;
-              case 's':
-                if ( *( *argv + 2 ) && *( *argv + 2 ) == 'i' )
-                  {
-                    co.view_si = true;
-                    break;
-                  }
-                goto FAIL;
-              case 'v':
-                show_version ();
-                exit ( EXIT_SUCCESS );
-              default:
-                goto FAIL;
-            }
-        }
-      else
-        goto FAIL;
-    }
-
-  return &co;
 
 FAIL:
-  error ( "Invalid argument '%s'", *argv );
   usage ();
   exit ( EXIT_FAILURE );
 }
