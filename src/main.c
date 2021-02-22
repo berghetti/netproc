@@ -76,7 +76,7 @@ struct resources_to_free
 static void free_resources ( struct resources_to_free );
 
 int
-main ( int argc, const char **argv )
+main ( int argc, char **argv )
 {
   struct packet packet = {0};
   struct ring ring = {0};
@@ -102,7 +102,9 @@ main ( int argc, const char **argv )
 
   double m_timer;
 
-  co = parse_options ( argc, argv );
+  co = parse_options2(argc, argv);
+  // co = parse_options ( argc, argv );
+
 
   if ( !setup_terminal () )
     fatal_error ( "Error setup terminal" );

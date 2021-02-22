@@ -49,7 +49,7 @@ translate ( const conection_t *restrict con,
   l_sock.sin_addr.s_addr = con->local_address;
 
   r_sock.sin_family = AF_INET;
-  r_sock.sin_port = con->remote_port;
+  r_sock.sin_port = htons (con->remote_port );
   r_sock.sin_addr.s_addr = con->remote_address;
 
   if ( co->translate_host )
@@ -67,6 +67,7 @@ translate ( const conection_t *restrict con,
 
   if ( co->translate_service )
     {
+      fprintf(stderr, "%s\n", "translate port");
       port2serv ( l_sock.sin_port, proto, l_service, NI_MAXSERV );
       port2serv ( r_sock.sin_port, proto, r_service, NI_MAXSERV );
     }

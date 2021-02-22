@@ -52,6 +52,9 @@ struct config_op
 };
 
 struct config_op *
-parse_options ( int argc, const char **argv );
+parse_options ( int argc, char **argv );
+
+struct config_op *
+parse_options2 ( int argc, char **argv );
 
 #endif  // CONFIG_H

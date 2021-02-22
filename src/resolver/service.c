@@ -14,10 +14,12 @@ port2serv ( unsigned short int port,
 
   char *protocol = ( proto ) ? proto : "tcp";
 
+  // unsigned short int port_nb = htons(port);
   sve = getservbyport ( port, protocol );
 
   if ( sve != NULL )
     {
+      fprintf(stderr, "%s\n", "translate port ok");
       strncpy ( buf, sve->s_name, buf_len );
       return 1;
     }

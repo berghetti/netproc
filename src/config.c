@@ -46,7 +46,97 @@ static struct config_op co = {
 };
 
 struct config_op *
-parse_options ( int argc, const char **argv )
+parse_options2 ( int argc, char **argv )
+{
+  char *arg;
+
+  // skip arg 0
+  argc--;
+  argv++;
+
+  arg = *argv++;
+  while(argc--)
+    {
+      fprintf(stderr, "%s\n", arg);
+
+      if (!strcmp(arg, "-B") || !strcmp(arg, "--bytes"))
+        co.view_bytes = true;
+      else if (!strcmp(arg, "-c") )
+        co.view_conections = true;
+      else if ( !strcmp(arg, "-f") || !strcmp(arg, "--file") )
+        {
+          co.log = true;
+          arg = *argv;
+          if ( arg  && *arg != '-' && !!strcmp(arg, "--") )
+            {
+                co.path_log = arg;
+                argv++;
+                argc--;
+            }
+        }
+      else if ( !strcmp(arg, "-h") || !strcmp(arg, "--help") )
+        {
+          usage ();
+          exit ( EXIT_SUCCESS );
+        }
+      else if ( !strcmp(arg, "-i") || !strcmp(arg, "--interface") )
+        {
+          arg = *argv;
+          if ( !arg  || (*arg == '-' || !strncmp(arg, "--", 2)) )
+            {
+              error ( "Argument '-i, --interface' requere interface name" );
+              usage ();
+              exit ( EXIT_FAILURE );
+            }
+
+          co.iface = arg;
+          argc--;
+          argv++;
+        }
+      else if ( !strcmp(arg, "-n"))
+        {
+            fprintf(stderr, "%s\n", "traduzindo -n");
+          // implict
+          co.view_conections = true;
+
+          co.translate_host = false;
+          co.translate_service = false;
+        }
+      else if ( !strcmp(arg, "-nh"))
+        {
+            fprintf(stderr, "%s\n", "traduzindo -nh");
+          // implict
+          co.view_conections = true;
+
+          // no translate only service (port)
+          co.translate_host = false;
+        }
+      else if ( !strcmp(arg, "-np"))
+        {
+            fprintf(stderr, "%s\n", "traduzindo -np");
+          // implict
+          co.view_conections = true;
+
+          // no translate only service (port)
+          co.translate_service = false;
+        }
+      else
+        {
+          error ( "Invalid argument '%s'", arg );
+          usage ();
+          exit ( EXIT_FAILURE );
+        }
+
+
+
+      arg = *argv++;
+    }
+
+  return &co;
+}
+
+struct config_op *
+parse_options ( int argc, char **argv )
 {
   // parse options
   while ( --argc )
