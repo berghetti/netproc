@@ -37,23 +37,30 @@ is_number ( const char *string );
 
 // retorna o total de diretorios encontrados, -1 em caso de falha.
 int
-get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
+get_numeric_directory ( uint32_t **buffer, const char *path_dir )
 {
   DIR *dir;
-
-  if ( ( dir = opendir ( path_dir ) ) == NULL )
-    return -1;
-
   struct dirent *directory = NULL;
   size_t count = 0;
-
   size_t len_buffer = TOT_PROCESS_BEGIN;
+
+  if ( ( dir = opendir ( path_dir ) ) == NULL )
+    {
+      ERROR_DEBUG ( "%s", strerror ( errno ) );
+      return -1;
+    }
+
   // FIXME: calloc is necessary?
   // *buffer = calloc ( len_buffer, sizeof ( **buffer ) );
   *buffer = malloc ( len_buffer * sizeof ( **buffer ) );
   if ( !*buffer )
-    return -1;
+    {
+      ERROR_DEBUG ( "%s", strerror ( errno ) );
+      count = -1;
+      goto END;
+    }
 
+  errno = 0;
   while ( ( directory = readdir ( dir ) ) )
     {
       if ( is_number ( directory->d_name ) )
@@ -69,16 +76,21 @@ get_numeric_directory2 ( uint32_t **buffer, const char *path_dir )
           // work with data that have
           if ( !temp )
             goto END;
-          // return -1;
 
           *buffer = temp;
 
-          // initialize new space of memory
           // FIXME: its necessary?
+          // initialize only new space of memory
           // memset ( &( *buffer )[count],
           //          0,
           //          ( len_buffer - count ) * sizeof ( **buffer ) );
         }
+    }
+
+  if ( errno )
+    {
+      ERROR_DEBUG ( "%s", strerror ( errno ) );
+      count = -1;
     }
 
 END:

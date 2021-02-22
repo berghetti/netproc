@@ -94,7 +94,7 @@ get_process_active_con ( process_t **cur_proc,
 {
   // get pid all process in system
   uint32_t *process_pids;
-  int total_process = get_numeric_directory2 ( &process_pids, PROCESS_DIR );
+  int total_process = get_numeric_directory ( &process_pids, PROCESS_DIR );
   if ( total_process == -1 )
     {
       ERROR_DEBUG ( "%s", "backtrace" );
@@ -183,7 +183,7 @@ get_process_active_con ( process_t **cur_proc,
       snprintf ( path_fd, MAX_PATH_FD, "/proc/%d/fd/", process_pids[index_pd] );
 
       // pegar todos os file descriptos do processo
-      total_fd_process = get_numeric_directory2 ( &fds_p, path_fd );
+      total_fd_process = get_numeric_directory ( &fds_p, path_fd );
 
       // falha ao pegar file descriptos do processo,
       // troca de processo

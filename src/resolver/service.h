@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
- #ifndef SERVICE_H
+#ifndef SERVICE_H
 #define SERVICE_H
 
 int
