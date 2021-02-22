@@ -106,22 +106,17 @@ update_log_process ( const process_t *new_proc,
                      size_t *len_buff )
 {
   static size_t max_len_buff_log = 0;
-  char *buffer_name = NULL;
   size_t len_name;
   bool locate;
 
   for ( size_t i = 0; i < len_proc; i++ )
     {
-      // m == dynamic allocation conversion specifier
-      if ( 1 != sscanf ( new_proc[i].name, "%ms", &buffer_name ) )
-        continue;
-
-      len_name = strlen ( buffer_name );
+      len_name = strlen ( new_proc[i].name );
       locate = false;
 
       for ( size_t j = 0; j < *len_buff; j++ )
         {
-          if ( !strncmp ( buffer_name, ( *buff_log )[j].name, len_name ) )
+          if ( !strncmp ( new_proc[i].name, ( *buff_log )[j].name, len_name ) )
             {
               locate = true;
 
@@ -148,14 +143,13 @@ update_log_process ( const process_t *new_proc,
                 return false;
             }
 
-          ( *buff_log )[*len_buff].name = strndup ( buffer_name, len_name + 1 );
+          ( *buff_log )[*len_buff].name =
+                  strndup ( new_proc[i].name, len_name );
 
           ( *buff_log )[*len_buff].tot_Bps_rx = new_proc[i].net_stat.tot_Bps_rx;
           ( *buff_log )[*len_buff].tot_Bps_tx = new_proc[i].net_stat.tot_Bps_tx;
           ( *len_buff )++;
         }
-
-      free ( buffer_name );
     }
 
   return true;

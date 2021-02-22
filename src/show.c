@@ -327,7 +327,8 @@ show_process ( const process_t *restrict processes,
   for ( size_t i = 0; i < tot_process; i++ )
     {
       // só exibe o processo se tiver fluxo de rede
-      if ( processes[i].net_stat.tot_Bps_rx ||
+      // ou se modo verboso ligado
+      if ( co->verbose || processes[i].net_stat.tot_Bps_rx ||
            processes[i].net_stat.tot_Bps_tx )
         {
           tot_rows++;

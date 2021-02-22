@@ -170,6 +170,6 @@ parse_options ( int argc, char **argv )
   return &co;
 
 FAIL:
-  usage ();
+  fprintf ( stderr, "See " PROG_NAME " --help\n" );
   exit ( EXIT_FAILURE );
 }

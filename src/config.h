@@ -46,7 +46,6 @@ struct config_op
   bool translate_host;     // translate ip to name using DNS
   bool translate_service;  // translate port to service
   bool verbose;            // show process without traffic alse
-                           // and show individual process in file (option -f)
 
   // internal
   uint8_t tic_tac;  // sinc program, internal control
@@ -55,6 +54,5 @@ struct config_op
 
 struct config_op *
 parse_options ( int argc, char **argv );
-
 
 #endif  // CONFIG_H
