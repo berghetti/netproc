@@ -19,7 +19,7 @@ tool to monitor network traffic based on processes
     $ make
     $ sudo make install
 
-##### [Fast install]
+##### [Install single command]
     $ git clone https://github.com/berghetti/netproc.git; cd netproc; make; sudo make install
 
 #### [Options / usage]
@@ -51,3 +51,10 @@ tool to monitor network traffic based on processes
 
 #### [uninstall]
     $ sudo make uninstall
+
+#### [Debug]
+    $ make clean
+    $ DEBUG=1 make
+    $ sudo ./bin/netproc 2> log.txt
+
+    $ sudo DESTDIR=/tmp make install
