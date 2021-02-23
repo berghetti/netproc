@@ -6,7 +6,6 @@ bin/netproc
 
 #txt
 *.txt
-!./doc/
 
 #obj
 *.o
