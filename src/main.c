@@ -108,7 +108,7 @@ main ( int argc, char **argv )
     fatal_error ( "Error setup terminal" );
 
   if ( -1 == ( sock = create_socket ( co ) ) )
-    fatal_error ( "Error create socket" );
+    fatal_error ( "Error create socket, is root?" );
 
   if ( co->log && !( log_file = setup_log_file ( co ) ) )
     {

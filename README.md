@@ -26,16 +26,20 @@ tool to monitor network traffic based on processes
     Usage: netproc [options]
 
     Options:
-     -B            view in bytes, default in bits
-     -c            visualization each active connection of the process
-     -f "file"     save statistics in file, file name is optional, default is netproc.log
-     -h            show this message
-     -i <iface>    specifies an interface, default is all (except interface with network 127.0.0.0/8)
-     -n            numeric host and service, implicit '-c',
-                   try '-nh' to no translate only host or '-np' to not translate only service
-     -p tcp | udp  specifies a protocol, the default is tcp and udp
-     -si           SI format display, with powers of 1000, default is IEC, with powers of 1024
-     -v            show version
+     -B, --bytes             view in bytes, default in bits
+     -c                      visualization each active connection of the process
+     -f, --file "filename"   save statistics in file, file name is optional,
+                             default is 'netproc.log'
+     -h, --help              show this message
+     -i, --interface iface   specifies an interface, default is all
+                             (except interface with network 127.0.0.0/8)
+     -n                      numeric host and service, implicit '-c', try '-nh' to no
+                             translate only host or '-np' to not translate only service
+     -p, --protocol tcp|udp  specifies a protocol, the default is tcp and udp
+     -v, --verbose           verbose mode, alse show process without traffic
+     --si                    show SI format, with powers of 1000, default is IEC,
+                             with powers of 1024
+     -V, --version           show version
 
     when running press:
      arrow keys    scroll

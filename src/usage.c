@@ -37,7 +37,7 @@ usage ( void )
          "Options:\n"
          " -B, --bytes             view in bytes, default in bits\n"
          " -c                      visualization each active connection of the process\n"
-         " -f, --file \"file\"       save statistics in file, file name is optional,\n"
+         " -f, --file \"filename\"   save statistics in file, filename is optional,\n"
          "                         default is '" PROG_NAME_LOG "'\n"
          " -h, --help              show this message\n"
          " -i, --interface iface   specifies an interface, default is all\n"
