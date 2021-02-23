@@ -10,6 +10,7 @@ Legend:
   * improved function readability parse_options in src/config.c
   * show the name of the process and its arguments
   + implemented mode verbose, that alse show process whitout traffic
+  + added man page
 
 0.5.0 - 2021-02-12
   - bin folder not present (necessary to compilation)
