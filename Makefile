@@ -18,8 +18,8 @@
 
 PROG_NAME=netproc
 
-PATH_DOC_INSTALL=$(DESTDIR)/usr/local/share/man/man8
-PATH_INSTALL=$(DESTDIR)/usr/local/sbin
+PATH_DOC_INSTALL=$(DESTDIR)/usr/share/man/man8
+PATH_INSTALL=$(DESTDIR)/usr/sbin
 
 SRC=./src
 BIN=./bin
@@ -34,7 +34,7 @@ ifdef DEBUG
 	CFLAGS+=-Wall -Wextra -pedantic -pedantic-errors -O0 -g
 else
 	CPPFLAGS=-D NDEBUG
-	CFLAGS+= -O2 -march=native -Wall -Wextra
+	CFLAGS+= -O2 -Wall -Wextra
 endif
 
 LDLIBS=-lncurses -lpthread
@@ -79,25 +79,8 @@ distclean: clean
 run:
 	sudo $(BIN)/$(PROG_NAME)
 
-# check if user has root privileges.
-define checkifroot
-  if [ `id -u` -ne 0 ]; then \
-    echo 'Need root privileges!'; \
-    exit 1; \
-  fi
-endef
-
-define checkbin
-	if [ ! -e $(1) ]; then \
-		echo $(1)" not exist, try \"make\"."; \
-		exit 1; \
-	fi
-endef
-
 
 install:
-	@$(call checkifroot)
-	@$(call checkbin, $(BIN)/$(PROG_NAME))
 	@ install -d -m 755 $(PATH_INSTALL)
 	@ install --strip $(BIN)/$(PROG_NAME) $(PATH_INSTALL); \
 	echo "Binary instaled in "$(PATH_INSTALL)"/"$(PROG_NAME)
@@ -107,7 +90,6 @@ install:
 	echo "Man page instaled in "$(PATH_DOC_INSTALL)/$(PROG_NAME)".8.gz"
 
 uninstall:
-	@$(call checkifroot)
 	@ find $(PATH_DOC_INSTALL) $(PATH_INSTALL) -type f -name "$(PROG_NAME)*" \
 	-delete -exec echo "Removed "{} \;
 
