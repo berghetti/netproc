@@ -4,11 +4,6 @@ Source: https://github.com/berghetti/netproc
 
 Files: *
 Copyright: 2020-2021 Mayco Souza Berghetti <mayco.s.berghetti@gmail.com>
-License: GPL-3+
-
-Files: debian/*
-Copyright: 2021 Mayco Souza Berghetti <mayco.s.berghetti@gmail.com>
-License: GPL-3+
 
 License: GPL-3+
  This program is free software: you can redistribute it and/or modify

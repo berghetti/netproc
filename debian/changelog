@@ -1,8 +1,8 @@
 netproc (0.5.5-1) unstable; urgency=low
 
   * Initial release. (Closes: #983520)
-    Fix location install in makefile.
-    Removed CFLAGS -march=native in makefile.
-    Removed directory and root check in makefile.
+   - Fix location install in makefile.
+   - Removed CFLAGS -march=native in makefile.
+   - emoved directory and root check in makefile.
 
  -- Mayco Souza Berghetti <mayco.s.berghetti@gmail.com>  Wed, 24 Feb 2021 16:09:22 +0000
