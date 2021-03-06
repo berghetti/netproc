@@ -30,7 +30,7 @@
 #include "m_error.h"
 
 // len init buffer
-#define TOT_PROCESS_BEGIN 512
+#define TOT_PROCESS_BEGIN 64
 
 static bool
 is_number ( const char *string );

@@ -20,7 +20,7 @@
 
 #include <stdbool.h>
 #include <string.h>    // strlen
-#include <net/if.h>    // if_indextoname
+#include <net/if.h>    // if_indextoname, IF_NAMESIZE
 #include <linux/in.h>  // IPPROTO_TCP
 #include <ncurses.h>
 

@@ -37,7 +37,7 @@
 #define PATH_UDP "/proc/net/udp"
 
 // len initial buffer conections
-#define TOT_CONECTIONS_BEGIN 512
+#define TOT_CONECTIONS_BEGIN 32
 
 // le o arquivo onde fica salva as conexoes '/proc/net/tcp',
 // recebe o local do arquivo, um buffer para armazenar
@@ -45,7 +45,9 @@
 // retorna a quantidade de registros encontrada
 // ou -1 em caso de erro
 static int
-get_info_conections ( conection_t **conection, const int protocol )
+get_info_conections ( conection_t **conection,
+                      const int protocol,
+                      const char *path_file )
 {
   FILE *arq = NULL;
   char *line = NULL;
@@ -58,8 +60,6 @@ get_info_conections ( conection_t **conection, const int protocol )
   unsigned int local_port, rem_port, state;
   unsigned long int inode;
   int matches;
-
-  const char *path_file = ( protocol == IPPROTO_TCP ) ? PATH_TCP : PATH_UDP;
 
   if ( !( arq = fopen ( path_file, "r" ) ) )
     {
@@ -178,8 +178,8 @@ get_conections_system ( conection_t **buffer, const int proto )
 
   if ( proto & TCP )
     {
-      if ( -1 == ( tot_con_tcp = get_info_conections ( &temp_conections_tcp,
-                                                       IPPROTO_TCP ) ) )
+      if ( -1 == ( tot_con_tcp = get_info_conections (
+                           &temp_conections_tcp, IPPROTO_TCP, PATH_TCP ) ) )
         {
           ERROR_DEBUG ( "%s", "backtrace" );
           tot_con = -1;
@@ -189,8 +189,8 @@ get_conections_system ( conection_t **buffer, const int proto )
 
   if ( proto & UDP )
     {
-      if ( -1 == ( tot_con_udp = get_info_conections ( &temp_conections_udp,
-                                                       IPPROTO_UDP ) ) )
+      if ( -1 == ( tot_con_udp = get_info_conections (
+                           &temp_conections_udp, IPPROTO_UDP, PATH_UDP ) ) )
         {
           ERROR_DEBUG ( "%s", "backtrace" );
           tot_con = -1;
