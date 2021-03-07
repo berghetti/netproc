@@ -103,7 +103,7 @@ main ( int argc, char **argv )
 
   double m_timer;
 
-  setlocale(LC_CTYPE, "");
+  setlocale ( LC_CTYPE, "" );
 
   co = parse_options ( argc, argv );
 

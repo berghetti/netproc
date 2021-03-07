@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>           // calloc
+#include <stdlib.h>  // calloc
 #include <inttypes.h>
 #include <sys/socket.h>       // setsockopt
 #include <linux/if_packet.h>  // *PACKET*
@@ -37,13 +37,13 @@
 #endif
 
 // quantidade de blocos
-#define N_BLOCKS 64 //256
+#define N_BLOCKS 64  // 256
 
 // each block will have at least 256KiB of size, because 128 * 2048 = 256KiB
 // this considering a page size of 4096.
 // this conf influences the use of CPU time
 // keep it as power-of-two
-#define FRAMES_PER_BLOCK 128 //512
+#define FRAMES_PER_BLOCK 128  // 512
 // size of frame (packet), considering overhead of struct tpacket (80 bytes)
 // size small cause more usage CPU
 #define LEN_FRAME 2048
@@ -59,7 +59,7 @@ create_ring_buff ( struct ring *ring )
   long page_size;
 
   ring->req.tp_frame_size = LEN_FRAME;
-          // TPACKET_ALIGN ( TPACKET3_HDRLEN ) + TPACKET_ALIGN ( LEN_FRAME );
+  // TPACKET_ALIGN ( TPACKET3_HDRLEN ) + TPACKET_ALIGN ( LEN_FRAME );
 
   // tamanho inicial de uma pagina de memoria
   errno = 0;
