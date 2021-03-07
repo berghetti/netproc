@@ -220,7 +220,7 @@ get_process_active_con ( process_t **cur_proc,
             {
               // when a connection has the status TCP_TIME_WAIT the inode is 0
               // so there is no way easy to track the process for this
-              // connection
+              // connection.
               // listening connections do not carry data...
               if ( conections[c].state == TCP_TIME_WAIT ||
                    conections[c].state == TCP_LISTEN )

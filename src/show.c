@@ -277,7 +277,7 @@ show_conections ( const process_t *restrict process,
           waddch ( pad, ACS_HLINE );  // ─
         }
       else
-        {                                // ultima conexão
+        {                                // last conection
           waddch ( pad, ACS_LLCORNER );  // └
           waddch ( pad, ACS_HLINE );     // ─
         }
