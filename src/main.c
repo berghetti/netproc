@@ -25,6 +25,7 @@
 #include <string.h>  // strerror
 #include <unistd.h>  // STDIN_FILENO
 #include <poll.h>    // poll
+#include <locale.h>
 
 #include "terminal.h"
 #include "config.h"
@@ -101,6 +102,8 @@ main ( int argc, char **argv )
   int rp;
 
   double m_timer;
+
+  setlocale(LC_CTYPE, "");
 
   co = parse_options ( argc, argv );
 

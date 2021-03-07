@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>  // calloc
+#include <stdlib.h>           // calloc
 #include <inttypes.h>
 #include <sys/socket.h>       // setsockopt
 #include <linux/if_packet.h>  // *PACKET*
@@ -29,31 +29,37 @@
 #include "ring.h"
 #include "m_error.h"
 
+// reference
+// https://www.kernel.org/doc/html/latest/networking/packet_mmap.html
+
 #ifndef TPACKET3_HDRLEN
 #error "TPACKET_V3 is necessary, check kernel linux version"
 #endif
 
 // quantidade de blocos
-#define N_BLOCKS 256
+#define N_BLOCKS 64 //256
 
-// essa conf influencia o uso do tempo da CPU
+// each block will have at least 256KiB of size, because 128 * 2048 = 256KiB
+// this considering a page size of 4096.
+// this conf influences the use of CPU time
 // keep it as power-of-two
-#define FRAMES_PER_BLOCK 512
-
-// tamanho do frame (pacote), descosiderando o overhead do cabeçalho tpacket
+#define FRAMES_PER_BLOCK 128 //512
+// size of frame (packet), considering overhead of struct tpacket (80 bytes)
 // size small cause more usage CPU
-#define LEN_FRAME 1600
+#define LEN_FRAME 2048
 
 // timeout in miliseconds
-#define TIMEOUT_FRAME 65
+// zero means that the kernel will calculate the timeout
+// https://github.com/torvalds/linux/blob/master/net/packet/af_packet.c#L596
+#define TIMEOUT_FRAME 0
 
 static bool
 create_ring_buff ( struct ring *ring )
 {
   long page_size;
 
-  ring->req.tp_frame_size =
-          TPACKET_ALIGN ( TPACKET3_HDRLEN ) + TPACKET_ALIGN ( LEN_FRAME );
+  ring->req.tp_frame_size = LEN_FRAME;
+          // TPACKET_ALIGN ( TPACKET3_HDRLEN ) + TPACKET_ALIGN ( LEN_FRAME );
 
   // tamanho inicial de uma pagina de memoria
   errno = 0;
@@ -63,9 +69,9 @@ create_ring_buff ( struct ring *ring )
       return false;
     }
 
-  ring->req.tp_block_size = page_size;
-
+  // The block has to be page size aligned
   // dobra o tamanho do bloco até que caiba a quantidade de frames
+  ring->req.tp_block_size = page_size;
   while ( ring->req.tp_block_size < ring->req.tp_frame_size * FRAMES_PER_BLOCK )
     {
       ring->req.tp_block_size <<= 1;
