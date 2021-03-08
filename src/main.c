@@ -108,7 +108,10 @@ main ( int argc, char **argv )
   co = parse_options ( argc, argv );
 
   if ( !setup_terminal () )
-    fatal_error ( "Error setup terminal" );
+    {
+      fprintf ( stderr, "Error setup terminal\n" );
+      return EXIT_FAILURE;
+    }
 
   if ( -1 == ( sock = create_socket ( co ) ) )
     fatal_error ( "Error create socket, is root?" );

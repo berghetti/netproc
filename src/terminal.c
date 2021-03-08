@@ -42,13 +42,15 @@ setup_terminal ( void )
       switch ( err )
         {
           case 1:
-            ERROR_DEBUG ( "%s", "terminal is hardcopy" );
+            fprintf ( stderr, "%s\n", "terminal is hardcopy" );
             break;
           case -1:
-            ERROR_DEBUG ( "%s", "no terminfo database" );
+            fprintf ( stderr, "%s\n", "no terminfo database" );
             break;
           case 0:
-            ERROR_DEBUG ( "%s", "unknown terminal" );
+            fprintf ( stderr,
+                      "%s\n",
+                      "unknown terminal, check environment variable TERM" );
         }
       return false;
     }
