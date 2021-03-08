@@ -91,7 +91,8 @@ add_statistics_in_processes ( process_t *restrict processes,
         {
           // ... e verifica com o pacote recebido pela rede com base
           // na porta local e tipo do protocolo, visto que somente um processo
-          // por vez pode usar determinada porta por protocolo
+          // por vez pode usar determinada porta por protocolo ( se não for um
+          // servidor )
           if ( processes[i].conection[j].local_port == pkt->local_port &&
                processes[i].conection[j].protocol == pkt->protocol )
             {

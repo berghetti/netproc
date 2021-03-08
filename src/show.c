@@ -40,8 +40,8 @@
 // tamanho representação textual porta da camada de transporte
 #define PORTLEN 5  // 65535
 
-// espaçamento entre as colunas
-#define PID -5  // negativo alinhado a esquerda
+// space between columns
+// #define PID -5  // negative == justify left
 #define PPS 6
 #define J_RATE 13
 
@@ -151,7 +151,7 @@ show_header ( const struct config_op *co )
   wattrset ( pad,
              ( sort_by == S_PID ) ? co->color_scheme[SELECTED_H]
                                   : co->color_scheme[HEADER] );
-  wprintw ( pad, " %*s ", PID, "PID" );
+  wprintw ( pad, " %*s ", co->max_digits_pid, "PID" );
 
   wattrset ( pad,
              ( sort_by == PPS_TX ) ? co->color_scheme[SELECTED_H]
@@ -242,7 +242,7 @@ show_conections ( const process_t *restrict process,
       wattrset ( pad, co->color_scheme[CONECTIONS] );
       wprintw ( pad,
                 " %*s %*ld %*ld %*s %*s ",
-                PID,
+                co->max_digits_pid,
                 "",
                 PPS,
                 process->conection[i].net_stat.avg_pps_tx,
@@ -356,7 +356,7 @@ show_process ( const process_t *restrict processes,
 
       wprintw ( pad,
                 " %*d %*ld %*ld %*s %*s %*s %*s ",
-                PID,
+                co->max_digits_pid,
                 processes[i].pid,
                 PPS,
                 processes[i].net_stat.avg_pps_tx,

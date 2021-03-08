@@ -25,6 +25,7 @@
 
 #include "config.h"
 #include "color.h"
+#include "pid.h"
 #include "show.h"
 #include "m_error.h"
 
@@ -74,6 +75,8 @@ setup_ui ( struct config_op *co )
   curs_set ( 0 );  // cursor invisible
 
   co->color_scheme = define_color_scheme ();
+
+  co->max_digits_pid = get_max_digits_pid ();
 
   return true;
 }

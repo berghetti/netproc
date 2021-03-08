@@ -48,8 +48,9 @@ struct config_op
   bool verbose;            // show process without traffic alse
 
   // internal
-  uint8_t tic_tac;  // sinc program, internal control
-  double running;   // time the program is running
+  uint8_t tic_tac;          // sinc program, internal control
+  double running;           // time the program is running
+  uint32_t max_digits_pid;  // used for spacing between columns in show.c
 };
 
 struct config_op *
