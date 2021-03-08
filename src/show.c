@@ -72,22 +72,17 @@ static void
 paint_selected ( const struct config_op *co )
 {
   int i = 0;
-  bool skip = false;
 
   while ( i < COLS_PAD )
     {
-      if ( skip )
-        goto SKIP;
-
       if ( line_original[i] )
-        waddch ( pad,
-                 ( line_original[i] & ( A_CHARTEXT | A_ALTCHARSET ) ) |
-                         co->color_scheme[SELECTED_L] );
+        {
+          // remove original color attribute and aplly new color
+          waddch ( pad,
+                   ( line_original[i] & ( A_CHARTEXT | A_ALTCHARSET ) ) |
+                           co->color_scheme[SELECTED_L] );
+        }
       else
-        skip = true;
-
-    SKIP:
-      if ( skip )
         waddch ( pad, ' ' | co->color_scheme[SELECTED_L] );
 
       i++;
@@ -151,7 +146,7 @@ show_header ( const struct config_op *co )
   wattrset ( pad,
              ( sort_by == S_PID ) ? co->color_scheme[SELECTED_H]
                                   : co->color_scheme[HEADER] );
-  wprintw ( pad, " %*s ", co->max_digits_pid, "PID" );
+  wprintw ( pad, "%*s ", co->max_digits_pid, "PID" );
 
   wattrset ( pad,
              ( sort_by == PPS_TX ) ? co->color_scheme[SELECTED_H]
@@ -185,7 +180,7 @@ show_header ( const struct config_op *co )
 
   wattrset ( pad, co->color_scheme[HEADER] );
   // paint to the end of line
-  wprintw ( pad, "%*s", -( COLS_PAD - PROGRAM - 1 ), "PROGRAM" );
+  wprintw ( pad, "%*s", -( COLS_PAD - PROGRAM ), "PROGRAM" );
 
   wattrset ( pad, co->color_scheme[RESET] );
 
@@ -241,7 +236,7 @@ show_conections ( const process_t *restrict process,
 
       wattrset ( pad, co->color_scheme[CONECTIONS] );
       wprintw ( pad,
-                " %*s %*ld %*ld %*s %*s ",
+                "%*s %*ld %*ld %*s %*s ",
                 co->max_digits_pid,
                 "",
                 PPS,
@@ -355,7 +350,7 @@ show_process ( const process_t *restrict processes,
               rx_tot, sizeof rx_tot, processes[i].net_stat.tot_Bps_rx, TOTAL );
 
       wprintw ( pad,
-                " %*d %*ld %*ld %*s %*s %*s %*s ",
+                "%*d %*ld %*ld %*s %*s %*s %*s ",
                 co->max_digits_pid,
                 processes[i].pid,
                 PPS,
