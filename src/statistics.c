@@ -89,71 +89,94 @@ add_statistics_in_processes ( process_t *restrict processes,
       // percorre todas as conexões do processo...
       for ( size_t j = 0; j < processes[i].total_conections; j++ )
         {
-          // ... e verifica com o pacote recebido pela rede com base
-          // na porta local e tipo do protocolo, visto que somente um processo
-          // por vez pode usar determinada porta por protocolo ( se não for um
-          // servidor )
-          if ( processes[i].conection[j].local_port == pkt->local_port &&
-               processes[i].conection[j].protocol == pkt->protocol )
+          // testes para tentar identificar se o pacote
+           // é realmente desse processo
+
+          if ( processes[i].conection[j].protocol != pkt->protocol )
+            continue;
+
+          // TCP must correspond exactly with the packet, if not, skip
+          if ( pkt->protocol == IPPROTO_TCP &&
+               ( processes[i].conection[j].local_port != pkt->local_port ||
+                 processes[i].conection[j].remote_port != pkt->remote_port ||
+                 processes[i].conection[j].remote_address != pkt->remote_address ) )
             {
-              locate = true;
+              continue;
+            }
 
-              processes[i].conection[j].if_index = pkt->if_index;
+          if ( pkt->protocol == IPPROTO_UDP )
+            {
+              // the local port is the only parameter that the kernel exports
+              // in certain UDP situations (like a torrent),
+              // if that is different, skip
+              if ( processes[i].conection[j].local_port != pkt->local_port )
+                continue;
 
-              /*
-               * udp connections have no state, however the kernel tries
-               * to correlate udp packets into connections, when it is able
-               * to assign the virtual state TCP_ESTABLISHED, when it is unable
-               * to assign the state TCP_CLOSE, and it ends up not exporting
-               * some data in /proc/net/udp, but we can "retrieve" that
-               * information from the captured packet
-               */
-              if ( processes[i].conection[j].protocol == IPPROTO_UDP &&
-                   processes[i].conection[j].state == TCP_CLOSE )
+              // UDP connections with state TCP_ESTABLISHED must
+              // correspond exactly with the packet, if not, skip
+              else if ( processes[i].conection[j].state == TCP_ESTABLISHED &&
+                        ( processes[i].conection[j].remote_port !=
+                                  pkt->remote_port ||
+                          processes[i].conection[j].remote_address !=
+                                  pkt->remote_address ) )
+                continue;
+
+              // udp connections have no state, however the kernel tries
+              // to correlate udp packets into connections, when it is able
+              // to assign the virtual state TCP_ESTABLISHED, when it is
+              // unable to assign the state TCP_CLOSE, and it ends up not
+              // exporting some data in /proc/net/udp, but we can "retrieve"
+              // that information from the captured packet
+              else if ( processes[i].conection[j].state == TCP_CLOSE )
                 {
                   processes[i].conection[j].local_address = pkt->local_address;
-                  processes[i].conection[j].remote_address =
-                          pkt->remote_address;
+                  processes[i].conection[j].remote_address = pkt->remote_address;
                   processes[i].conection[j].remote_port = pkt->remote_port;
                 }
-
-              if ( pkt->direction == PKT_DOWN )
-                {  // estatisticas geral do processo
-                  processes[i].net_stat.pps_rx[id_buff_circ]++;
-                  processes[i].net_stat.Bps_rx[id_buff_circ] += pkt->lenght;
-
-                  processes[i].net_stat.bytes_last_sec_rx += pkt->lenght;
-
-                  processes[i].net_stat.tot_Bps_rx += pkt->lenght;
-
-                  // adicionado estatisticas exclusica da conexão
-                  if ( co->view_conections )
-                    {
-                      processes[i].conection[j].net_stat.pps_rx[id_buff_circ]++;
-                      processes[i].conection[j].net_stat.Bps_rx[id_buff_circ] +=
-                              pkt->lenght;
-                    }
-                }
-              else
-                {  // estatisticas geral do processo
-                  processes[i].net_stat.pps_tx[id_buff_circ]++;
-                  processes[i].net_stat.Bps_tx[id_buff_circ] += pkt->lenght;
-
-                  processes[i].net_stat.bytes_last_sec_tx += pkt->lenght;
-
-                  processes[i].net_stat.tot_Bps_tx += pkt->lenght;
-
-                  // adicionado estatisticas exclusica da conexão
-                  if ( co->view_conections )
-                    {
-                      processes[i].conection[j].net_stat.pps_tx[id_buff_circ]++;
-                      processes[i].conection[j].net_stat.Bps_tx[id_buff_circ] +=
-                              pkt->lenght;
-                    }
-                }
-
-              break;
             }
+
+          // pass all test
+          locate = true;
+
+          processes[i].conection[j].if_index = pkt->if_index;
+
+
+          if ( pkt->direction == PKT_DOWN )
+            {  // estatisticas geral do processo
+              processes[i].net_stat.pps_rx[id_buff_circ]++;
+              processes[i].net_stat.Bps_rx[id_buff_circ] += pkt->lenght;
+
+              processes[i].net_stat.bytes_last_sec_rx += pkt->lenght;
+
+              processes[i].net_stat.tot_Bps_rx += pkt->lenght;
+
+              // adicionado estatisticas exclusica da conexão
+              if ( co->view_conections )
+                {
+                  processes[i].conection[j].net_stat.pps_rx[id_buff_circ]++;
+                  processes[i].conection[j].net_stat.Bps_rx[id_buff_circ] +=
+                          pkt->lenght;
+                }
+            }
+          else
+            {  // estatisticas geral do processo
+              processes[i].net_stat.pps_tx[id_buff_circ]++;
+              processes[i].net_stat.Bps_tx[id_buff_circ] += pkt->lenght;
+
+              processes[i].net_stat.bytes_last_sec_tx += pkt->lenght;
+
+              processes[i].net_stat.tot_Bps_tx += pkt->lenght;
+
+              // adicionado estatisticas exclusica da conexão
+              if ( co->view_conections )
+                {
+                  processes[i].conection[j].net_stat.pps_tx[id_buff_circ]++;
+                  processes[i].conection[j].net_stat.Bps_tx[id_buff_circ] +=
+                          pkt->lenght;
+                }
+            }
+
+          break;
         }
     }
 
