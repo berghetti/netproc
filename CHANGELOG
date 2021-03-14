@@ -8,6 +8,7 @@ Legend:
   - automatic calculation of the size of the pid column,
     solves the problem you had for systems with a pid of more than 5 digits
   * ~93.75% decrease in memory usage, readjusting mmap socket values
+  * using ncursesw instead of ncurses for better support for ALTCHARSERT characters
 
 0.5.5 - 2021-02.23
   - connection port number was being displayed incorrectly
