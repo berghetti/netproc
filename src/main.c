@@ -103,6 +103,7 @@ main ( int argc, char **argv )
 
   double m_timer;
 
+  // needle to ncursesw
   setlocale ( LC_CTYPE, "" );
 
   co = parse_options ( argc, argv );
