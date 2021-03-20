@@ -31,7 +31,7 @@ static int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
                         [NAME_PROG] = COLOR_PAIR ( 1 ),
                         [NAME_PROG_BOLD] = A_BOLD | COLOR_PAIR ( 1 ),
                         [CONECTIONS] = A_DIM | COLOR_PAIR ( 4 ),
-                        [TREE] = A_BOLD | COLOR_PAIR ( 1 ),
+                        [TREE] = COLOR_PAIR ( 1 ),
                         [RESUME] = A_DIM | COLOR_PAIR ( 4 ),
                         [RESUME_VALUE] = COLOR_PAIR ( 1 ),
                 },
