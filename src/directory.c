@@ -62,7 +62,9 @@ get_numeric_directory ( uint32_t **buffer, const char *path_dir )
   errno = 0;
   while ( ( directory = readdir ( dir ) ) )
     {
-      if ( 1 != (sscanf(directory->d_name, "%u%c", &(*buffer)[count], &crap) ) )
+      if ( 1 !=
+           ( sscanf (
+                   directory->d_name, "%u%c", &( *buffer )[count], &crap ) ) )
         continue;
 
       if ( ++count == len_buffer )
@@ -78,7 +80,6 @@ get_numeric_directory ( uint32_t **buffer, const char *path_dir )
               errno = 0;
               goto END;
             }
-
 
           *buffer = temp;
 

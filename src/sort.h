@@ -20,18 +20,10 @@
 
 #ifndef SORT_H
 #define SORT_H
+
 #include <stdlib.h>
 #include "process.h"
 #include "conection.h"
-
-// parameter mode of function sort
-// #define S_PID   1
-// #define PPS_TX  2
-// #define PPS_RX  3
-// #define RATE_TX 4
-// #define RATE_RX 5
-// #define TOT_TX  6
-// #define TOT_RX  7
 
 enum cols_sort
 {
@@ -46,6 +38,9 @@ enum cols_sort
 };
 
 void
-sort ( process_t *proc, int tot_process, int mode );
+sort ( process_t *restrict proc,
+       int tot_process,
+       int mode,
+       const struct config_op *restrict co );
 
 #endif  // SORT_H

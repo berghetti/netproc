@@ -316,7 +316,7 @@ show_process ( const process_t *restrict processes,
   char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
   char tx_tot[LEN_STR_TOTAL], rx_tot[LEN_STR_TOTAL];
 
-  sort ( ( process_t * ) processes, tot_process, sort_by );
+  sort ( ( process_t * ) processes, tot_process, sort_by, co );
 
   wmove ( pad, LINE_START + 1, 0 );  // move second line after header
   for ( size_t i = 0; i < tot_process; i++ )

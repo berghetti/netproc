@@ -95,7 +95,7 @@ add_statistics_in_processes ( process_t *restrict processes,
     UPDATE_ID_BUFF ( id_buff_circ );
 
   // for ( size_t i = 0; i < tot_proc; i++ )
-  while(tot_proc--)
+  while ( tot_proc-- )
     {
       process = processes + tot_proc;
       // caso o indice do buffer circular tenha atualizado,
