@@ -37,7 +37,7 @@ else
 	CFLAGS+= -O2 -march=native -Wall -Wextra
 endif
 
-LDLIBS=-lncursesw -lpthread
+LDLIBS=-lncurses -lpthread
 
 #.c files
 C_SOURCE=$(wildcard $(SRC)/*.c)

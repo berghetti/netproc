@@ -10,6 +10,7 @@ Legend:
   - incorrect sorting caused by overflow resolved
   * ~93.75% decrease in memory usage, readjusting mmap socket values
   * using ncursesw instead of ncurses for better support for ALTCHARSERT characters
+    (ncursesw seems to be causing more CPU usage to check this out)
 
 0.5.5 - 2021-02.23
   - connection port number was being displayed incorrectly
