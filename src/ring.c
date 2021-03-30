@@ -36,17 +36,19 @@
 #error "TPACKET_V3 is necessary, check kernel linux version"
 #endif
 
-// quantidade de blocos
-#define N_BLOCKS 64  // 256
-
 // each block will have at least 256KiB of size, because 128 * 2048 = 256KiB
 // this considering a page size of 4096.
-// this conf influences the use of CPU time
+// this conf influences the use of CPU time and mmemory usage
 // keep it as power-of-two
-#define FRAMES_PER_BLOCK 128  // 512
+
+// quantidade de blocos
+#define N_BLOCKS 4
+
+#define FRAMES_PER_BLOCK 128  // 128 32
 // size of frame (packet), considering overhead of struct tpacket (80 bytes)
 // size small cause more usage CPU
 #define LEN_FRAME 2048
+// #define LEN_FRAME 262144
 
 // timeout in miliseconds
 // zero means that the kernel will calculate the timeout
@@ -57,8 +59,9 @@ static bool
 create_ring_buff ( struct ring *ring )
 {
   long page_size;
+  size_t frames_per_block;
 
-  ring->req.tp_frame_size = LEN_FRAME;
+  ring->req.tp_frame_size =  LEN_FRAME;
   // TPACKET_ALIGN ( TPACKET3_HDRLEN ) + TPACKET_ALIGN ( LEN_FRAME );
 
   // tamanho inicial de uma pagina de memoria
@@ -78,7 +81,7 @@ create_ring_buff ( struct ring *ring )
     }
 
   ring->req.tp_block_nr = N_BLOCKS;
-  size_t frames_per_block = ring->req.tp_block_size / ring->req.tp_frame_size;
+  frames_per_block = ring->req.tp_block_size / ring->req.tp_frame_size;
   ring->req.tp_frame_nr = ring->req.tp_block_nr * frames_per_block;
   ring->req.tp_retire_blk_tov = TIMEOUT_FRAME;
   ring->req.tp_feature_req_word = 0;

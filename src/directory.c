@@ -31,7 +31,7 @@
 #include "m_error.h"
 
 // len init buffer
-#define TOT_PROCESS_BEGIN 64
+#define TOT_PROCESS_BEGIN 256
 
 // retorna o total de diretorios encontrados, -1 em caso de falha.
 int

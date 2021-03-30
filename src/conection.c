@@ -37,7 +37,7 @@
 #define PATH_UDP "/proc/net/udp"
 
 // len initial buffer conections
-#define TOT_CONECTIONS_BEGIN 32
+#define TOT_CONECTIONS_BEGIN 64
 
 // le o arquivo onde fica salva as conexoes '/proc/net/tcp',
 // recebe o local do arquivo, um buffer para armazenar

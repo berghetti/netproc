@@ -7,6 +7,7 @@ Legend:
 0.??.??
   - automatic calculation of the size of the pid column,
     solves the problem you had for systems with a pid of more than 5 digits
+  - incorrect sorting caused by overflow resolved
   * ~93.75% decrease in memory usage, readjusting mmap socket values
   * using ncursesw instead of ncurses for better support for ALTCHARSERT characters
 

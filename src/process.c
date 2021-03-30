@@ -75,6 +75,7 @@ copy_conections ( process_t *proc, conection_t *con, bool new_proc );
 // armazena a quantidade maxima de PROCESSOS
 // que podem ser armazenas na memoria da struct process_t
 // principal antes que seja necessario realicar mais memoria
+// setting to 0 is redundant I know
 static uint32_t max_n_proc = 0;
 
 /*
@@ -464,21 +465,23 @@ copy_conections ( process_t *proc, conection_t *con, bool new_proc )
 static void *
 alloc_memory_process ( process_t **proc, const size_t len )
 {
-  const size_t new_len = len * 2;
+  // const size_t new_len = len * 2;
+  const size_t new_len = len;
 
   // na primeira vez sera nulo, aloca o dobro da quantidade necessaria
-  if ( !*proc )
-    {
-      *proc = calloc ( sizeof ( process_t ), new_len );
-
-      if ( !*proc )
-        {
-          ERROR_DEBUG ( "%s", strerror ( errno ) );
-          return NULL;
-        }
-
-      max_n_proc = new_len;
-    }
+  // if ( !*proc )
+  //   {
+  //     // FIXME: calloc is necessary?
+  //     *proc = malloc ( sizeof ( process_t ) * new_len );
+  //
+  //     if ( !*proc )
+  //       {
+  //         ERROR_DEBUG ( "%s", strerror ( errno ) );
+  //         return NULL;
+  //       }
+  //
+  //     max_n_proc = new_len;
+  //   }
   // se total de processos com conexões ativas agora for maior
   // que o espaço inicial reservado, realloca mais memoria (o dobro necessario).
   // OU
@@ -486,7 +489,7 @@ alloc_memory_process ( process_t **proc, const size_t len )
   // necessario no momento, diminui 1/3 do espaço alocado, ainda mantendo o
   // dobro do necessario, assim temos a oportunidade de economizar memória e
   // tambem evitar muitos reallocs
-  else if ( len > max_n_proc || max_n_proc >= len * 3 )
+  if ( len > max_n_proc || max_n_proc >= len * 3 )
     {
       void *p;
       p = realloc ( *proc, sizeof ( process_t ) * new_len );
