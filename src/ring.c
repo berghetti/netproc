@@ -34,18 +34,18 @@
 #endif
 
 // quantidade de blocos
-#define N_BLOCKS 256
+#define N_BLOCKS 4
 
 // essa conf influencia o uso do tempo da CPU
 // keep it as power-of-two
-#define FRAMES_PER_BLOCK 512
+#define FRAMES_PER_BLOCK 128
 
 // tamanho do frame (pacote), descosiderando o overhead do cabeçalho tpacket
 // size small cause more usage CPU
-#define LEN_FRAME 1600
+#define LEN_FRAME 2048
 
 // timeout in miliseconds
-#define TIMEOUT_FRAME 65
+#define TIMEOUT_FRAME 0
 
 static bool
 create_ring_buff ( struct ring *ring )
