@@ -92,7 +92,7 @@ paint_selected ( const struct config_op *co )
 static void
 show_resume ( const struct config_op *co )
 {
-  char rate_tx[LEN_STR_RATE] = {0}, rate_rx[LEN_STR_RATE] = {0};
+  char rate_tx[LEN_STR_RATE], rate_rx[LEN_STR_RATE];
 
   human_readable ( rate_tx, LEN_STR_RATE, cur_rate_tx, RATE );
   human_readable ( rate_rx, LEN_STR_RATE, cur_rate_rx, RATE );
