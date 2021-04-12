@@ -12,3 +12,6 @@ bin/netproc
 
 #log
 *.log
+
+#vim
+*.swp
