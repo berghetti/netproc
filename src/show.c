@@ -52,7 +52,7 @@
 #define LINE_START 4
 
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
-static chtype line_original[COLS_PAD] = {0};
+static chtype line_original[COLS_PAD] = { 0 };
 
 static int sort_by = RATE_RX;  // ordenação padrão
 static int scroll_x = 0;
@@ -409,6 +409,7 @@ show_process ( const process_t *restrict processes,
       paint_selected ( co );
     }
 
+  // wresize(pad, LINES, COLS);
   // update line header
   pnoutrefresh (
           pad, LINE_START, scroll_x, LINE_START, 0, LINE_START, COLS - 1 );

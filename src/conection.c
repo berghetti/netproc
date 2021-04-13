@@ -55,7 +55,7 @@ get_info_conections ( conection_t **conection,
 
   int ret;
 
-  char local_addr[10] = {0}, rem_addr[10] = {0};  // enough for ipv4
+  char local_addr[10] = { 0 }, rem_addr[10] = { 0 };  // enough for ipv4
 
   unsigned int local_port, rem_port, state;
   unsigned long int inode;

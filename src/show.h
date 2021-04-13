@@ -29,7 +29,7 @@
 
 // this is ugly, but it is what it has for now
 #define MAX_NAME_PROGRAM 2000
-#define LINES_PAD 200 // 2000
+#define LINES_PAD 200  // 2000
 
 #define COLS_PAD PROGRAM + MAX_NAME_PROGRAM
 

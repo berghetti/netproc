@@ -61,7 +61,7 @@ create_ring_buff ( struct ring *ring )
   long page_size;
   size_t frames_per_block;
 
-  ring->req.tp_frame_size =  LEN_FRAME;
+  ring->req.tp_frame_size = LEN_FRAME;
   // TPACKET_ALIGN ( TPACKET3_HDRLEN ) + TPACKET_ALIGN ( LEN_FRAME );
 
   // tamanho inicial de uma pagina de memoria

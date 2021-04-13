@@ -73,7 +73,7 @@ setup_ui ( struct config_op *co )
 
   nodelay ( pad, TRUE );  // no gelay getch()
   keypad ( pad, TRUE );   // get arrow key
-
+  scrollok ( pad, TRUE );
   curs_set ( 0 );  // cursor invisible
 
   co->color_scheme = define_color_scheme ();

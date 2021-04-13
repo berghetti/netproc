@@ -36,14 +36,16 @@ enum sufix_types
 };
 
 static const char *const sufix_schemes[TOT_SUFIX_SCHEME][TOT_ELEMENTS_SUFIX] = {
-        [SUFIX_IEC_BYTE] = {"B/s", "KiB/s", "MiB/s", "GiB/s", "TiB/s", "PiB/s"},
-        [SUFIX_IEC_BIT] = {"b/s", "Kib/s", "Mib/s", "Gib/s", "Tib/s", "Pib/s"},
-        [SUFIX_SI_BYTE] = {"B/s", "KB/s", "MB/s", "GB/s", "TB/s", "PB/s"},
-        [SUFIX_SI_BIT] = {"b/s", "Kb/s", "Mb/s", "Gb/s", "Tb/s", "Pb/s"},
-        [SUFIX_IEC_BYTE_TOT] = {"B", "KiB", "MiB", "GiB", "TiB", "PiB"},
-        [SUFIX_IEC_BIT_TOT] = {"b", "Kib", "Mib", "Gib", "Tib", "Pib"},
-        [SUFIX_SI_BYTE_TOT] = {"B", "KB", "MB", "GB", "TB", "PB"},
-        [SUFIX_SI_BIT_TOT] = {"b", "Kb", "Mb", "Gb", "Tb", "Pb"}};
+        [SUFIX_IEC_BYTE] =
+                { "B/s", "KiB/s", "MiB/s", "GiB/s", "TiB/s", "PiB/s" },
+        [SUFIX_IEC_BIT] =
+                { "b/s", "Kib/s", "Mib/s", "Gib/s", "Tib/s", "Pib/s" },
+        [SUFIX_SI_BYTE] = { "B/s", "KB/s", "MB/s", "GB/s", "TB/s", "PB/s" },
+        [SUFIX_SI_BIT] = { "b/s", "Kb/s", "Mb/s", "Gb/s", "Tb/s", "Pb/s" },
+        [SUFIX_IEC_BYTE_TOT] = { "B", "KiB", "MiB", "GiB", "TiB", "PiB" },
+        [SUFIX_IEC_BIT_TOT] = { "b", "Kib", "Mib", "Gib", "Tib", "Pib" },
+        [SUFIX_SI_BYTE_TOT] = { "B", "KB", "MB", "GB", "TB", "PB" },
+        [SUFIX_SI_BIT_TOT] = { "b", "Kb", "Mb", "Gb", "Tb", "Pb" } };
 
 int chosen_base;
 const char *const *sufix_rate;

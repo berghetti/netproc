@@ -29,7 +29,7 @@
 uint32_t
 get_max_digits_pid ( void )
 {
-  char max_pid[MAX_DIGITS_UINT32 + 1]; 
+  char max_pid[MAX_DIGITS_UINT32 + 1];
   char *p = max_pid;
 
   FILE *file;

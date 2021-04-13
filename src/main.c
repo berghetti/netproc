@@ -79,8 +79,8 @@ static void free_resources ( struct resources_to_free );
 int
 main ( int argc, char **argv )
 {
-  struct packet packet = {0};
-  struct ring ring = {0};
+  struct packet packet = { 0 };
+  struct ring ring = { 0 };
   struct tpacket_block_desc *pbd;
   struct tpacket3_hdr *ppd;
   struct config_op *co;
@@ -174,10 +174,10 @@ main ( int argc, char **argv )
 
   const nfds_t nfds = 2;
   struct pollfd poll_set[2] = {
-          {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0},
-          {.fd = sock, .events = POLLIN | POLLPRI, .revents = 0}};
+          { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 },
+          { .fd = sock, .events = POLLIN | POLLPRI, .revents = 0 } };
 
-  struct sigaction sigact = {.sa_handler = sig_handler};
+  struct sigaction sigact = { .sa_handler = sig_handler };
   sigemptyset ( &sigact.sa_mask );
 
   sigaction ( SIGINT, &sigact, NULL );
@@ -298,13 +298,13 @@ main ( int argc, char **argv )
 EXIT:
 
   free_resources (
-          ( struct resources_to_free ){.log_file = log_file,
-                                       .buff_log = log_file_buffer,
-                                       .len_log = len_log_file_buffer,
-                                       .sock = sock,
-                                       .processes = processes,
-                                       .tot_processes = tot_process_act,
-                                       .ring = &ring} );
+          ( struct resources_to_free ){ .log_file = log_file,
+                                        .buff_log = log_file_buffer,
+                                        .len_log = len_log_file_buffer,
+                                        .sock = sock,
+                                        .processes = processes,
+                                        .tot_processes = tot_process_act,
+                                        .ring = &ring } );
 
   return prog_exit;
 }

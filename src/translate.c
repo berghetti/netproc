@@ -37,7 +37,7 @@ translate ( const conection_t *restrict con,
             const struct config_op *restrict co )
 {
   // tuple ip:port <-> ip:port
-  static char tuple[LEN_TUPLE] = {0};
+  static char tuple[LEN_TUPLE] = { 0 };
   struct sockaddr_in l_sock, r_sock;  // local_socket and remote_socket
 
   const char *proto = ( con->protocol == IPPROTO_UDP ) ? "udp" : "tcp";
