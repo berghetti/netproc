@@ -680,7 +680,7 @@ full_read(const int fd, char **buffer)
 // armazena o nome do processo no buffer e retorna
 // o tamanho do nome do processo,
 // função cuida da alocação de memoria para o nome do processo
-static int
+static ssize_t 
 get_name_process(char **buffer, const pid_t pid)
 {
   char path_cmdline[MAX_CMDLINE];
