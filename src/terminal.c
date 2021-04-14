@@ -84,6 +84,20 @@ setup_ui ( struct config_op *co )
 }
 
 void
+resize_pad(const int l, const int c)
+{
+  delwin(pad);
+  if ( ! (pad = newpad(l, c) ) )
+  {
+    ERROR_DEBUG("%s", strerror(errno));
+  }
+  nodelay ( pad, TRUE );  // no gelay getch()
+  keypad ( pad, TRUE );   // get arrow key
+  scrollok ( pad, TRUE );
+  curs_set ( 0 );  // cursor invisible
+}
+
+void
 restore_terminal ( void )
 {
   delwin ( pad );

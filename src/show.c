@@ -52,7 +52,7 @@
 #define LINE_START 4
 
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
-static chtype line_original[COLS_PAD] = { 0 };
+static chtype line_original[1000] = { 0 };
 
 static int sort_by = RATE_RX;  // ordenação padrão
 static int scroll_x = 0;
@@ -66,14 +66,16 @@ static int tot_proc_act = 0;  // total de processos com conexão ativa
 static nstats_t cur_rate_tx, cur_rate_rx;
 static nstats_t cur_pps_tx, cur_pps_rx;
 
-// static chtype line_color[COLS_PAD];  // versão otimizada não precisa
+// total lines and cols current on pad
+static int cur_cols = COLS_PAD;
+static int cur_lines = LINES_PAD;
 
 static void
 paint_selected ( const struct config_op *co )
 {
   int i = 0;
 
-  while ( i < COLS_PAD )
+  while ( i < cur_cols )
     {
       if ( line_original[i] )
         {
@@ -180,7 +182,7 @@ show_header ( const struct config_op *co )
 
   wattrset ( pad, co->color_scheme[HEADER] );
   // paint to the end of line
-  wprintw ( pad, "%*s", -( COLS_PAD - PROGRAM ), "PROGRAM" );
+  wprintw ( pad, "%*s", -( cur_cols - PROGRAM ), "PROGRAM" );
 
   wattrset ( pad, co->color_scheme[RESET] );
 
@@ -290,7 +292,6 @@ show_conections ( const process_t *restrict process,
       tot_rows++;
     }
 
-  // wattroff ( pad, co->color_scheme[CONECTIONS] );
   wattrset ( pad, co->color_scheme[RESET] );
 }
 
@@ -306,7 +307,17 @@ show_process ( const process_t *restrict processes,
                const size_t tot_process,
                const struct config_op *restrict co )
 {
-  int len_base_name, len_name;
+
+  if (co->max_name_process + PROGRAM > cur_cols || 
+      co->tot_rows > cur_lines)
+  {
+    cur_cols = co->max_name_process + PROGRAM;
+    cur_lines = co->tot_rows;
+    resize_pad(cur_lines, cur_cols);
+    show_header( co );
+  }
+
+  size_t len_base_name, len_name;
   tot_rows = LINE_START;
 
   tot_proc_act = 0;
@@ -374,7 +385,7 @@ show_process ( const process_t *restrict processes,
       // programa-nome
       len_name = find_last_char ( processes[i].name, len_base_name, '/' ) + 1;
 
-      for ( int j = 0; processes[i].name[j] && j < MAX_NAME_PROGRAM - 1; j++ )
+      for ( size_t j = 0; processes[i].name[j] && j < cur_cols - 1; j++ )
         {
           if ( j >= len_name && j < len_base_name )
             // destaca somente o nome do programa
@@ -403,7 +414,7 @@ show_process ( const process_t *restrict processes,
         selected = tot_rows;
 
       // salva conteudo da linha antes de pintar
-      mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD - 1 );
+      mvwinchnstr ( pad, selected, 0, line_original, cur_cols - 1 );
 
       // (re)pinta item selecionado
       paint_selected ( co );
@@ -435,11 +446,11 @@ running_input ( const struct config_op *co )
         {
           // scroll horizontal
           case KEY_RIGHT:
-            if ( scroll_x + 5 < COLS_PAD - COLS )
+            if ( scroll_x + 5 < cur_cols - COLS )
               {
-                scroll_x = ( scroll_x + 5 <= COLS_PAD - COLS )
+                scroll_x = ( scroll_x + 5 <= cur_cols - COLS )
                                    ? scroll_x + 5
-                                   : COLS_PAD - COLS;
+                                   : cur_cols - COLS;
 
                 // update header
                 pnoutrefresh ( pad,
@@ -498,11 +509,11 @@ running_input ( const struct config_op *co )
                   scroll_y++;
 
                 // restaura linha atual
-                mvwaddchnstr ( pad, selected - 1, 0, line_original, COLS_PAD );
+                mvwaddchnstr ( pad, selected - 1, 0, line_original, cur_cols );
 
                 // salva linha que sera marcada/selecionada (antes de estar
                 // pintada)
-                mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD - 1 );
+                mvwinchnstr ( pad, selected, 0, line_original, cur_cols - 1 );
 
                 // pinta a linha selecionada
                 paint_selected ( co );
@@ -528,11 +539,11 @@ running_input ( const struct config_op *co )
                   scroll_y--;
 
                 // restaura linha atual
-                mvwaddchnstr ( pad, selected + 1, 0, line_original, COLS_PAD );
+                mvwaddchnstr ( pad, selected + 1, 0, line_original, cur_cols );
 
                 // salva linha que sera marcada/selecionada (antes de estar
                 // pintada)
-                mvwinchnstr ( pad, selected, 0, line_original, COLS_PAD - 1 );
+                mvwinchnstr ( pad, selected, 0, line_original, cur_cols - 1 );
 
                 paint_selected ( co );
 

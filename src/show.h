@@ -27,9 +27,9 @@
 // tamanho fixo de caracteres até a coluna program
 #define PROGRAM 77
 
-// this is ugly, but it is what it has for now
-#define MAX_NAME_PROGRAM 2000
-#define LINES_PAD 200  // 2000
+// FIXME: check this values
+#define MAX_NAME_PROGRAM 64 
+#define LINES_PAD 50 // 2000
 
 #define COLS_PAD PROGRAM + MAX_NAME_PROGRAM
 

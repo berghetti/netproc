@@ -43,6 +43,8 @@ static struct config_op co = {
         // internal control sinc of program, NOT REMOVE
         .tic_tac = 0,
         .running = 0,
+        .max_name_process = 0,
+        .tot_rows = 0
 };
 
 struct config_op *

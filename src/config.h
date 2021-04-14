@@ -22,6 +22,7 @@
 #define CONFIG_H
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdbool.h>
 
 #define PROG_NAME "netproc"
@@ -51,6 +52,8 @@ struct config_op
   uint8_t tic_tac;          // sinc program, internal control
   double running;           // time the program is running
   uint32_t max_digits_pid;  // used for spacing between columns in show.c
+  size_t max_name_process;  // 
+  size_t tot_rows;          // total of process and conections to display
 };
 
 struct config_op *
