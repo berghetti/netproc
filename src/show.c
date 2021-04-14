@@ -67,8 +67,18 @@ static nstats_t cur_rate_tx, cur_rate_rx;
 static nstats_t cur_pps_tx, cur_pps_rx;
 
 // total lines and cols current on pad
-static int cur_cols = COLS_PAD;
-static int cur_lines = LINES_PAD;
+static int cur_cols;
+static int cur_lines;
+
+#define MAX(a, b) ( (a) > (b) ? (a) : (b) )
+
+// it is not possible to initialize the variable at compile time
+static void
+set_lines_cols(void)
+{
+  cur_cols = MAX(COLS, MIN_COLS_PAD);
+  cur_lines = MAX(LINES, MIN_LINES_PAD);
+}
 
 static void
 paint_selected ( const struct config_op *co )
@@ -182,7 +192,7 @@ show_header ( const struct config_op *co )
 
   wattrset ( pad, co->color_scheme[HEADER] );
   // paint to the end of line
-  wprintw ( pad, "%*s", -( cur_cols - PROGRAM ), "PROGRAM" );
+  wprintw ( pad, "%*s", -( cur_cols ), "PROGRAM" );
 
   wattrset ( pad, co->color_scheme[RESET] );
 
@@ -298,6 +308,7 @@ show_conections ( const process_t *restrict process,
 void
 start_ui ( const struct config_op *co )
 {
+  set_lines_cols();
   show_header ( co );
   doupdate ();
 }
@@ -313,7 +324,7 @@ show_process ( const process_t *restrict processes,
   {
     cur_cols = co->max_name_process + PROGRAM;
     cur_lines = co->tot_rows;
-    resize_pad(cur_lines, cur_cols);
+    resize_pad(cur_lines, cur_cols + 1);
     show_header( co );
   }
 
@@ -385,7 +396,7 @@ show_process ( const process_t *restrict processes,
       // programa-nome
       len_name = find_last_char ( processes[i].name, len_base_name, '/' ) + 1;
 
-      for ( size_t j = 0; processes[i].name[j] && j < cur_cols - 1; j++ )
+      for ( size_t j = 0; j < processes[i].len_name - 1; j++ )
         {
           if ( j >= len_name && j < len_base_name )
             // destaca somente o nome do programa

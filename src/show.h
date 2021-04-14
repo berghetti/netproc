@@ -28,10 +28,10 @@
 #define PROGRAM 77
 
 // FIXME: check this values
-#define MAX_NAME_PROGRAM 64 
-#define LINES_PAD 50 // 2000
+#define START_NAME_PROGRAM 64 
+#define MIN_LINES_PAD 50 // 2000
 
-#define COLS_PAD PROGRAM + MAX_NAME_PROGRAM
+#define MIN_COLS_PAD PROGRAM + START_NAME_PROGRAM
 
 // exibe os processos e suas estatisticas de rede
 void
