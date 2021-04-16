@@ -25,11 +25,12 @@
 #include "config.h"
 
 // tamanho fixo de caracteres até a coluna program
-#define PROGRAM 77
+// considerando o tamanho maximo para a coluna PID
+#define PROGRAM 81
 
 // FIXME: check this values
-#define START_NAME_PROGRAM 64 
-#define MIN_LINES_PAD 50 // 2000
+#define START_NAME_PROGRAM 64
+#define MIN_LINES_PAD 50
 
 #define MIN_COLS_PAD PROGRAM + START_NAME_PROGRAM
 

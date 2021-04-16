@@ -36,7 +36,6 @@
 #include "ring.h"
 #include "filter.h"
 #include "statistics.h"
-// #include "crc32.h"
 #include "sufix.h"
 #include "timer.h"
 #include "show.h"

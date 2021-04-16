@@ -28,24 +28,22 @@
 #include "usage.h"
 
 // default options
-static struct config_op co = {
-        .iface = NULL,  // all interfaces
-        .path_log = PROG_NAME_LOG,
-        .log = false,
-        .proto = TCP | UDP,
-        .view_si = false,
-        .view_bytes = false,
-        .view_conections = false,
-        .translate_host = true,
-        .translate_service = true,
-        .verbose = false,
+static struct config_op co = { .iface = NULL,  // all interfaces
+                               .path_log = PROG_NAME_LOG,
+                               .log = false,
+                               .proto = TCP | UDP,
+                               .view_si = false,
+                               .view_bytes = false,
+                               .view_conections = false,
+                               .translate_host = true,
+                               .translate_service = true,
+                               .verbose = false,
 
-        // internal control sinc of program, NOT REMOVE
-        .tic_tac = 0,
-        .running = 0,
-        .max_name_process = 0,
-        .tot_rows = 0
-};
+                               // internal control sinc of program, NOT REMOVE
+                               .tic_tac = 0,
+                               .running = 0,
+                               .max_name_process = 0,
+                               .tot_rows = 0 };
 
 struct config_op *
 parse_options ( int argc, char **argv )

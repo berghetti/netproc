@@ -51,6 +51,7 @@
 // linha que começa a ser exibido os programas ativos
 #define LINE_START 4
 
+// FIXME: const value no ok
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
 static chtype line_original[1000] = { 0 };
 
@@ -70,35 +71,23 @@ static nstats_t cur_pps_tx, cur_pps_rx;
 static int cur_cols;
 static int cur_lines;
 
-#define MAX(a, b) ( (a) > (b) ? (a) : (b) )
+#define MAX( a, b ) ( ( a ) > ( b ) ? ( a ) : ( b ) )
 
 // it is not possible to initialize the variable at compile time
 static void
-set_lines_cols(void)
+set_lines_cols ( void )
 {
-  cur_cols = MAX(COLS, MIN_COLS_PAD);
-  cur_lines = MAX(LINES, MIN_LINES_PAD);
+  cur_cols = MAX ( COLS, MIN_COLS_PAD );
+  cur_lines = MAX ( LINES, MIN_LINES_PAD );
 }
 
 static void
 paint_selected ( const struct config_op *co )
 {
-  int i = 0;
-
-  while ( i < cur_cols )
-    {
-      if ( line_original[i] )
-        {
-          // remove original color attribute and aplly new color
-          waddch ( pad,
-                   ( line_original[i] & ( A_CHARTEXT | A_ALTCHARSET ) ) |
-                           co->color_scheme[SELECTED_L] );
-        }
-      else
-        waddch ( pad, ' ' | co->color_scheme[SELECTED_L] );
-
-      i++;
-    }
+  for ( int i = 0; i < cur_cols; i++ )
+    waddch ( pad,
+             ( line_original[i] & ( A_CHARTEXT | A_ALTCHARSET ) ) |
+                     co->color_scheme[SELECTED_L] );
 }
 
 static void
@@ -308,7 +297,7 @@ show_conections ( const process_t *restrict process,
 void
 start_ui ( const struct config_op *co )
 {
-  set_lines_cols();
+  set_lines_cols ();
   show_header ( co );
   doupdate ();
 }
@@ -318,17 +307,16 @@ show_process ( const process_t *restrict processes,
                const size_t tot_process,
                const struct config_op *restrict co )
 {
+  int temp_cols = co->max_name_process + PROGRAM;
 
-  if (co->max_name_process + PROGRAM > cur_cols || 
-      co->tot_rows > cur_lines)
-  {
-    cur_cols = co->max_name_process + PROGRAM;
-    cur_lines = co->tot_rows;
-    resize_pad(cur_lines, cur_cols + 1);
-    show_header( co );
-  }
+  if ( temp_cols > cur_cols || co->tot_rows > ( uint32_t ) cur_lines )
+    {
+      cur_cols = temp_cols;
+      cur_lines = co->tot_rows;
+      resize_pad ( cur_lines, cur_cols );
+      show_header ( co );
+    }
 
-  size_t len_base_name, len_name;
   tot_rows = LINE_START;
 
   tot_proc_act = 0;
@@ -391,12 +379,13 @@ show_process ( const process_t *restrict processes,
       // wprintw ( pad, "%s", processes[i].name );
 
       // "/usr/bin/programa-nome" --any_parameters
-      len_base_name = strlen_space ( processes[i].name );
+      size_t len_base_name = strlen_space ( processes[i].name );
 
       // programa-nome
-      len_name = find_last_char ( processes[i].name, len_base_name, '/' ) + 1;
+      size_t len_name =
+              find_last_char ( processes[i].name, len_base_name, '/' ) + 1;
 
-      for ( size_t j = 0; j < processes[i].len_name - 1; j++ )
+      for ( size_t j = 0; j < processes[i].len_name; j++ )
         {
           if ( j >= len_name && j < len_base_name )
             // destaca somente o nome do programa
@@ -425,7 +414,7 @@ show_process ( const process_t *restrict processes,
         selected = tot_rows;
 
       // salva conteudo da linha antes de pintar
-      mvwinchnstr ( pad, selected, 0, line_original, cur_cols - 1 );
+      mvwinchstr ( pad, selected, 0, line_original );
 
       // (re)pinta item selecionado
       paint_selected ( co );
@@ -513,18 +502,18 @@ running_input ( const struct config_op *co )
 
             break;
           case KEY_DOWN:
-            if ( selected + 1 <= tot_rows )
+            if ( ++selected <= tot_rows )
               {
-                selected++;
+
                 if ( selected >= LINES - 1 )
                   scroll_y++;
 
                 // restaura linha atual
-                mvwaddchnstr ( pad, selected - 1, 0, line_original, cur_cols );
+                mvwaddchstr ( pad, selected - 1, 0, line_original );
 
                 // salva linha que sera marcada/selecionada (antes de estar
                 // pintada)
-                mvwinchnstr ( pad, selected, 0, line_original, cur_cols - 1 );
+                mvwinchstr ( pad, selected, 0, line_original );
 
                 // pinta a linha selecionada
                 paint_selected ( co );
@@ -539,22 +528,25 @@ running_input ( const struct config_op *co )
                            COLS - 1 );
               }
             else
-              beep ();
+              {
+                selected--;
+                beep();
+              }
 
             break;
           case KEY_UP:
-            if ( selected - 1 > LINE_START )
+            if ( --selected > LINE_START )
               {
-                selected--;
+
                 if ( scroll_y > LINE_START + 1 )
                   scroll_y--;
 
                 // restaura linha atual
-                mvwaddchnstr ( pad, selected + 1, 0, line_original, cur_cols );
+                mvwaddchstr ( pad, selected + 1, 0, line_original );
 
                 // salva linha que sera marcada/selecionada (antes de estar
                 // pintada)
-                mvwinchnstr ( pad, selected, 0, line_original, cur_cols - 1 );
+                mvwinchstr ( pad, selected, 0, line_original );
 
                 paint_selected ( co );
 
@@ -568,7 +560,10 @@ running_input ( const struct config_op *co )
                            COLS - 1 );
               }
             else
-              beep ();
+              {
+                selected++;
+                beep();
+              }
 
             break;
           case 's':

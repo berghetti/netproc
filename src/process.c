@@ -32,8 +32,7 @@
 #include "process.h"  // process_t
 #include "m_error.h"  // ERROR_DEBUG
 
-
-static ssize_t 
+static ssize_t
 get_name_process ( char **buffer, const pid_t pid );
 
 static void
@@ -282,14 +281,14 @@ get_process_active_con ( process_t **cur_proc,
           else
             {
               ssize_t len;
-              len = get_name_process( &processes[tot_process_active_con].name,
+              len = get_name_process ( &processes[tot_process_active_con].name,
                                        processes[tot_process_active_con].pid );
               if ( len == -1 )
                 return -1;
 
               processes[tot_process_active_con].len_name = len;
-              
-              if ( (size_t) len > co->max_name_process)
+
+              if ( ( size_t ) len > co->max_name_process )
                 co->max_name_process = len;
 
               if ( !alloc_memory_conections (
@@ -725,5 +724,6 @@ get_name_process ( char **buffer, const pid_t pid )
   // warranty
   *p = '\0';
 
-  return total_read;
+  // last bytes is null
+  return total_read - 1;
 }

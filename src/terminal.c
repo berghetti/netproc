@@ -59,14 +59,14 @@ setup_terminal ( void )
 }
 
 static void
-create_pad(const int l, const int c)
+create_pad ( const int l, const int c )
 {
-  if ( !( pad = newpad ( l, c ) ) ) 
+  if ( !( pad = newpad ( l, c ) ) )
     ERROR_DEBUG ( "%s", strerror ( errno ) );
-                                                   
+
   nodelay ( pad, TRUE );  // no gelay getch()
   keypad ( pad, TRUE );   // get arrow key
-  //scrollok ( pad, TRUE );
+  // scrollok ( pad, TRUE );
   curs_set ( 0 );  // cursor invisible
 }
 
@@ -76,7 +76,7 @@ setup_ui ( struct config_op *co )
   initscr ();
   cbreak ();  // disable buffering to get keypad
   noecho ();
-  create_pad(LINES, COLS);
+  create_pad ( LINES, COLS );
 
   co->color_scheme = define_color_scheme ();
 
@@ -86,10 +86,10 @@ setup_ui ( struct config_op *co )
 }
 
 void
-resize_pad(const int l, const int c)
+resize_pad ( const int l, const int c )
 {
-  delwin(pad);
-  create_pad(l, c);
+  delwin ( pad );
+  create_pad ( l, c );
 }
 
 void

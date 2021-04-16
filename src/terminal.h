@@ -36,7 +36,7 @@ bool
 setup_ui ( struct config_op *co );
 
 void
-resize_pad(const int l, const int c);
+resize_pad ( const int l, const int c );
 
 // volta configurações original do terminal
 void
