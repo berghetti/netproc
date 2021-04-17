@@ -345,7 +345,10 @@ get_process_active_con ( process_t **cur_proc,
       process_copy ( *cur_proc, processes, tot_process_active_con );
     }
 
-  co->tot_rows = tot_process_active_con + total_conections;
+  co->tot_rows = tot_process_active_con;
+
+  if ( co->view_conections )
+    co->tot_rows += total_conections;
 
   free ( process_pids );
   free ( processes );
@@ -473,36 +476,12 @@ copy_conections ( process_t *proc, conection_t *con, bool new_proc )
     }
 }
 
-// alloca memoria para process_t com o dobro do tamanho informado
-// se chamada pela primeira vez - ponteiro == NULL,
-// se não, verifica se o espaço de memoria atual é
-// insuficiente com base no numero de processos ativos x alocação anterior
 static void *
 alloc_memory_process ( process_t **proc, const size_t len )
 {
+  // double of necessary
   const size_t new_len = len * 2;
 
-  // na primeira vez sera nulo, aloca o dobro da quantidade necessaria
-  // if ( !*proc )
-  //   {
-  //     // FIXME: calloc is necessary?
-  //     *proc = malloc ( sizeof ( process_t ) * new_len );
-  //
-  //     if ( !*proc )
-  //       {
-  //         ERROR_DEBUG ( "%s", strerror ( errno ) );
-  //         return NULL;
-  //       }
-  //
-  //     max_n_proc = new_len;
-  //   }
-  // se total de processos com conexões ativas agora for maior
-  // que o espaço inicial reservado, realloca mais memoria (o dobro necessario).
-  // OU
-  // se o espaço alocado para os processos estiver três vezes maior que o
-  // necessario no momento, diminui 1/3 do espaço alocado, ainda mantendo o
-  // dobro do necessario, assim temos a oportunidade de economizar memória e
-  // tambem evitar muitos reallocs
   if ( len > max_n_proc || max_n_proc >= len * 3 )
     {
       void *p;

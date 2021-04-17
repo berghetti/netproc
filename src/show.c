@@ -29,6 +29,7 @@
 #include "process.h"
 #include "conection.h"
 #include "color.h"
+#include "m_error.h"
 #include "translate.h"
 #include "terminal.h"
 #include "show.h"
@@ -223,7 +224,7 @@ show_conections ( const process_t *restrict process,
         last_con = true;
 
       // faz a tradução de ip:porta para nome-reverso:serviço
-      tuple = translate ( &process->conection[i], co );
+     // tuple = translate ( &process->conection[i], co );
 
       human_readable ( tx_rate,
                        sizeof tx_rate,
@@ -298,6 +299,9 @@ void
 start_ui ( const struct config_op *co )
 {
   set_lines_cols ();
+  // line_original = malloc(cur_cols * sizeof(chtype));
+  // if (!line_original)
+  ERROR_DEBUG ( "%s", strerror ( errno ) );
   show_header ( co );
   doupdate ();
 }
@@ -307,15 +311,26 @@ show_process ( const process_t *restrict processes,
                const size_t tot_process,
                const struct config_op *restrict co )
 {
-  int temp_cols = co->max_name_process + PROGRAM;
+  {
+    int temp_cols = co->max_name_process + PROGRAM;
+    bool need_resize_pad = false;
 
-  if ( temp_cols > cur_cols || co->tot_rows > ( uint32_t ) cur_lines )
-    {
-      cur_cols = temp_cols;
-      cur_lines = co->tot_rows;
-      resize_pad ( cur_lines, cur_cols );
-      show_header ( co );
-    }
+    if ( temp_cols > cur_cols )
+      {
+        cur_cols = temp_cols;
+        need_resize_pad = true;
+      }
+    if ( co->tot_rows > ( uint32_t ) cur_lines )
+      {
+        cur_lines = co->tot_rows;
+        need_resize_pad = true;
+      }
+    if ( need_resize_pad )
+      {
+        resize_pad ( cur_lines, cur_cols );
+        show_header ( co );
+      }
+  }
 
   tot_rows = LINE_START;
 
@@ -399,9 +414,10 @@ show_process ( const process_t *restrict processes,
       waddch ( pad, '\n' );
 
       // option -c and process with traffic at the moment
-      if ( co->view_conections & ( processes[i].net_stat.avg_Bps_rx ||
-                                   processes[i].net_stat.avg_Bps_tx ) )
-        show_conections ( &processes[i], co );
+     if ( co->view_conections & ( processes[i].net_stat.avg_Bps_rx ||
+                                  processes[i].net_stat.avg_Bps_tx ) )
+      
+      show_conections ( &processes[i], co );
     }
 
   // clear lines begin cursor end screen, replace wclear()
@@ -414,7 +430,7 @@ show_process ( const process_t *restrict processes,
         selected = tot_rows;
 
       // salva conteudo da linha antes de pintar
-      mvwinchstr ( pad, selected, 0, line_original );
+      mvwinchnstr ( pad, selected, 0, line_original, cur_cols );
 
       // (re)pinta item selecionado
       paint_selected ( co );
@@ -504,7 +520,6 @@ running_input ( const struct config_op *co )
           case KEY_DOWN:
             if ( ++selected <= tot_rows )
               {
-
                 if ( selected >= LINES - 1 )
                   scroll_y++;
 
@@ -513,7 +528,7 @@ running_input ( const struct config_op *co )
 
                 // salva linha que sera marcada/selecionada (antes de estar
                 // pintada)
-                mvwinchstr ( pad, selected, 0, line_original );
+                mvwinchnstr ( pad, selected, 0, line_original, cur_cols );
 
                 // pinta a linha selecionada
                 paint_selected ( co );
@@ -530,14 +545,13 @@ running_input ( const struct config_op *co )
             else
               {
                 selected--;
-                beep();
+                beep ();
               }
 
             break;
           case KEY_UP:
             if ( --selected > LINE_START )
               {
-
                 if ( scroll_y > LINE_START + 1 )
                   scroll_y--;
 
@@ -546,7 +560,7 @@ running_input ( const struct config_op *co )
 
                 // salva linha que sera marcada/selecionada (antes de estar
                 // pintada)
-                mvwinchstr ( pad, selected, 0, line_original );
+                mvwinchnstr ( pad, selected, 0, line_original, cur_cols );
 
                 paint_selected ( co );
 
@@ -562,7 +576,7 @@ running_input ( const struct config_op *co )
             else
               {
                 selected++;
-                beep();
+                beep ();
               }
 
             break;
