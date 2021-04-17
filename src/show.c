@@ -224,7 +224,7 @@ show_conections ( const process_t *restrict process,
         last_con = true;
 
       // faz a tradução de ip:porta para nome-reverso:serviço
-     // tuple = translate ( &process->conection[i], co );
+      tuple = translate ( &process->conection[i], co );
 
       human_readable ( tx_rate,
                        sizeof tx_rate,
@@ -414,10 +414,10 @@ show_process ( const process_t *restrict processes,
       waddch ( pad, '\n' );
 
       // option -c and process with traffic at the moment
-     if ( co->view_conections & ( processes[i].net_stat.avg_Bps_rx ||
-                                  processes[i].net_stat.avg_Bps_tx ) )
-      
-      show_conections ( &processes[i], co );
+      if ( co->view_conections & ( processes[i].net_stat.avg_Bps_rx ||
+                                   processes[i].net_stat.avg_Bps_tx ) )
+
+        show_conections ( &processes[i], co );
     }
 
   // clear lines begin cursor end screen, replace wclear()
