@@ -17,20 +17,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SOCK_UTIL_H
-#define SOCK_UTIL_H
+#ifndef THREAD_POLL_H
+#define THREAD_POLL_H
 
-#include <stdbool.h>
-#include <sys/socket.h>
-
-bool
-check_addr_equal ( struct sockaddr_storage *addr1,
-                   struct sockaddr_storage *addr2 );
-
-// transform binary to text
 int
-sockaddr_ntop ( struct sockaddr_storage *addr,
-                char *buf,
-                const size_t len_buff );
+thpool_init ( unsigned int num_workers );
 
-#endif  // SOCK_UTIL_H
+int
+add_task ( void ( *func ) ( void * ), void *args );
+
+#endif  // THREAD_POLL_H

@@ -42,6 +42,7 @@
 #include "log.h"
 #include "usage.h"
 #include "m_error.h"
+#include "resolver/thread_pool.h"
 
 // a cada vez que o tempo de T_REFRESH segundo(s) é atingido
 // esse valor é alterado (entre 0 e 1), para que outras partes, statistics_proc,
@@ -136,6 +137,14 @@ main ( int argc, char **argv )
       free_log ( log_file, NULL, 0 );
       free_ring ( &ring );
       fatal_error ( "Error set filter network" );
+    }
+
+  if (co->translate_host && !thpool_init(0))
+    {
+      close_socket ( sock );
+      free_log ( log_file, NULL, 0 );
+      free_ring ( &ring );
+      fatal_error ( "Error init thread pool (domain)" );
     }
 
   define_sufix ( co );

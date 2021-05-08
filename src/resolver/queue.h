@@ -17,20 +17,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SOCK_UTIL_H
-#define SOCK_UTIL_H
+#ifndef QUEUE_H
+#define QUEUE_H
 
-#include <stdbool.h>
-#include <sys/socket.h>
-
-bool
-check_addr_equal ( struct sockaddr_storage *addr1,
-                   struct sockaddr_storage *addr2 );
-
-// transform binary to text
 int
-sockaddr_ntop ( struct sockaddr_storage *addr,
-                char *buf,
-                const size_t len_buff );
+enqueue ( void *element );
 
-#endif  // SOCK_UTIL_H
+void *
+dequeue ( void );
+
+#endif  // QUEUE_H
