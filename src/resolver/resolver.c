@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2020-2021 Mayco S. Berghetti
+ *  Copyright (C) 2021 Mayco S. Berghetti
  *
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -17,26 +17,23 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef QUEUE_H
-#define QUEUE_H
+#include "thread_pool.h"
+#include "domain.h"
 
-struct queue_node
+int
+resolver_init ( unsigned int cache_size, unsigned int num_workers )
 {
-  void *data;
-  struct queue_node *next;
-};
+  if ( !thpool_init ( num_workers ) )
+    return 0;
 
-struct queue
+  cache_domain_init ( cache_size );
+
+  return 1;
+}
+
+void
+resolver_clean ( void )
 {
-  struct queue_node *head;
-  struct queue_node *tail;
-  unsigned int size;
-};
-
-struct queue_node *
-enqueue ( struct queue *queue, void *data );
-
-void *
-dequeue ( struct queue *queue );
-
-#endif  // QUEUE_H
+  thpool_free ();
+  cache_domain_free ();
+}

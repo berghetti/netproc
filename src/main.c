@@ -42,7 +42,7 @@
 #include "log.h"
 #include "usage.h"
 #include "m_error.h"
-#include "resolver/thread_pool.h"
+#include "resolver/resolver.h"
 
 // a cada vez que o tempo de T_REFRESH segundo(s) é atingido
 // esse valor é alterado (entre 0 e 1), para que outras partes, statistics_proc,
@@ -74,7 +74,7 @@ struct resources_to_free
   int sock;
 };
 
-static void free_resources ( struct resources_to_free );
+static void free_resources ( struct resources_to_free * );
 
 int
 main ( int argc, char **argv )
@@ -139,7 +139,7 @@ main ( int argc, char **argv )
       fatal_error ( "Error set filter network" );
     }
 
-  if (co->translate_host && !thpool_init(0))
+  if ( co->translate_host && !resolver_init ( 0, 0 ) )
     {
       close_socket ( sock );
       free_log ( log_file, NULL, 0 );
@@ -306,7 +306,7 @@ main ( int argc, char **argv )
 EXIT:
 
   free_resources (
-          ( struct resources_to_free ){ .log_file = log_file,
+          &( struct resources_to_free ){ .log_file = log_file,
                                         .buff_log = log_file_buffer,
                                         .len_log = len_log_file_buffer,
                                         .sock = sock,
@@ -318,19 +318,21 @@ EXIT:
 }
 
 static void
-free_resources ( struct resources_to_free res )
+free_resources ( struct resources_to_free *res )
 {
   restore_terminal ();
 
-  close_socket ( res.sock );
+  close_socket ( res->sock );
 
-  free_ring ( res.ring );
+  free_ring ( res->ring );
 
-  if ( res.log_file )
-    free_log ( res.log_file, res.buff_log, res.len_log );
+  if ( res->log_file )
+    free_log ( res->log_file, res->buff_log, res->len_log );
 
-  if ( res.tot_processes )
-    free_process ( res.processes, res.tot_processes );
+  if ( res->tot_processes )
+    free_process ( res->processes, res->tot_processes );
+
+  resolver_clean ();
 }
 
 static void

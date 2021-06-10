@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2020-2021 Mayco S. Berghetti
+ *  Copyright (C) 2021 Mayco S. Berghetti
  *
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -17,26 +17,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef QUEUE_H
-#define QUEUE_H
+#ifndef RESOLVER_H
+#define RESOLVER_H
 
-struct queue_node
-{
-  void *data;
-  struct queue_node *next;
-};
+// client include inly resolver.h
+#include "domain.h"
+#include "service.h"
 
-struct queue
-{
-  struct queue_node *head;
-  struct queue_node *tail;
-  unsigned int size;
-};
+int
+resolver_init ( unsigned int cache_size, unsigned int num_workers );
 
-struct queue_node *
-enqueue ( struct queue *queue, void *data );
+void
+resolver_clean ( void );
 
-void *
-dequeue ( struct queue *queue );
-
-#endif  // QUEUE_H
+#endif  // RESOLVER_H

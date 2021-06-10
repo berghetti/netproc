@@ -26,4 +26,7 @@ thpool_init ( unsigned int num_workers );
 int
 add_task ( void ( *func ) ( void * ), void *args );
 
+void
+thpool_free ( void );
+
 #endif  // THREAD_POLL_H

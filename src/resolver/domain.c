@@ -17,56 +17,53 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>
-#include <string.h>
-#include <pthread.h>
-#include <limits.h>  // for PTHREAD_STACK_MIN
+#include <stdlib.h>      // free
+#include <string.h>      // strncpy
+#include <sys/socket.h>  // getnameinfo
+#include <netdb.h>       // getnameinfo
 
 #include "domain.h"
-#include "sock_util.h"
-#include "thread_pool.h" 
+#include "thread_pool.h"
+#include "list.h"
+#include "sock_util.h"  // check_addr_equal
 
-// (2048 * sizeof(struct host)) == 2.26 MiB cache of domain
-#define MAX_CACHE_ENTRIES 2048
+// (2048 * sizeof(struct host)) == ~2.31 MiB cache of domain
+#define DEFAULT_CACHE_ENTRIES 2048
+static unsigned int max_cache_size = DEFAULT_CACHE_ENTRIES;
+static struct list list_hosts = { 0 };
 
-#define RESOLVED 1
-#define RESOLVING 2
-
-// circular index
-#define UPDATE_INDEX_CACHE( idx ) \
-  ( ( idx ) = ( ( idx ) + 1 ) % MAX_CACHE_ENTRIES )
-
-#define UPDATE_TOT_HOSTS_IN_CACHE( tot )                    \
-  ( ( tot ) = ( ( tot ) < MAX_CACHE_ENTRIES ) ? ( tot ) + 1 \
-                                              : MAX_CACHE_ENTRIES )
-
-static int
-check_name_resolved ( struct sockaddr_storage *ss,
-                      struct hosts *hosts_cache,
-                      const size_t tot_hosts_cache )
+void
+cache_domain_init ( unsigned int size )
 {
-  for ( size_t i = 0; i < tot_hosts_cache; i++ )
-    {
-      if ( check_addr_equal ( ss, &hosts_cache[i].ss ) )
-        {
-          if ( hosts_cache[i].status == RESOLVED )
-            return i;  // cache hit
-
-          // already in cache, but not resolved
-          return -2;
-        }
-    }
-
-  // not found in cache
-  return -1;
+  if ( size )
+    max_cache_size = size;
 }
 
 void
+cache_domain_free ( void )
+{
+  struct list_node *node, *temp;
+
+  node = list_hosts.head;
+  while ( node )
+    {
+      temp = node->next;
+
+      free ( node->data );
+      free ( node );
+
+      node = temp;
+    }
+}
+
+// run on thread
+static void
 ip2domain_exec ( void *arg )
 {
-  struct hosts *host = ( struct hosts * ) arg;
+  struct host *host = ( struct host * ) arg;
 
   // convert ipv4 and ipv6
+  // if error, convert to text ip same
   if ( getnameinfo ( ( struct sockaddr * ) &host->ss,
                      sizeof ( host->ss ),
                      host->fqdn,
@@ -81,66 +78,76 @@ ip2domain_exec ( void *arg )
   host->status = RESOLVED;
 }
 
+static struct host *
+create_host ( struct sockaddr_storage *ss )
+{
+  struct host *host = malloc ( sizeof *host );
+
+  if ( host )
+    {
+      memcpy ( &host->ss, ss, sizeof ( *ss ) );
+      host->status = RESOLVING;
+    }
+
+  return host;
+}
+
+static struct host *
+search_host ( struct sockaddr_storage *ss )
+{
+  struct list_node *node = list_hosts.head;
+
+  while ( node )
+    {
+      if ( check_addr_equal ( node->data, ss ) )
+        return node->data;
+
+      node = node->next;
+    }
+
+  return NULL;
+}
+
 // return:
 //  1 name resolved
 //  0 name no resolved
-//  -1 on error
 int
 ip2domain ( struct sockaddr_storage *ss, char *buff, const size_t buff_len )
 {
-  static struct hosts hosts_cache[MAX_CACHE_ENTRIES];
-  static unsigned int tot_hosts_cache = 0;
-  static unsigned int index_cache_host = 0;
+  struct host *host = search_host ( ss );
 
-  int nr = check_name_resolved ( ss, hosts_cache, tot_hosts_cache );
-  if ( nr >= 0 )
+  if ( host )
     {
-      // cache hit
-      strncpy ( buff, hosts_cache[nr].fqdn, buff_len );
-      return 1;
-    }
-  else if ( nr == -2 )
-    {
-      // already resolving
-      sockaddr_ntop ( ss, buff, buff_len );
-      return 0;
-    }
-  else
-    {
-      // cache miss
-
-      // if status equal RESOLVING, a thread already working this slot,
-      // go to next
-      unsigned int count = 0;
-      while ( hosts_cache[index_cache_host].status == RESOLVING )
+      if ( host->status == RESOLVED )  // cache hit
         {
-          UPDATE_INDEX_CACHE ( index_cache_host );
-
-          // no buffer space currently available, return ip in format of text.
-          // increase the buffer size if you want ;)
-          if ( count++ == MAX_CACHE_ENTRIES - 1 )
-            {
-              sockaddr_ntop ( ss, buff, buff_len );
-              return 0;
-            }
+          strncpy ( buff, host->fqdn, buff_len );
+          return 1;
         }
-
-      memcpy ( &hosts_cache[index_cache_host].ss, ss, sizeof ( *ss ) );
-
-      hosts_cache[index_cache_host].status = RESOLVING;
-
+      else  // resolving, thread working
+        {
+          sockaddr_ntop ( ss, buff, buff_len );
+          return 0;
+        }
+    }
+  else  // cache miss
+    {
       // transform binary to text
       sockaddr_ntop ( ss, buff, buff_len );
 
       // add task to workers (thread pool)
-      if ( -1 == add_task ( ip2domain_exec,
-                            ( void * ) &hosts_cache[index_cache_host] ) )
-        {
-          return -1;
-        }
+      host = create_host ( ss );
+      add_task ( ip2domain_exec, host );
+      list_push ( &list_hosts, host );
 
-      UPDATE_TOT_HOSTS_IN_CACHE ( tot_hosts_cache );
-      UPDATE_INDEX_CACHE ( index_cache_host );
+      if ( list_hosts.size > max_cache_size )
+        {
+          host = list_hosts.tail->data;
+          if ( host->status == RESOLVED )
+            {
+              free ( host );
+              list_delete ( &list_hosts, list_hosts.tail );
+            }
+        }
     }
 
   return 0;

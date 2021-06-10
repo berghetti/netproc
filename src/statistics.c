@@ -20,7 +20,8 @@
 
 #include <stdbool.h>
 #include <net/if.h>
-#include <netinet/tcp.h>  // cods tcp state (TCP_ESTABLISHED, TCP_TIME_WAIT...)
+#include <netinet/in.h>   // IPPROTO_TCP, IPPROTO_UDP
+#include <netinet/tcp.h>  // TCP_ESTABLISHED, TCP_TIME_WAIT...
 
 #include "config.h"
 #include "packet.h"

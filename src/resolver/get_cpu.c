@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2020-2021 Mayco S. Berghetti
+ *  Copyright (C) 2021 Mayco S. Berghetti
  *
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -17,26 +17,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef QUEUE_H
-#define QUEUE_H
+#include <unistd.h>
 
-struct queue_node
+// return tot cpu available on system or 0
+int
+get_count_cpu ( void )
 {
-  void *data;
-  struct queue_node *next;
-};
+  int ret = 0;
 
-struct queue
-{
-  struct queue_node *head;
-  struct queue_node *tail;
-  unsigned int size;
-};
+// GNU extension
+#ifdef _SC_NPROCESSORS_ONLN
+  ret = ( int ) sysconf ( _SC_NPROCESSORS_ONLN );
+  if ( ret < 0 )
+    ret = 0;
+#endif
 
-struct queue_node *
-enqueue ( struct queue *queue, void *data );
-
-void *
-dequeue ( struct queue *queue );
-
-#endif  // QUEUE_H
+  return ret;
+}

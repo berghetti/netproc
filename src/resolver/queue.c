@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2020-2021 Mayco S. Berghetti
+ *  Copyright (C) 2021 Mayco S. Berghetti
  *
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -17,59 +17,64 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>  // for malloc
+#include <stdlib.h>  // malloc
+#include "queue.h"
 
-struct queue
-{
-  void *data;
-  struct queue *next;
-};
-
-static struct queue *queue_head = NULL;
-static struct queue *queue_tail = NULL;
-
-static struct queue *
+static struct queue_node *
 create_element ( void *data )
 {
-  struct queue *e = malloc ( sizeof ( *e ) );
-  if ( !e )
-    return NULL;
+  struct queue_node *e = malloc ( sizeof ( *e ) );
 
-  e->data = data;
-  e->next = NULL;
+  if ( e )
+    {
+      e->data = data;
+      e->next = NULL;
+    }
 
   return e;
 }
 
-int
-enqueue ( void *data )
+struct queue_node *
+enqueue ( struct queue *queue, void *data )
 {
-  struct queue *element = create_element ( data );
-  if ( !element )
-    return -1;
+  struct queue_node *element = create_element ( data );
 
-  if ( !queue_head )
+  if ( element )
     {
-      queue_head = element;
-      queue_tail = element;
-    }
-  else
-    {
-      queue_tail->next = element;
-      queue_tail = element;
+      queue->size++;
+
+      if ( !queue->head )
+        {
+          queue->head = queue->tail = element;
+        }
+      else
+        {
+          queue->tail->next = element;
+          queue->tail = element;
+        }
     }
 
-  return 0;
+  return element;
 }
 
 void *
-dequeue ( void )
+dequeue ( struct queue *queue )
 {
-  void *data = queue_head->data;
+  void *data;
+  struct queue_node *tmp;
 
-  void *t = queue_head;
-  queue_head = queue_head->next;
-  free ( t );
+  // empty queue
+  if ( !queue->size )
+    return NULL;
+
+  queue->size--;
+
+  data = queue->head->data;
+
+  tmp = queue->head->next;
+  free ( queue->head );
+
+  queue->head = tmp;
 
   return data;
 }

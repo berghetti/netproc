@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2020-2021 Mayco S. Berghetti
+ *  Copyright (C) 2021 Mayco S. Berghetti
  *
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -17,26 +17,28 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef QUEUE_H
-#define QUEUE_H
+#ifndef LIST_H
+#define LIST_H
 
-struct queue_node
+struct list_node
 {
   void *data;
-  struct queue_node *next;
+
+  struct list_node *next;
+  struct list_node *prev;
 };
 
-struct queue
+struct list
 {
-  struct queue_node *head;
-  struct queue_node *tail;
+  struct list_node *head;
+  struct list_node *tail;
   unsigned int size;
 };
 
-struct queue_node *
-enqueue ( struct queue *queue, void *data );
+struct list_node *
+list_push ( struct list *list, void *data );
 
-void *
-dequeue ( struct queue *queue );
+void
+list_delete ( struct list *list, struct list_node *node );
 
-#endif  // QUEUE_H
+#endif  // LIST_H

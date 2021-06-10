@@ -7,11 +7,11 @@ Legend:
 0.??.??
   - automatic calculation of the size of the pid column,
     solves the problem you had for systems with a pid of more than 5 digits
-  - resolved incorrect sorting caused by overflow resolved
+  - resolved incorrect sorting
   * using ncursesw instead of ncurses for better support for
     ALTCHARSERT characters
-  * readjusting mmap socket values, gain minor consumed of memory
-  * automatic calculation size pad ncurses, gain minor consumed of memory
+  * readjusting mmap socket values, improving consumed of memory
+  * automatic calculation size pad ncurses, improving consumed of memory
   * improved dns resolver, now uses thread pool, improving the use of
     system recursions
 

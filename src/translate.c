@@ -27,8 +27,7 @@
 
 #include "translate.h"
 #include "resolver/sock_util.h"
-#include "resolver/domain.h" 
-#include "resolver/service.h"
+#include "resolver/resolver.h"
 
 #define LEN_TUPLE ( ( NI_MAXHOST + NI_MAXSERV ) * 2 ) + 7 + 10
 

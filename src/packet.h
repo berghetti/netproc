@@ -22,17 +22,9 @@
 #define NETWORK_H
 
 #include <stdint.h>           // types uint*_t
-#include <sys/types.h>        // type ssize_t
+// #include <sys/types.h>        // type ssize_t
 #include <sys/socket.h>       // setsockopt
 #include <linux/if_packet.h>  // struct tpacket3_hdr
-
-#ifndef IPPROTO_UDP
-#define IPPROTO_UDP 17
-#endif
-
-#ifndef IPPROTO_TCP
-#define IPPROTO_TCP 6
-#endif
 
 // values of packet.direction
 #define PKT_DOWN 1
