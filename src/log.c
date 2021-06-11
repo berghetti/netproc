@@ -186,5 +186,4 @@ log_to_file ( process_t *restrict processes,
   write_process_to_file ( *process_filtred, *len_buffer_log, log_file );
 
   return true;
-  ;
 }

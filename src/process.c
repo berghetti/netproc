@@ -263,8 +263,6 @@ get_process_active_con ( process_t **cur_proc,
               processes[tot_process_active_con].name =
                       ( *cur_proc )[exists_pid].name;
 
-              processes[tot_process_active_con].len_name =
-                      ( *cur_proc )[exists_pid].len_name;
               // WARNING
               // passa a apontar para conexões do buffer principal
               if ( !alloc_memory_conections (
@@ -285,8 +283,6 @@ get_process_active_con ( process_t **cur_proc,
                                        processes[tot_process_active_con].pid );
               if ( len == -1 )
                 return -1;
-
-              processes[tot_process_active_con].len_name = len;
 
               if ( ( size_t ) len > co->max_name_process )
                 co->max_name_process = len;
@@ -700,8 +696,8 @@ get_name_process ( char **buffer, const pid_t pid )
       p++;
     }
 
-  // warranty
-  *p = '\0';
+  // warranty, already null terminated
+  *p = 0;
 
   // last bytes is null
   return total_read - 1;
