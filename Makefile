@@ -40,17 +40,20 @@ endif
 
 LDLIBS=-lncursesw -lpthread
 
-#.c files
-C_SOURCE=$(wildcard $(SRCDIR)/*.c)
-C_SOURCE+=$(wildcard $(SRCDIR)/resolver/*.c)
+#.c files all subdirectories
+C_SOURCE= $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/*/*.c)
 
-# .h files
-H_SOURCE=$(wildcard $(SRCDIR)/*.h)
-H_SOURCE+=$(wildcard $(SRCDIR)/resolver/*.h)
+# .h files all subdirectories
+H_SOURCE=$(wildcard $(SRCDIR)/*.h) $(wildcard $(SRCDIR)/*/*.h)
+
+# https://www.gnu.org/software/make/manual/make.html#General-Search
+# search path prerequisits
+VPATH= src src/resolver
 
 # Object files
 # todos arquivos .c trocado a extensão para .o
-OBJECTS=$(C_SOURCE:.c=.o)
+# transforma 'src/foo.c' em 'obj/foo.o'
+OBJECTS=$(addprefix $(OBJDIR)/, $(notdir $(C_SOURCE:.c=.o) ) )
 
 # alvos fake, não são arquivos
 .PHONY: all clean distclean run install uninstall format man
@@ -61,20 +64,15 @@ all: $(BINDIR)/$(PROG_NAME)
 # regra ja é implitica dessa forma,
 # adicionado apenas para 'clareza'
 
-# $(addprefix obj/, $(^F)), remove o diretorio do nome do objeto
-# e adiciona outro diretorio ao nome
 $(BINDIR)/$(PROG_NAME): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(addprefix $(OBJDIR)/, $(^F)) $(LDLIBS) -o $@
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 # mascara generica para compilar arquivos .o
 # utiliza todos os arquivos headers como dependencia,
 # caso algum seja atualizado, todo os objetos são recompilados
 
-# a ultima parte da regra remove o diretorio do nome do objeto, $(@F)
-# e coloca o objeto no OBJDIR
-
-%.o: %.c $(H_SOURCE)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $(OBJDIR)/$(@F)
+$(OBJDIR)/%.o: %.c $(H_SOURCE)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 clean:
 	@ find . -type f -name '*.o' -delete
@@ -125,4 +123,5 @@ format:
 	@ clang-format -i $(SRCDIR)/resolver/*.[ch]
 
 man:
-	txt2man -t netproc -v "netproc man" -s 8 $(DOCDIR)/netproc.8.txt > $(DOCDIR)/netproc.8
+	txt2man -t $(PROG_NAME) -v "$(PROG_NAME) man" -s 8 \
+	$(DOCDIR)/$(PROG_NAME).8.txt > $(DOCDIR)/$(PROG_NAME).8

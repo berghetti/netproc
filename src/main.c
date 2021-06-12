@@ -74,7 +74,8 @@ struct resources_to_free
   int sock;
 };
 
-static void free_resources ( struct resources_to_free * );
+static void
+free_resources ( struct resources_to_free * );
 
 int
 main ( int argc, char **argv )
@@ -307,12 +308,12 @@ EXIT:
 
   free_resources (
           &( struct resources_to_free ){ .log_file = log_file,
-                                        .buff_log = log_file_buffer,
-                                        .len_log = len_log_file_buffer,
-                                        .sock = sock,
-                                        .processes = processes,
-                                        .tot_processes = tot_process_act,
-                                        .ring = &ring } );
+                                         .buff_log = log_file_buffer,
+                                         .len_log = len_log_file_buffer,
+                                         .sock = sock,
+                                         .processes = processes,
+                                         .tot_processes = tot_process_act,
+                                         .ring = &ring } );
 
   return prog_exit;
 }

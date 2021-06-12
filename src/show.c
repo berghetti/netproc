@@ -391,18 +391,19 @@ show_process ( const process_t *restrict processes,
                 J_RATE,
                 rx_tot );
 
-      // wprintw ( pad, "%s", processes[i].name );
+      // "/usr/bin/programa-nome --any_parameters"
+      size_t len_full_name = strlen ( processes[i].name );
 
-      // "/usr/bin/programa-nome" --any_parameters
-      size_t len_base_name = strlen_space ( processes[i].name );
+      // "/usr/bin/programa-nome"
+      size_t len_path_name = strlen_space ( processes[i].name );
 
-      // programa-nome
+      // "programa-nome"
       size_t len_name =
-              find_last_char ( processes[i].name, len_base_name, '/' ) + 1;
+              find_last_char ( processes[i].name, len_path_name, '/' );
 
-      for ( size_t j = 0; j < strlen(processes[i].name); j++ )
+      for ( size_t j = 0; j < len_full_name; j++ )
         {
-          if ( j >= len_name && j < len_base_name )
+          if ( j > len_name && j < len_path_name )
             // destaca somente o nome do programa
             waddch ( pad,
                      processes[i].name[j] | co->color_scheme[NAME_PROG_BOLD] );
