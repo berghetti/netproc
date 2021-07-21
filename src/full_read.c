@@ -18,9 +18,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>    // errno
-#include <stdlib.h>   // realloc
-#include <unistd.h>   // read
+#include <errno.h>   // errno
+#include <stdlib.h>  // realloc
+#include <unistd.h>  // read
 
 #define ENTRY_SIZE_BUFF 64
 
@@ -52,7 +52,8 @@ full_read ( const int fd, char **buffer )
       if ( bytes_read == -1 )
         {
           if ( errno != EINTR )
-            goto ERROR_EXIT;;
+            goto ERROR_EXIT;
+          ;
 
           continue;
         }

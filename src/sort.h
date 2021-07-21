@@ -38,9 +38,9 @@ enum cols_sort
 };
 
 void
-sort ( process_t *restrict proc,
-       int tot_process,
+sort ( process_t **proc,
+       size_t tot_process,
        int mode,
-       const struct config_op *restrict co );
+       const struct config_op *co );
 
 #endif  // SORT_H

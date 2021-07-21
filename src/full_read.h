@@ -24,4 +24,4 @@
 ssize_t
 full_read ( const int fd, char **buffer );
 
-#endif // FULL_READ_H
+#endif  // FULL_READ_H

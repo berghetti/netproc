@@ -30,10 +30,9 @@
 
 #include "m_error.h"
 
-// len init buffer
 #define ENTRY_SIZE_BUF 128
 
-// retorna o total de diretorios encontrados, -1 em caso de falha.
+// -1 failure
 int
 get_numeric_directory ( uint32_t **buffer, const char *path_dir )
 {
@@ -50,7 +49,6 @@ get_numeric_directory ( uint32_t **buffer, const char *path_dir )
   struct dirent *directory;
   while ( ( directory = readdir ( dir ) ) )
     {
-
       if ( count == len_buffer )
         {
           len_buffer += ENTRY_SIZE_BUF;

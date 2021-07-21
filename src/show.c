@@ -211,7 +211,7 @@ show_conections ( const process_t *process, const struct config_op *co )
   for ( i = 0; i < process->total_conections; i++ )
     {
       tot_rows++;
-      
+
       // se a proxima conexão estiver com estatisticas zeradas, essa é a ultima
       // conexão, as conexões são ordenadas de forma decrescente previamente
       if ( ( i < process->total_conections - 1 &&
@@ -339,7 +339,7 @@ show_process ( const struct processes *processes,
   char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
   char tx_tot[LEN_STR_TOTAL], rx_tot[LEN_STR_TOTAL];
 
-  // sort ( ( process_t * ) processes, tot_process, sort_by, co );
+  sort ( processes->proc, processes->total, sort_by, co );
 
   wmove ( pad, LINE_START + 1, 0 );  // move second line after header
   // for ( size_t i = 0; i < tot_process; i++ )

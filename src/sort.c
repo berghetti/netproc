@@ -31,38 +31,34 @@ compara_processo ( const void *restrict p1,
                    const void *restrict p2,
                    void *restrict mode )
 {
-  int64_t r;
+  process_t *proc1 = *( process_t ** ) p1;
+  process_t *proc2 = *( process_t ** ) p2;
 
+  int64_t r;
   switch ( *( int * ) mode )
     {
       case RATE_RX:
-        r = ( ( process_t * ) p2 )->net_stat.avg_Bps_rx -
-            ( ( process_t * ) p1 )->net_stat.avg_Bps_rx;
+        r = proc2->net_stat.avg_Bps_rx - proc1->net_stat.avg_Bps_rx;
         break;
       case RATE_TX:
-        r = ( ( process_t * ) p2 )->net_stat.avg_Bps_tx -
-            ( ( process_t * ) p1 )->net_stat.avg_Bps_tx;
+        r = proc2->net_stat.avg_Bps_tx - proc1->net_stat.avg_Bps_tx;
         break;
       case TOT_RX:
-        r = ( ( process_t * ) p2 )->net_stat.tot_Bps_rx -
-            ( ( process_t * ) p1 )->net_stat.tot_Bps_rx;
+        r = proc2->net_stat.tot_Bps_rx - proc1->net_stat.tot_Bps_rx;
         break;
       case TOT_TX:
-        r = ( ( process_t * ) p2 )->net_stat.tot_Bps_tx -
-            ( ( process_t * ) p1 )->net_stat.tot_Bps_tx;
+        r = proc2->net_stat.tot_Bps_tx - proc1->net_stat.tot_Bps_tx;
         break;
       case PPS_RX:
-        r = ( ( process_t * ) p2 )->net_stat.avg_pps_rx -
-            ( ( process_t * ) p1 )->net_stat.avg_pps_rx;
+        r = proc2->net_stat.avg_pps_rx - proc1->net_stat.avg_pps_rx;
         break;
       case PPS_TX:
-        r = ( ( process_t * ) p2 )->net_stat.avg_pps_tx -
-            ( ( process_t * ) p1 )->net_stat.avg_pps_tx;
+        r = proc2->net_stat.avg_pps_tx - proc1->net_stat.avg_pps_tx;
         break;
 
+      // PID
       default:
-        // ordena menor para maior
-        r = ( ( process_t * ) p1 )->pid - ( ( process_t * ) p2 )->pid;
+        r = proc1->pid - proc2->pid;
     }
 
   if ( r > 0 )
@@ -78,25 +74,25 @@ compara_conexao ( const void *restrict p1,
                   const void *restrict p2,
                   void *restrict mode )
 {
+  conection_t *con1 = (conection_t *) p1;
+  conection_t *con2 = (conection_t *) p2;
+
   int64_t r;
   switch ( *( int * ) mode )
     {
       case RATE_TX:
-        r = ( ( conection_t * ) p2 )->net_stat.avg_Bps_tx -
-            ( ( conection_t * ) p1 )->net_stat.avg_Bps_tx;
+        r = con2->net_stat.avg_Bps_tx - con1->net_stat.avg_Bps_tx;
         break;
       case PPS_RX:
-        r = ( ( conection_t * ) p2 )->net_stat.avg_pps_rx -
-            ( ( conection_t * ) p1 )->net_stat.avg_pps_rx;
+        r = con2->net_stat.avg_pps_rx - con1->net_stat.avg_pps_rx;
         break;
       case PPS_TX:
-        r = ( ( conection_t * ) p2 )->net_stat.avg_pps_tx -
-            ( ( conection_t * ) p1 )->net_stat.avg_pps_tx;
+        r = con2->net_stat.avg_pps_tx - con1->net_stat.avg_pps_tx;
         break;
 
+      // RATE RX
       default:
-        r = ( ( conection_t * ) p2 )->net_stat.avg_Bps_rx -
-            ( ( conection_t * ) p1 )->net_stat.avg_Bps_rx;
+        r = con2->net_stat.avg_Bps_rx - con1->net_stat.avg_Bps_rx;
     }
   if ( r > 0 )
     return 1;
@@ -107,21 +103,21 @@ compara_conexao ( const void *restrict p1,
 }
 
 void
-sort ( process_t *restrict proc,
-       int tot_process,
+sort ( process_t **proc,
+       size_t tot_process,
        int mode,
-       const struct config_op *restrict co )
+       const struct config_op *co )
 {
   qsort_r ( proc,
             tot_process,
-            sizeof ( process_t ),
+            sizeof ( process_t * ),
             compara_processo,
             ( void * ) &mode );
 
   if ( co->view_conections )
-    for ( int i = 0; i < tot_process; i++ )
-      qsort_r ( proc[i].conection,
-                proc[i].total_conections,
+    for ( size_t i = 0; i < tot_process; i++ )
+      qsort_r ( proc[i]->conection,
+                proc[i]->total_conections,
                 sizeof ( conection_t ),
                 compara_conexao,
                 ( void * ) &mode );

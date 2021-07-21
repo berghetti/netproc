@@ -276,7 +276,7 @@ processes_get ( struct processes *procs, struct config_op *co )
                 {
                   proc = create_new_process ( pids[index_pid] );
                   if ( !proc )
-                    break;      // no return error, check others processes
+                    break;  // no return error, check others processes
 
                   hashtable_set ( ht_process, pids[index_pid], proc );
                 }
