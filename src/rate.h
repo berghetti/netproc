@@ -64,11 +64,9 @@ struct net_stat
   nstats_t bytes_last_sec_tx;
 };
 
-typedef struct process process_t;
+struct processes;
 
 void
-calc_avg_rate ( process_t *restrict proc,
-                const size_t tot_proc,
-                const struct config_op *restrict co );
+calc_avg_rate ( struct processes *processes, const struct config_op *co );
 
 #endif  // RATE_H

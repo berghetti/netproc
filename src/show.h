@@ -36,8 +36,7 @@
 
 // exibe os processos e suas estatisticas de rede
 void
-show_process ( const process_t *restrict processes,
-               const size_t tot_process,
+show_process ( const struct processes *processes,
                const struct config_op *restrict co );
 
 // inicia a primeira vez a interface do usuario

@@ -197,8 +197,7 @@ show_header ( const struct config_op *co )
 }
 
 static void
-show_conections ( const process_t *restrict process,
-                  const struct config_op *restrict co )
+show_conections ( const process_t *process, const struct config_op *co )
 {
   // tuple ip:port <-> ip:port
   char *tuple;
@@ -212,15 +211,14 @@ show_conections ( const process_t *restrict process,
   for ( i = 0; i < process->total_conections; i++ )
     {
       tot_rows++;
-
+      
       // se a proxima conexão estiver com estatisticas zeradas, essa é a ultima
       // conexão, as conexões são ordenadas de forma decrescente previamente
       if ( ( i < process->total_conections - 1 &&
              process->conection[i + 1].net_stat.avg_Bps_rx == 0 &&
              process->conection[i + 1].net_stat.avg_Bps_tx == 0 &&
              process->conection[i + 1].net_stat.tot_Bps_rx == 0 &&
-             process->conection[i + 1].net_stat.tot_Bps_rx == 0 ) ||
-           i == process->total_conections - 1 )
+             process->conection[i + 1].net_stat.tot_Bps_rx == 0 ) )
         last_con = true;
 
       // faz a tradução de ip:porta para nome-reverso:serviço
@@ -299,16 +297,16 @@ void
 start_ui ( const struct config_op *co )
 {
   set_lines_cols ();
-  // line_original = malloc(cur_cols * sizeof(chtype));
-  // if (!line_original)
-  ERROR_DEBUG ( "%s", strerror ( errno ) );
+  // line_original = malloc ( cur_cols * sizeof ( chtype ) );
+  // if ( !line_original )
+
+  // ERROR_DEBUG ( "%s", strerror ( errno ) );
   show_header ( co );
   doupdate ();
 }
 
 void
-show_process ( const process_t *restrict processes,
-               const size_t tot_process,
+show_process ( const struct processes *processes,
                const struct config_op *restrict co )
 {
   {
@@ -341,47 +339,49 @@ show_process ( const process_t *restrict processes,
   char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
   char tx_tot[LEN_STR_TOTAL], rx_tot[LEN_STR_TOTAL];
 
-  sort ( ( process_t * ) processes, tot_process, sort_by, co );
+  // sort ( ( process_t * ) processes, tot_process, sort_by, co );
 
   wmove ( pad, LINE_START + 1, 0 );  // move second line after header
-  for ( size_t i = 0; i < tot_process; i++ )
+  // for ( size_t i = 0; i < tot_process; i++ )
+  for ( process_t **proc = processes->proc; *proc; proc++ )
     {
+      process_t *process = *proc;
       // só exibe o processo se tiver fluxo de rede
       // ou se modo verboso ligado
-      if ( !co->verbose && !( processes[i].net_stat.tot_Bps_rx ||
-                              processes[i].net_stat.tot_Bps_tx ) )
+      if ( !co->verbose &&
+           !( process->net_stat.tot_Bps_rx || process->net_stat.tot_Bps_tx ) )
         continue;
 
       tot_rows++;
       tot_proc_act++;
 
       // update total show in resume
-      cur_rate_tx += processes[i].net_stat.avg_Bps_tx;
-      cur_rate_rx += processes[i].net_stat.avg_Bps_rx;
+      cur_rate_tx += process->net_stat.avg_Bps_tx;
+      cur_rate_rx += process->net_stat.avg_Bps_rx;
 
-      cur_pps_tx += processes[i].net_stat.avg_pps_tx;
-      cur_pps_rx += processes[i].net_stat.avg_pps_rx;
-
-      human_readable (
-              tx_rate, sizeof tx_rate, processes[i].net_stat.avg_Bps_tx, RATE );
+      cur_pps_tx += process->net_stat.avg_pps_tx;
+      cur_pps_rx += process->net_stat.avg_pps_rx;
 
       human_readable (
-              rx_rate, sizeof rx_rate, processes[i].net_stat.avg_Bps_rx, RATE );
+              tx_rate, sizeof tx_rate, process->net_stat.avg_Bps_tx, RATE );
 
       human_readable (
-              tx_tot, sizeof tx_tot, processes[i].net_stat.tot_Bps_tx, TOTAL );
+              rx_rate, sizeof rx_rate, process->net_stat.avg_Bps_rx, RATE );
 
       human_readable (
-              rx_tot, sizeof rx_tot, processes[i].net_stat.tot_Bps_rx, TOTAL );
+              tx_tot, sizeof tx_tot, process->net_stat.tot_Bps_tx, TOTAL );
+
+      human_readable (
+              rx_tot, sizeof rx_tot, process->net_stat.tot_Bps_rx, TOTAL );
 
       wprintw ( pad,
                 "%*d %*ld %*ld %*s %*s %*s %*s ",
                 co->max_digits_pid,
-                processes[i].pid,
+                process->pid,
                 PPS,
-                processes[i].net_stat.avg_pps_tx,
+                process->net_stat.avg_pps_tx,
                 PPS,
-                processes[i].net_stat.avg_pps_rx,
+                process->net_stat.avg_pps_rx,
                 J_RATE,
                 tx_rate,
                 J_RATE,
@@ -392,33 +392,31 @@ show_process ( const process_t *restrict processes,
                 rx_tot );
 
       // "/usr/bin/programa-nome --any_parameters"
-      size_t len_full_name = strlen ( processes[i].name );
+      size_t len_full_name = strlen ( process->name );
 
       // "/usr/bin/programa-nome"
-      size_t len_path_name = strlen_space ( processes[i].name );
+      size_t len_path_name = strlen_space ( process->name );
 
       // "programa-nome"
-      size_t len_name =
-              find_last_char ( processes[i].name, len_path_name, '/' );
+      size_t len_name = find_last_char ( process->name, len_path_name, '/' );
 
       for ( size_t j = 0; j < len_full_name; j++ )
         {
           if ( j > len_name && j < len_path_name )
             // destaca somente o nome do programa
-            waddch ( pad,
-                     processes[i].name[j] | co->color_scheme[NAME_PROG_BOLD] );
+            waddch ( pad, process->name[j] | co->color_scheme[NAME_PROG_BOLD] );
           else
             // pinta todo o caminho do programa e parametros
-            waddch ( pad, processes[i].name[j] | co->color_scheme[NAME_PROG] );
+            waddch ( pad, process->name[j] | co->color_scheme[NAME_PROG] );
         }
 
       waddch ( pad, '\n' );
 
       // option -c and process with traffic at the moment
-      if ( co->view_conections & ( processes[i].net_stat.avg_Bps_rx ||
-                                   processes[i].net_stat.avg_Bps_tx ) )
+      if ( co->view_conections &
+           ( process->net_stat.avg_Bps_rx || process->net_stat.avg_Bps_tx ) )
 
-        show_conections ( &processes[i], co );
+        show_conections ( process, co );
     }
 
   // clear lines begin cursor end screen, replace wclear()

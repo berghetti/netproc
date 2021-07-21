@@ -65,12 +65,11 @@ static volatile sig_atomic_t prog_exit = 0;
 // all resources that needed free on program exit
 struct resources_to_free
 {
+  struct ring *ring;
   FILE *log_file;
   log_processes *buff_log;
+  struct processes *procs;
   size_t len_log;
-  process_t *processes;
-  uint32_t tot_processes;
-  struct ring *ring;
   int sock;
 };
 
@@ -85,9 +84,6 @@ main ( int argc, char **argv )
   struct tpacket_block_desc *pbd;
   struct tpacket3_hdr *ppd;
   struct config_op *co;
-
-  process_t *processes = NULL;
-  ssize_t tot_process_act = 0;
 
   // feature log in file
   FILE *log_file = NULL;
@@ -160,9 +156,27 @@ main ( int argc, char **argv )
 
   start_ui ( co );
 
-  // first search by processes
-  tot_process_act = get_process_active_con ( &processes, tot_process_act, co );
-  if ( tot_process_act == -1 )
+  const nfds_t nfds = 2;
+  struct pollfd poll_set[2] = {
+          { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 },
+          { .fd = sock, .events = POLLIN | POLLPRI, .revents = 0 } };
+
+  struct sigaction sigact = { .sa_handler = sig_handler };
+  sigemptyset ( &sigact.sa_mask );
+
+  sigaction ( SIGINT, &sigact, NULL );
+  sigaction ( SIGTERM, &sigact, NULL );
+
+  if ( !processes_init () )
+    {
+      close_socket ( sock );
+      free_log ( log_file, NULL, 0 );
+      free_ring ( &ring );
+      fatal_error ( "Error process_init" );
+    }
+
+  struct processes processes = { .proc = NULL };
+  if ( !get_process_active_con2 ( &processes, co ) )
     {
       close_socket ( sock );
       free_log ( log_file, NULL, 0 );
@@ -177,20 +191,9 @@ main ( int argc, char **argv )
       free_log ( log_file, NULL, 0 );
       free_ring ( &ring );
       restore_terminal ();
-      free_process ( processes, tot_process_act );
+      processes_free ( &processes );
       fatal_error ( "Error start timer" );
     }
-
-  const nfds_t nfds = 2;
-  struct pollfd poll_set[2] = {
-          { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 },
-          { .fd = sock, .events = POLLIN | POLLPRI, .revents = 0 } };
-
-  struct sigaction sigact = { .sa_handler = sig_handler };
-  sigemptyset ( &sigact.sa_mask );
-
-  sigaction ( SIGINT, &sigact, NULL );
-  sigaction ( SIGTERM, &sigact, NULL );
 
   pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
 
@@ -221,8 +224,7 @@ main ( int argc, char **argv )
               // de um processo existente, que ainda não foi mapeado, então
               // anotamos que sera necessario atualizar a lista de processos
               // com conexões ativas.
-              if ( !add_statistics_in_processes (
-                           processes, tot_process_act, &packet, co ) )
+              if ( !add_statistics_in_processes ( &processes, &packet, co ) )
                 {
                   // mark to update processes
                   fail_process_pkt = true;
@@ -243,34 +245,31 @@ main ( int argc, char **argv )
 
       // necessario para zerar contadores quando não ha trafego
       packet.lenght = 0;
-      add_statistics_in_processes ( processes, tot_process_act, &packet, co );
+      add_statistics_in_processes ( &processes, &packet, co );
 
       double temp;
       if ( ( temp = timer ( m_timer ) ) >= ( double ) T_REFRESH )
         {
           co->running += temp;
-          calc_avg_rate ( processes, tot_process_act, co );
+          calc_avg_rate ( &processes, co );
 
-          show_process ( processes, tot_process_act, co );
+          show_process ( &processes, co );
 
-          if ( co->log && !log_to_file ( processes,
-                                         tot_process_act,
-                                         &log_file_buffer,
-                                         &len_log_file_buffer,
-                                         log_file ) )
-            {
-              goto EXIT;
-            }
+          // if ( co->log && !log_to_file ( processes.proc,
+          //                                processes.total,
+          //                                &log_file_buffer,
+          //                                &len_log_file_buffer,
+          //                                log_file ) )
+          // {
+          //   goto EXIT;
+          // }
 
           if ( -1 == ( m_timer = restart_timer () ) )
             goto EXIT;
 
           TIC_TAC ( co->tic_tac );
 
-          // update processes case necessary
-          if ( fail_process_pkt &&
-               -1 == ( tot_process_act = get_process_active_con (
-                               &processes, tot_process_act, co ) ) )
+          if ( fail_process_pkt && !get_process_active_con2 ( &processes, co ) )
             goto EXIT;
         }
 
@@ -311,8 +310,7 @@ EXIT:
                                          .buff_log = log_file_buffer,
                                          .len_log = len_log_file_buffer,
                                          .sock = sock,
-                                         .processes = processes,
-                                         .tot_processes = tot_process_act,
+                                         .procs = &processes,
                                          .ring = &ring } );
 
   return prog_exit;
@@ -330,8 +328,7 @@ free_resources ( struct resources_to_free *res )
   if ( res->log_file )
     free_log ( res->log_file, res->buff_log, res->len_log );
 
-  if ( res->tot_processes )
-    free_process ( res->processes, res->tot_processes );
+  processes_free ( res->procs );
 
   resolver_clean ();
 }

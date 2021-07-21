@@ -31,50 +31,32 @@
 #include "m_error.h"
 
 // len init buffer
-#define TOT_PROCESS_BEGIN 256
+#define ENTRY_SIZE_BUF 128
 
 // retorna o total de diretorios encontrados, -1 em caso de falha.
 int
 get_numeric_directory ( uint32_t **buffer, const char *path_dir )
 {
   DIR *dir;
-  struct dirent *directory = NULL;
-  size_t count = 0;
-  size_t len_buffer = TOT_PROCESS_BEGIN;
-  char crap;
-
   if ( ( dir = opendir ( path_dir ) ) == NULL )
     {
       ERROR_DEBUG ( "%s - %s", path_dir, strerror ( errno ) );
       return -1;
     }
 
-  // FIXME: calloc is necessary?
-  // *buffer = calloc ( len_buffer, sizeof ( **buffer ) );
-  *buffer = malloc ( len_buffer * sizeof ( **buffer ) );
-  if ( !*buffer )
-    {
-      ERROR_DEBUG ( "%s", strerror ( errno ) );
-      count = -1;
-      goto END;
-    }
-
   errno = 0;
+  size_t count = 0;
+  size_t len_buffer = 0;
+  struct dirent *directory;
   while ( ( directory = readdir ( dir ) ) )
     {
-      if ( 1 !=
-           ( sscanf (
-                   directory->d_name, "%u%c", &( *buffer )[count], &crap ) ) )
-        continue;
 
-      if ( ++count == len_buffer )
+      if ( count == len_buffer )
         {
-          // doble len buffer
-          len_buffer <<= 1;
-
+          len_buffer += ENTRY_SIZE_BUF;
           void *temp;
           temp = realloc ( *buffer, len_buffer * sizeof ( **buffer ) );
-          // work with data that have
+
           if ( !temp )
             {
               errno = 0;
@@ -82,13 +64,15 @@ get_numeric_directory ( uint32_t **buffer, const char *path_dir )
             }
 
           *buffer = temp;
-
-          // FIXME: its necessary?
-          // initialize only new space of memory
-          // memset ( &( *buffer )[count],
-          //          0,
-          //          ( len_buffer - count ) * sizeof ( **buffer ) );
         }
+
+      char crap;
+      int rs = sscanf ( directory->d_name, "%u%c", &( *buffer )[count], &crap );
+
+      if ( rs != 1 )
+        continue;
+
+      count++;
     }
 
   if ( errno )

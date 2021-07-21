@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2020-2021 Mayco S. Berghetti
+ *  Copyright (C) 2021 Mayco S. Berghetti
  *
  *  This file is part of Netproc.
  *
@@ -18,20 +18,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef STATISTICS_PROC_H
-#define STATISTICS_PROC_H
+#ifndef FULL_READ_H
+#define FULL_READ_H
 
-#include <stdbool.h>
+ssize_t
+full_read ( const int fd, char **buffer );
 
-#include "config.h"
-#include "process.h"
-
-// encontra o processo ao qual o fluxo de dados pertence
-// e adiciona/incrementa estatisticas de pacotes por segundo
-// e total de bytes
-bool
-add_statistics_in_processes ( struct processes *processes,
-                              const struct packet *pkt,
-                              const struct config_op *co );
-
-#endif  // STATISTICS_PROC_H
+#endif // FULL_READ_H

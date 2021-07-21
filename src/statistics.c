@@ -79,26 +79,22 @@ conection_match_packet ( conection_t *restrict conection,
 }
 
 bool
-add_statistics_in_processes ( process_t *restrict processes,
-                              size_t tot_proc,
-                              const struct packet *restrict pkt,
-                              const struct config_op *restrict co )
+add_statistics_in_processes ( struct processes *processes,
+                              const struct packet *pkt,
+                              const struct config_op *co )
 {
   static int last_tic;
   static uint8_t id_buff_circ;
-
-  process_t *process;
-  size_t c;
-  bool locate = false;
 
   // time geral do programa atualizou, desloca o indice do buffer
   if ( last_tic != co->tic_tac )
     UPDATE_ID_BUFF ( id_buff_circ );
 
-  // for ( size_t i = 0; i < tot_proc; i++ )
-  while ( tot_proc-- )
+  bool locate = false;
+  size_t c;
+  for ( process_t **proc = processes->proc; *proc; proc++ )
     {
-      process = processes + tot_proc;
+      process_t *process = *proc;
       // caso o indice do buffer circular tenha atualizado,
       // pois ja deu o tempo pre definido, T_REFRESH,
       // apaga os dados antes de começar a escrever

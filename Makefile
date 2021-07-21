@@ -32,7 +32,7 @@ CFLAGS=
 
 # environment var
 ifdef DEBUG
-	CFLAGS+=-Wall -Wextra -pedantic -pedantic-errors -O0 -g
+	CFLAGS+=-Wall -Wextra -pedantic -O0 -ggdb
 else
 	CPPFLAGS=-D NDEBUG
 	CFLAGS+= -O2 -march=native -Wall -Wextra
