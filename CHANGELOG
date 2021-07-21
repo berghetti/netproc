@@ -5,15 +5,16 @@ Legend:
 ! Known issue / missing feature
 
 0.??.??
-  - automatic calculation of the size of the pid column,
-    solves the problem you had for systems with a pid of more than 5 digits
-  - resolved incorrect sorting
+  - automatic calculation of the size of the pid column
+  - incorrect sorting
+  - minor bug scroll horizontal
   * using ncursesw instead of ncurses for better support for
     ALTCHARSERT characters
   * readjusting mmap socket values, improving consumed of memory
   * automatic calculation size pad ncurses, improving consumed of memory
   * improved dns resolver, now uses thread pool, improving the use of
     system recursions
+  * using hashtable implementation in search of processes
 
 0.5.5 - 2021-02.23
   - connection port number was being displayed incorrectly

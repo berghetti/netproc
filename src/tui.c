@@ -57,7 +57,7 @@
 
 // FIXME: check this values
 #define START_NAME_PROGRAM 64
-#define MIN_LINES_PAD 50
+#define MIN_LINES_PAD 64
 
 #define MIN_COLS_PAD PROGRAM + START_NAME_PROGRAM
 
@@ -236,8 +236,8 @@ need_resize_pad ( int lines, int cols )
 static void
 show_conections ( const process_t *process, const struct config_op *co )
 {
-  if ( need_resize_pad ( process->total_conections, 0 ) )
-    resize_pad ( process->total_conections, 0 );
+  if ( need_resize_pad ( process->total_conections + tot_rows, 0 ) )
+    resize_pad ( process->total_conections + tot_rows, 0 );
 
   bool last_con = false;
   for ( size_t i = 0; i < process->total_conections; i++ )
@@ -462,15 +462,7 @@ tui_show ( const struct processes *processes, const struct config_op *co )
       paint_selected ();
     }
 
-  // wresize(pad, tot_rows, tot_cols);
-  // update line header
-  // pnoutrefresh (
-  //         pad, LINE_START, scroll_x, LINE_START, 0, LINE_START, COLS - 1 );
-
   show_header ( co );
-
-  // pnoutrefresh (
-  //         pad, LINE_START, scroll_x, LINE_START, 0, LINE_START, COLS - 1 );
 
   pnoutrefresh (
           pad, scroll_y, scroll_x, LINE_START + 1, 0, LINES - 1, COLS - 1 );
