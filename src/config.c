@@ -41,9 +41,7 @@ static struct config_op co = { .iface = NULL,  // all interfaces
 
                                // internal control sinc of program, NOT REMOVE
                                .tic_tac = 0,
-                               .running = 0,
-                               .max_name_process = 0,
-                               .tot_rows = 0 };
+                               .running = 0 };
 
 struct config_op *
 parse_options ( int argc, char **argv )

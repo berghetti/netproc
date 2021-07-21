@@ -46,13 +46,6 @@ struct processes
 int
 processes_init ( void );
 
-// inicializa a estrutura process_t com os processos ativos e
-// retorna a quantidade processos armazenados
-ssize_t
-get_process_active_con ( process_t **procs,
-                         const size_t tot_process_act_old,
-                         struct config_op *co );
-
 int
 processes_get ( struct processes *procs, struct config_op *co );
 

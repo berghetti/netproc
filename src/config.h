@@ -38,7 +38,6 @@ struct config_op
 {
   char *iface;             // bind interface
   char *path_log;          // path to log in file
-  int *color_scheme;       // scheme colors
   int proto;               // tcp or udp
   bool log;                // log in file
   bool view_si;            // SI or IEC prefix
@@ -49,11 +48,8 @@ struct config_op
   bool verbose;            // show process without traffic alse
 
   // internal
-  uint8_t tic_tac;            // sinc program, internal control
-  double running;             // time the program is running
-  uint32_t max_digits_pid;    // used for spacing between columns in show.c
-  uint32_t max_name_process;  //
-  uint32_t tot_rows;          // total of process and conections to display
+  uint8_t tic_tac;  // sinc program, internal control
+  double running;   // time the program is running
 };
 
 struct config_op *

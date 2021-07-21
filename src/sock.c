@@ -18,8 +18,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>  // malloc
 #include <stdbool.h>
+#include <stdlib.h>           // malloc
 #include <arpa/inet.h>        // htons
 #include <errno.h>            // variable errno
 #include <linux/if_ether.h>   // defined ETH_P_ALL

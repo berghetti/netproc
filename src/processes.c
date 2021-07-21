@@ -33,6 +33,7 @@
 #include "processes.h"  // process_t
 #include "config.h"
 #include "m_error.h"  // ERROR_DEBUG
+#include "macro_util.h"
 
 // /proc/%d/cmdline
 #define MAX_CMDLINE 25
@@ -132,7 +133,7 @@ free_process ( void *arg )
 }
 
 static int
-free_dead_process ( hashtable_t *ht, void *value, void *user_data )
+free_dead_process ( hashtable_t *ht, void *value, UNUSED ( void *user_data ) )
 {
   process_t *proc = ( process_t * ) value;
 
@@ -149,7 +150,7 @@ struct my_array
 };
 
 static int
-to_array ( hashtable_t *ht, void *value, void *user_data )
+to_array ( UNUSED ( hashtable_t *ht ), void *value, void *user_data )
 {
   struct my_array *ar = user_data;
   process_t *proc = value;
@@ -189,12 +190,10 @@ processes_init ( void )
 /*
  percorre todos os processos encontrados no diretório '/proc/',
  em cada processo encontrado armazena todos os file descriptors
- do processo - /proc/$id/fd - no buffer fds_p
+ do processo - /proc/$id/fd - no buffer fds
  depois compara o link simbolico apontado pelo FD com 'socket:[inode]',
  sendo inode coletado do arquivo '/proc/net/tcp', caso a comparação seja igual,
  encontramos o processo que corresponde ao inode (conexão).
-
- return total process with conection active or -1 on failure
 */
 int
 processes_get ( struct processes *procs, struct config_op *co )

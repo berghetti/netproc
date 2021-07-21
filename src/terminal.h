@@ -25,25 +25,8 @@
 
 #include "config.h"
 
-extern WINDOW *pad;
-
 // carrega os parametros do terminal
 bool
 setup_terminal ( void );
-
-// start ncurses
-bool
-setup_ui ( struct config_op *co );
-
-void
-resize_pad ( const int l, const int c );
-
-// volta configurações original do terminal
-void
-restore_terminal ( void );
-
-// limpa a tela, podendo tambem limpar o buffer do scroll se disponivel
-// void
-// clear_cmd ( );
 
 #endif  // TERMINAL_H

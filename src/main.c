@@ -38,7 +38,7 @@
 #include "statistics.h"
 #include "sufix.h"
 #include "timer.h"
-#include "show.h"
+#include "tui.h"
 #include "log.h"
 #include "usage.h"
 #include "m_error.h"
@@ -146,15 +146,15 @@ main ( int argc, char **argv )
 
   define_sufix ( co );
 
-  if ( !setup_ui ( co ) )
-    {
-      close_socket ( sock );
-      free_log ( log_file, NULL, 0 );
-      free_ring ( &ring );
-      fatal_error ( "Error setup user interface" );
-    }
+  // if ( !setup_ui ( co ) )
+  //   {
+  //     close_socket ( sock );
+  //     free_log ( log_file, NULL, 0 );
+  //     free_ring ( &ring );
+  //     fatal_error ( "Error setup user interface" );
+  //   }
 
-  start_ui ( co );
+  tui_init ( co );
 
   const nfds_t nfds = 2;
   struct pollfd poll_set[2] = {
@@ -181,7 +181,7 @@ main ( int argc, char **argv )
       close_socket ( sock );
       free_log ( log_file, NULL, 0 );
       free_ring ( &ring );
-      restore_terminal ();
+      tui_free ();
       fatal_error ( "Error get processes" );
     }
 
@@ -190,7 +190,7 @@ main ( int argc, char **argv )
       close_socket ( sock );
       free_log ( log_file, NULL, 0 );
       free_ring ( &ring );
-      restore_terminal ();
+      tui_free ();
       processes_free ( &processes );
       fatal_error ( "Error start timer" );
     }
@@ -253,7 +253,7 @@ main ( int argc, char **argv )
           co->running += temp;
           calc_avg_rate ( &processes, co );
 
-          show_process ( &processes, co );
+          tui_show ( &processes, co );
 
           // if ( co->log && !log_to_file ( processes.proc,
           //                                processes.total,
@@ -295,7 +295,7 @@ main ( int argc, char **argv )
                     continue;
 
                   if ( poll_set[i].fd == STDIN_FILENO &&
-                       running_input ( co ) == P_EXIT )
+                       tui_handle_input ( co ) == P_EXIT )
                     goto EXIT;
                 }
             }
@@ -319,7 +319,7 @@ EXIT:
 static void
 free_resources ( struct resources_to_free *res )
 {
-  restore_terminal ();
+  tui_free ();
 
   close_socket ( res->sock );
 

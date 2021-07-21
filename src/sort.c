@@ -74,8 +74,8 @@ compara_conexao ( const void *restrict p1,
                   const void *restrict p2,
                   void *restrict mode )
 {
-  conection_t *con1 = (conection_t *) p1;
-  conection_t *con2 = (conection_t *) p2;
+  conection_t *con1 = ( conection_t * ) p1;
+  conection_t *con2 = ( conection_t * ) p2;
 
   int64_t r;
   switch ( *( int * ) mode )

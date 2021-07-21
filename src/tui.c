@@ -31,18 +31,17 @@
 #include "color.h"
 #include "m_error.h"
 #include "translate.h"
-#include "terminal.h"
-#include "show.h"
+#include "tui.h"
 #include "usage.h"
 #include "sort.h"
 #include "rate.h"  // type nstats_t
 #include "human_readable.h"
+#include "pid.h"
+#include "macro_util.h"
 
-// tamanho representação textual porta da camada de transporte
-#define PORTLEN 5  // 65535
+#define PORTLEN 5  // strlen("65535")
 
 // space between columns
-// #define PID -5  // negative == justify left
 #define PPS 6
 #define J_RATE 13
 
@@ -52,7 +51,20 @@
 // linha que começa a ser exibido os programas ativos
 #define LINE_START 4
 
-// FIXME: const value no ok
+// tamanho fixo de caracteres até a coluna program
+// menos a caluna PID que é variavel
+#define PROGRAM 71
+
+// FIXME: check this values
+#define START_NAME_PROGRAM 64
+#define MIN_LINES_PAD 50
+
+#define MIN_COLS_PAD PROGRAM + START_NAME_PROGRAM
+
+static WINDOW *pad = NULL;
+static int *color_scheme;
+
+// FIXME: const lenght value no ok
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
 static chtype line_original[1000] = { 0 };
 
@@ -60,7 +72,9 @@ static int sort_by = RATE_RX;  // ordenação padrão
 static int scroll_x = 0;
 static int scroll_y = LINE_START + 1;
 static int selected = LINE_START + 1;  // posição de linha do item selecionado
-static int tot_rows;                   // total linhas exibidas
+
+static int tot_cols;
+static int tot_rows;  // total linhas exibidas
 
 static int tot_proc_act = 0;  // total de processos com conexão ativa
 
@@ -72,23 +86,15 @@ static nstats_t cur_pps_tx, cur_pps_rx;
 static int cur_cols;
 static int cur_lines;
 
-#define MAX( a, b ) ( ( a ) > ( b ) ? ( a ) : ( b ) )
-
-// it is not possible to initialize the variable at compile time
-static void
-set_lines_cols ( void )
-{
-  cur_cols = MAX ( COLS, MIN_COLS_PAD );
-  cur_lines = MAX ( LINES, MIN_LINES_PAD );
-}
+static int max_digits_pid;
 
 static void
-paint_selected ( const struct config_op *co )
+paint_selected ( void )
 {
   for ( int i = 0; i < cur_cols; i++ )
     waddch ( pad,
              ( line_original[i] & ( A_CHARTEXT | A_ALTCHARSET ) ) |
-                     co->color_scheme[SELECTED_L] );
+                     color_scheme[SELECTED_L] );
 }
 
 static void
@@ -99,42 +105,43 @@ show_resume ( const struct config_op *co )
   human_readable ( rate_tx, LEN_STR_RATE, cur_rate_tx, RATE );
   human_readable ( rate_rx, LEN_STR_RATE, cur_rate_rx, RATE );
 
-  wattrset ( pad, co->color_scheme[RESUME] );
+  wattrset ( pad, color_scheme[RESUME] );
   mvwprintw ( pad, 0, 1, PROG_NAME " - " PROG_VERSION "\n" );
 
   wmove ( pad, 2, 1 );
   wclrtoeol ( pad );  // erase the current line
   wprintw ( pad, "Running: " );
-  wattrset ( pad, co->color_scheme[RESUME_VALUE] );
+  wattrset ( pad, color_scheme[RESUME_VALUE] );
   wprintw ( pad, "%s", sec2clock ( ( uint64_t ) co->running ) );
 
-  wattrset ( pad, co->color_scheme[RESUME] );
+  wattrset ( pad, color_scheme[RESUME] );
   mvwprintw ( pad, 2, 25, "pps tx: " );
-  wattrset ( pad, co->color_scheme[RESUME_VALUE] );
+  wattrset ( pad, color_scheme[RESUME_VALUE] );
   wprintw ( pad, "%ld", cur_pps_tx );
-  wattrset ( pad, co->color_scheme[RESUME] );
+  wattrset ( pad, color_scheme[RESUME] );
   mvwprintw ( pad, 2, 40, "rate tx: " );
-  wattrset ( pad, co->color_scheme[RESUME_VALUE] );
+  wattrset ( pad, color_scheme[RESUME_VALUE] );
   wprintw ( pad, "%s", rate_tx );
 
-  wattrset ( pad, co->color_scheme[RESUME] );
+  wattrset ( pad, color_scheme[RESUME] );
   wmove ( pad, 3, 1 );
   wprintw ( pad, "Processes: " );
   wclrtoeol ( pad );  // erase the current line
-  wattrset ( pad, co->color_scheme[RESUME_VALUE] );
+  wattrset ( pad, color_scheme[RESUME_VALUE] );
   wprintw ( pad, "%d", tot_proc_act );
 
-  wattrset ( pad, co->color_scheme[RESUME] );
+  wattrset ( pad, color_scheme[RESUME] );
   mvwprintw ( pad, 3, 25, "pps rx: " );
-  wattrset ( pad, co->color_scheme[RESUME_VALUE] );
+  wattrset ( pad, color_scheme[RESUME_VALUE] );
   wprintw ( pad, "%d", cur_pps_rx );
-  wattrset ( pad, co->color_scheme[RESUME] );
+  wattrset ( pad, color_scheme[RESUME] );
   mvwprintw ( pad, 3, 40, "rate rx: " );
-  wattrset ( pad, co->color_scheme[RESUME_VALUE] );
+  wattrset ( pad, color_scheme[RESUME_VALUE] );
   wprintw ( pad, "%s", rate_rx );
 
-  wattrset ( pad, co->color_scheme[RESET] );
+  wattrset ( pad, color_scheme[RESET] );
 
+  // update all resume
   pnoutrefresh ( pad, 0, 0, 0, 0, LINE_START - 1, COLS - 1 );
 }
 
@@ -146,47 +153,48 @@ show_header ( const struct config_op *co )
   wmove ( pad, LINE_START, 0 );  // move first line
 
   wattrset ( pad,
-             ( sort_by == S_PID ) ? co->color_scheme[SELECTED_H]
-                                  : co->color_scheme[HEADER] );
-  wprintw ( pad, "%*s ", co->max_digits_pid, "PID" );
+             ( sort_by == S_PID ) ? color_scheme[SELECTED_H]
+                                  : color_scheme[HEADER] );
+  wprintw ( pad, "%*s ", max_digits_pid, "PID" );
 
   wattrset ( pad,
-             ( sort_by == PPS_TX ) ? co->color_scheme[SELECTED_H]
-                                   : co->color_scheme[HEADER] );
+             ( sort_by == PPS_TX ) ? color_scheme[SELECTED_H]
+                                   : color_scheme[HEADER] );
   wprintw ( pad, "%*s ", PPS, "PPS TX" );
 
   wattrset ( pad,
-             ( sort_by == PPS_RX ) ? co->color_scheme[SELECTED_H]
-                                   : co->color_scheme[HEADER] );
+             ( sort_by == PPS_RX ) ? color_scheme[SELECTED_H]
+                                   : color_scheme[HEADER] );
   wprintw ( pad, "%*s", PPS, "PPS RX" );
 
   wattrset ( pad,
-             ( sort_by == RATE_TX ) ? co->color_scheme[SELECTED_H]
-                                    : co->color_scheme[HEADER] );
+             ( sort_by == RATE_TX ) ? color_scheme[SELECTED_H]
+                                    : color_scheme[HEADER] );
   wprintw ( pad, "    %s   ", "RATE TX" );
 
   wattrset ( pad,
-             ( sort_by == RATE_RX ) ? co->color_scheme[SELECTED_H]
-                                    : co->color_scheme[HEADER] );
+             ( sort_by == RATE_RX ) ? color_scheme[SELECTED_H]
+                                    : color_scheme[HEADER] );
   wprintw ( pad, "    %s   ", "RATE RX" );
 
   wattrset ( pad,
-             ( sort_by == TOT_TX ) ? co->color_scheme[SELECTED_H]
-                                   : co->color_scheme[HEADER] );
+             ( sort_by == TOT_TX ) ? color_scheme[SELECTED_H]
+                                   : color_scheme[HEADER] );
   wprintw ( pad, "    %s    ", "TOTAL TX" );
 
   wattrset ( pad,
-             ( sort_by == TOT_RX ) ? co->color_scheme[SELECTED_H]
-                                   : co->color_scheme[HEADER] );
+             ( sort_by == TOT_RX ) ? color_scheme[SELECTED_H]
+                                   : color_scheme[HEADER] );
   wprintw ( pad, "  %s   ", "TOTAL RX" );
 
-  wattrset ( pad, co->color_scheme[HEADER] );
   // paint to the end of line
-  wprintw ( pad, "%*s", -( cur_cols ), "PROGRAM" );
+  wattrset ( pad, color_scheme[HEADER] );
+  wprintw (
+          pad, "%*s", -( cur_cols - ( PROGRAM + max_digits_pid ) ), "PROGRAM" );
 
-  wattrset ( pad, co->color_scheme[RESET] );
+  wattrset ( pad, color_scheme[RESET] );
 
-  // update header
+  // update only line header
   pnoutrefresh ( pad,
                  LINE_START,
                  scroll_x,
@@ -196,19 +204,43 @@ show_header ( const struct config_op *co )
                  COLS - 1 );
 }
 
+static WINDOW *
+create_pad ( const int l, const int c )
+{
+  WINDOW *p = newpad ( l, c );
+  if ( !p )
+    ERROR_DEBUG ( "%s", strerror ( errno ) );
+
+  nodelay ( p, TRUE );  // no gelay getch()
+  keypad ( p, TRUE );   // get arrow key
+  curs_set ( 0 );       // cursor invisible
+
+  return p;
+}
+
+static void
+resize_pad ( const int l, const int c )
+{
+  cur_lines = MAX ( l, cur_lines );
+  cur_cols = MAX ( c, cur_cols );
+
+  wresize ( pad, cur_lines, cur_cols );
+}
+
+static inline bool
+need_resize_pad ( int lines, int cols )
+{
+  return ( lines > cur_lines || cols > cur_cols );
+}
+
 static void
 show_conections ( const process_t *process, const struct config_op *co )
 {
-  // tuple ip:port <-> ip:port
-  char *tuple;
+  if ( need_resize_pad ( process->total_conections, 0 ) )
+    resize_pad ( process->total_conections, 0 );
+
   bool last_con = false;
-  size_t i;
-  char iface_buff[IF_NAMESIZE];
-  char *iface;
-
-  char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
-
-  for ( i = 0; i < process->total_conections; i++ )
+  for ( size_t i = 0; i < process->total_conections; i++ )
     {
       tot_rows++;
 
@@ -218,11 +250,13 @@ show_conections ( const process_t *process, const struct config_op *co )
              process->conection[i + 1].net_stat.avg_Bps_rx == 0 &&
              process->conection[i + 1].net_stat.avg_Bps_tx == 0 &&
              process->conection[i + 1].net_stat.tot_Bps_rx == 0 &&
-             process->conection[i + 1].net_stat.tot_Bps_rx == 0 ) )
+             process->conection[i + 1].net_stat.tot_Bps_rx == 0 ) ||
+           i == process->total_conections - 1 )
         last_con = true;
 
-      // faz a tradução de ip:porta para nome-reverso:serviço
-      tuple = translate ( &process->conection[i], co );
+      char *tuple = translate ( &process->conection[i], co );
+
+      char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
 
       human_readable ( tx_rate,
                        sizeof tx_rate,
@@ -234,10 +268,10 @@ show_conections ( const process_t *process, const struct config_op *co )
                        process->conection[i].net_stat.avg_Bps_rx,
                        RATE );
 
-      wattrset ( pad, co->color_scheme[CONECTIONS] );
+      wattrset ( pad, color_scheme[CONECTIONS] );
       wprintw ( pad,
                 "%*s %*ld %*ld %*s %*s ",
-                co->max_digits_pid,
+                max_digits_pid,
                 "",
                 PPS,
                 process->conection[i].net_stat.avg_pps_tx,
@@ -248,12 +282,14 @@ show_conections ( const process_t *process, const struct config_op *co )
                 J_RATE,
                 rx_rate );
 
+      char iface_buff[IF_NAMESIZE];
+      char *iface;
+
       if ( if_indextoname ( process->conection[i].if_index, iface_buff ) )
         iface = iface_buff;
       else
         iface = "";
 
-      // wprintw ( pad, "             %*s", -( IF_NAMESIZE ), iface );
       wprintw ( pad,
                 "%*s %*s",
                 IF_NAMESIZE,
@@ -265,7 +301,7 @@ show_conections ( const process_t *process, const struct config_op *co )
       // space tuple
       wprintw ( pad, "%*s", TUPLE, "" );
 
-      wattrset ( pad, co->color_scheme[TREE] );
+      wattrset ( pad, color_scheme[TREE] );
       if ( !last_con )
         {
           waddch ( pad, ACS_LTEE );   // ├
@@ -277,7 +313,7 @@ show_conections ( const process_t *process, const struct config_op *co )
           waddch ( pad, ACS_HLINE );     // ─
         }
 
-      wattrset ( pad, co->color_scheme[CONECTIONS] );
+      wattrset ( pad, color_scheme[CONECTIONS] );
       wprintw ( pad, " %s\n", tuple );
 
       if ( last_con )
@@ -286,68 +322,51 @@ show_conections ( const process_t *process, const struct config_op *co )
   // se teve conexões exibidas, pula uma linha
   if ( last_con )
     {
-      waddch ( pad, '\n' );
       tot_rows++;
+      waddch ( pad, '\n' );
     }
 
-  wattrset ( pad, co->color_scheme[RESET] );
+  wattrset ( pad, color_scheme[RESET] );
+}
+
+static void
+set_lines_cols ( void )
+{
+  cur_cols = MAX ( COLS, MIN_COLS_PAD );
+  cur_lines = MAX ( LINES, MIN_LINES_PAD );
 }
 
 void
-start_ui ( const struct config_op *co )
+tui_init ( const struct config_op *co )
 {
   set_lines_cols ();
-  // line_original = malloc ( cur_cols * sizeof ( chtype ) );
-  // if ( !line_original )
 
-  // ERROR_DEBUG ( "%s", strerror ( errno ) );
+  initscr ();
+  cbreak ();  // disable buffering to get keypad
+  noecho ();
+
+  pad = create_pad ( cur_lines, cur_cols );
+  color_scheme = define_color_scheme ();
+  max_digits_pid = get_max_digits_pid ();
+
   show_header ( co );
   doupdate ();
 }
 
 void
-show_process ( const struct processes *processes,
-               const struct config_op *restrict co )
+tui_show ( const struct processes *processes, const struct config_op *co )
 {
-  {
-    int temp_cols = co->max_name_process + PROGRAM;
-    bool need_resize_pad = false;
-
-    if ( temp_cols > cur_cols )
-      {
-        cur_cols = temp_cols;
-        need_resize_pad = true;
-      }
-    if ( co->tot_rows > ( uint32_t ) cur_lines )
-      {
-        cur_lines = co->tot_rows;
-        need_resize_pad = true;
-      }
-    if ( need_resize_pad )
-      {
-        resize_pad ( cur_lines, cur_cols );
-        show_header ( co );
-      }
-  }
-
   tot_rows = LINE_START;
-
   tot_proc_act = 0;
-
   cur_rate_tx = cur_rate_rx = cur_pps_tx = cur_pps_rx = 0;
-
-  char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
-  char tx_tot[LEN_STR_TOTAL], rx_tot[LEN_STR_TOTAL];
 
   sort ( processes->proc, processes->total, sort_by, co );
 
   wmove ( pad, LINE_START + 1, 0 );  // move second line after header
-  // for ( size_t i = 0; i < tot_process; i++ )
-  for ( process_t **proc = processes->proc; *proc; proc++ )
+  for ( process_t **procs = processes->proc; *procs; procs++ )
     {
-      process_t *process = *proc;
-      // só exibe o processo se tiver fluxo de rede
-      // ou se modo verboso ligado
+      process_t *process = *procs;
+
       if ( !co->verbose &&
            !( process->net_stat.tot_Bps_rx || process->net_stat.tot_Bps_tx ) )
         continue;
@@ -362,6 +381,18 @@ show_process ( const struct processes *processes,
       cur_pps_tx += process->net_stat.avg_pps_tx;
       cur_pps_rx += process->net_stat.avg_pps_rx;
 
+      // "/usr/bin/programa-nome --any_parameters"
+      size_t len_full_name = strlen ( process->name );
+
+      // +1 because'\n'
+      tot_cols = MAX ( ( size_t ) tot_cols,
+                       len_full_name + PROGRAM + max_digits_pid + 1 );
+
+      if ( need_resize_pad ( 0, tot_cols ) )
+        resize_pad ( 0, tot_cols );
+
+      char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
+      char tx_tot[LEN_STR_TOTAL], rx_tot[LEN_STR_TOTAL];
       human_readable (
               tx_rate, sizeof tx_rate, process->net_stat.avg_Bps_tx, RATE );
 
@@ -376,7 +407,7 @@ show_process ( const struct processes *processes,
 
       wprintw ( pad,
                 "%*d %*ld %*ld %*s %*s %*s %*s ",
-                co->max_digits_pid,
+                max_digits_pid,
                 process->pid,
                 PPS,
                 process->net_stat.avg_pps_tx,
@@ -391,9 +422,6 @@ show_process ( const struct processes *processes,
                 J_RATE,
                 rx_tot );
 
-      // "/usr/bin/programa-nome --any_parameters"
-      size_t len_full_name = strlen ( process->name );
-
       // "/usr/bin/programa-nome"
       size_t len_path_name = strlen_space ( process->name );
 
@@ -404,22 +432,21 @@ show_process ( const struct processes *processes,
         {
           if ( j > len_name && j < len_path_name )
             // destaca somente o nome do programa
-            waddch ( pad, process->name[j] | co->color_scheme[NAME_PROG_BOLD] );
+            waddch ( pad, process->name[j] | color_scheme[NAME_PROG_BOLD] );
           else
             // pinta todo o caminho do programa e parametros
-            waddch ( pad, process->name[j] | co->color_scheme[NAME_PROG] );
+            waddch ( pad, process->name[j] | color_scheme[NAME_PROG] );
         }
 
       waddch ( pad, '\n' );
 
       // option -c and process with traffic at the moment
-      if ( co->view_conections &
+      if ( co->view_conections &&
            ( process->net_stat.avg_Bps_rx || process->net_stat.avg_Bps_tx ) )
-
         show_conections ( process, co );
     }
 
-  // clear lines begin cursor end screen, replace wclear()
+  // clear lines begin cursor end screen, "replace" wclear()
   wclrtobot ( pad );
 
   // paint item selected
@@ -432,28 +459,34 @@ show_process ( const struct processes *processes,
       mvwinchnstr ( pad, selected, 0, line_original, cur_cols );
 
       // (re)pinta item selecionado
-      paint_selected ( co );
+      paint_selected ();
     }
 
-  // wresize(pad, LINES, COLS);
+  // wresize(pad, tot_rows, tot_cols);
   // update line header
-  pnoutrefresh (
-          pad, LINE_START, scroll_x, LINE_START, 0, LINE_START, COLS - 1 );
+  // pnoutrefresh (
+  //         pad, LINE_START, scroll_x, LINE_START, 0, LINE_START, COLS - 1 );
+
+  show_header ( co );
+
+  // pnoutrefresh (
+  //         pad, LINE_START, scroll_x, LINE_START, 0, LINE_START, COLS - 1 );
 
   pnoutrefresh (
           pad, scroll_y, scroll_x, LINE_START + 1, 0, LINES - 1, COLS - 1 );
 
-  show_resume ( co );
-
-  // depois de todas as janelas atualizadas, imprime todas uma unica vez
+  // full refresh
   doupdate ();
 }
 
 // handle input of user while program is running
 int
-running_input ( const struct config_op *co )
+tui_handle_input ( const struct config_op *co )
 {
   int ch;
+
+  if ( !pad )
+    return P_CONTINE;
 
   while ( ( ch = wgetch ( pad ) ) != ERR )
     {
@@ -461,60 +494,69 @@ running_input ( const struct config_op *co )
         {
           // scroll horizontal
           case KEY_RIGHT:
-            if ( scroll_x + 5 < cur_cols - COLS )
+            for ( int i = 5; i >= 0; i-- )
               {
-                scroll_x = ( scroll_x + 5 <= cur_cols - COLS )
-                                   ? scroll_x + 5
-                                   : cur_cols - COLS;
+                if ( i == 0 )
+                  {
+                    beep ();
+                    break;
+                  }
+                else if ( scroll_x + i <= cur_cols - COLS )
+                  {
+                    scroll_x += i;
 
-                // update header
-                pnoutrefresh ( pad,
-                               LINE_START,
-                               scroll_x,
-                               LINE_START,
-                               0,
-                               LINE_START,
-                               COLS - 1 );
+                    pnoutrefresh ( pad,
+                                   LINE_START,
+                                   scroll_x,
+                                   LINE_START,
+                                   0,
+                                   LINE_START,
+                                   COLS - 1 );
 
-                pnoutrefresh ( pad,
-                               scroll_y,
-                               scroll_x,
-                               LINE_START + 1,
-                               0,
-                               LINES - 1,
-                               COLS - 1 );
-                doupdate ();
+                    pnoutrefresh ( pad,
+                                   scroll_y,
+                                   scroll_x,
+                                   LINE_START + 1,
+                                   0,
+                                   LINES - 1,
+                                   COLS - 1 );
+                    doupdate ();
+                    break;
+                  }
               }
-            else
-              beep ();
-
             break;
           case KEY_LEFT:
-            if ( scroll_x > 0 )
+            for ( int i = 5; i >= 0; i-- )
               {
-                scroll_x = ( scroll_x - 5 >= 0 ) ? scroll_x - 5 : 0;
+                if ( i == 0 )
+                  {
+                    beep ();
+                    break;
+                  }
+                else if ( scroll_x - i >= 0 )
+                  {
+                    scroll_x -= i;
 
-                // update header
-                pnoutrefresh ( pad,
-                               LINE_START,
-                               scroll_x,
-                               LINE_START,
-                               0,
-                               LINE_START,
-                               COLS - 1 );
+                    // update header
+                    pnoutrefresh ( pad,
+                                   LINE_START,
+                                   scroll_x,
+                                   LINE_START,
+                                   0,
+                                   LINE_START,
+                                   COLS - 1 );
 
-                pnoutrefresh ( pad,
-                               scroll_y,
-                               scroll_x,
-                               LINE_START + 1,
-                               0,
-                               LINES - 1,
-                               COLS - 1 );
-                doupdate ();
+                    pnoutrefresh ( pad,
+                                   scroll_y,
+                                   scroll_x,
+                                   LINE_START + 1,
+                                   0,
+                                   LINES - 1,
+                                   COLS - 1 );
+                    doupdate ();
+                    break;
+                  }
               }
-            else
-              beep ();
-
             break;
           case KEY_DOWN:
             if ( ++selected <= tot_rows )
@@ -530,9 +572,8 @@ running_input ( const struct config_op *co )
                 mvwinchnstr ( pad, selected, 0, line_original, cur_cols );
 
                 // pinta a linha selecionada
-                paint_selected ( co );
+                paint_selected ();
 
-                // atualiza tela
                 prefresh ( pad,
                            scroll_y,
                            scroll_x,
@@ -561,9 +602,8 @@ running_input ( const struct config_op *co )
                 // pintada)
                 mvwinchnstr ( pad, selected, 0, line_original, cur_cols );
 
-                paint_selected ( co );
+                paint_selected ();
 
-                // atualiza tela
                 prefresh ( pad,
                            scroll_y,
                            scroll_x,
@@ -587,10 +627,17 @@ running_input ( const struct config_op *co )
             break;
           case 'q':
           case 'Q':
-            // exit ( EXIT_SUCCESS );
             return P_EXIT;
         }
     }
 
   return P_CONTINE;
+}
+
+void
+tui_free ( void )
+{
+  delwin ( pad );
+  curs_set ( 1 );  // restore cursor
+  endwin ();
 }

@@ -24,31 +24,21 @@
 #include "processes.h"  // type process_t, MAX_NAME
 #include "config.h"
 
-// tamanho fixo de caracteres até a coluna program
-// considerando o tamanho maximo para a coluna PID
-#define PROGRAM 81
-
-// FIXME: check this values
-#define START_NAME_PROGRAM 64
-#define MIN_LINES_PAD 50
-
-#define MIN_COLS_PAD PROGRAM + START_NAME_PROGRAM
-
-// exibe os processos e suas estatisticas de rede
-void
-show_process ( const struct processes *processes,
-               const struct config_op *restrict co );
-
-// inicia a primeira vez a interface do usuario
-void
-start_ui ( const struct config_op *co );
-
-// return of running_input
+// return of tui_handle_input
 #define P_EXIT 1
 #define P_CONTINE 0
 
+void
+tui_init ( const struct config_op *co );
+
+void
+tui_show ( const struct processes *processes, const struct config_op *co );
+
 // handle input of user while program is running
 int
-running_input ( const struct config_op *co );
+tui_handle_input ( const struct config_op *co );
+
+void
+tui_free ( void );
 
 #endif  // SHOW_H

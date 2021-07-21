@@ -34,7 +34,7 @@ enum cols_sort
   RATE_RX,
   TOT_TX,
   TOT_RX,
-  COLS_TO_SORT  // total de elementos no enum
+  COLS_TO_SORT  // total elements in enum
 };
 
 void
