@@ -22,7 +22,7 @@
 #define SORT_H
 
 #include <stdlib.h>
-#include "process.h"
+#include "processes.h"
 #include "conection.h"
 
 enum cols_sort

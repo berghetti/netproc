@@ -31,7 +31,7 @@
 #include "config.h"
 #include "packet.h"
 #include "rate.h"
-#include "process.h"
+#include "processes.h"
 #include "sock.h"
 #include "ring.h"
 #include "filter.h"
@@ -176,7 +176,7 @@ main ( int argc, char **argv )
     }
 
   struct processes processes = { .proc = NULL };
-  if ( !get_process_active_con2 ( &processes, co ) )
+  if ( !processes_get ( &processes, co ) )
     {
       close_socket ( sock );
       free_log ( log_file, NULL, 0 );
@@ -269,7 +269,7 @@ main ( int argc, char **argv )
 
           TIC_TAC ( co->tic_tac );
 
-          if ( fail_process_pkt && !get_process_active_con2 ( &processes, co ) )
+          if ( fail_process_pkt && !processes_get ( &processes, co ) )
             goto EXIT;
         }
 

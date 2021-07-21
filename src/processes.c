@@ -30,7 +30,7 @@
 
 #include "hashtable.h"
 #include "full_read.h"
-#include "process.h"  // process_t
+#include "processes.h"  // process_t
 #include "config.h"
 #include "m_error.h"  // ERROR_DEBUG
 
@@ -197,7 +197,7 @@ processes_init ( void )
  return total process with conection active or -1 on failure
 */
 int
-get_process_active_con2 ( struct processes *procs, struct config_op *co )
+processes_get ( struct processes *procs, struct config_op *co )
 {
   uint32_t *pids = NULL;
   int total_process = get_numeric_directory ( &pids, "/proc/" );

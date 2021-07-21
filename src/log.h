@@ -23,7 +23,7 @@
 
 #include <stdbool.h>
 
-#include "process.h"
+#include "processes.h"
 #include "rate.h"
 
 typedef struct log_processes

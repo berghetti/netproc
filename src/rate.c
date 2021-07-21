@@ -21,7 +21,7 @@
 #include <stdlib.h>
 
 #include "human_readable.h"
-#include "process.h"
+#include "processes.h"
 #include "round.h"
 #include "rate.h"
 

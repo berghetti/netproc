@@ -25,7 +25,7 @@
 
 #include "config.h"
 #include "packet.h"
-#include "process.h"
+#include "processes.h"
 
 // incremento circular de 0 até LEN_BUF_CIRC_RATE - 1
 #define UPDATE_ID_BUFF( id ) ( ( id ) = ( ( id ) + 1 ) % LEN_BUF_CIRC_RATE )

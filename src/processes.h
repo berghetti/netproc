@@ -54,7 +54,7 @@ get_process_active_con ( process_t **procs,
                          struct config_op *co );
 
 int
-get_process_active_con2 ( struct processes *procs, struct config_op *co );
+processes_get ( struct processes *procs, struct config_op *co );
 
 void
 processes_free ( struct processes *procs );

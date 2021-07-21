@@ -24,7 +24,7 @@
 #include <stdbool.h>
 
 #include "config.h"
-#include "process.h"
+#include "processes.h"
 
 // encontra o processo ao qual o fluxo de dados pertence
 // e adiciona/incrementa estatisticas de pacotes por segundo

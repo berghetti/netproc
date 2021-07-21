@@ -21,7 +21,7 @@
 #ifndef SHOW_H
 #define SHOW_H
 
-#include "process.h"  // type process_t, MAX_NAME
+#include "processes.h"  // type process_t, MAX_NAME
 #include "config.h"
 
 // tamanho fixo de caracteres até a coluna program
