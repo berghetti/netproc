@@ -91,7 +91,7 @@ update_log_process ( process_t **new_proc,
   for ( size_t i = 0; i < len_proc; i++ )
     {
       size_t len_name = strlen ( new_proc[i]->name );
-      bool ocate = false;
+      bool locate = false;
 
       if ( *len_buff == max_len_buff )
         {
@@ -104,7 +104,7 @@ update_log_process ( process_t **new_proc,
               free ( *buff );
               return false;
             }
-            
+
           *buff = tmp;
         }
 
