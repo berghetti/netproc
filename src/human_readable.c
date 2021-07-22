@@ -21,7 +21,7 @@
 // based in source code of program wget
 // https://github.com/mirror/wget/blob/master/src/utils.c
 
-#include <stdio.h>    // snprintf()
+#include <stdio.h>  // snprintf()
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -81,11 +81,7 @@ human_readable ( char *buffer,
                  const uint64_t bytes,
                  int mode )
 {
-  const char *const *sufix;
-  if ( mode == RATE )
-    sufix = sufix_rate;
-  else
-    sufix = sufix_total;
+  const char *const *sufix = ( mode == RATE ) ? sufix_rate : sufix_total;
 
   ssize_t sn;
 
@@ -118,8 +114,7 @@ human_readable ( char *buffer,
       /* At each iteration N is greater than the *subsequent* power.
          That way N/1024.0 produces a decimal number in the units of
          *this* power.  */
-      if ( ( val = bytest * ibase ) < base ||
-           i == ( TOT_ELEMENTS_SUFIX - 1 ) )
+      if ( ( val = bytest * ibase ) < base || i == ( TOT_ELEMENTS_SUFIX - 1 ) )
         {
           // coloca casas decimais se o valor for menor que ACCURACY
           // e se não for um valor inteiro

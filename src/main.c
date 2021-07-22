@@ -328,7 +328,7 @@ free_resources ( struct resources_to_free *res )
     free_log ( res->log_file, res->buff_log, res->len_log );
 
   processes_free ( res->procs );
-  
+
   resolver_clean ();
 }
 
