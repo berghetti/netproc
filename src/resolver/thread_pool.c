@@ -151,29 +151,6 @@ th_worker ( __attribute__ ( ( unused ) ) void *args )
 }
 
 int
-add_task ( void ( *func ) ( void * ), void *args )
-{
-  struct task *task = create_task ( func, args );
-  if ( !task )
-    return -1;
-
-  // push job in queue
-  pthread_mutex_lock ( &mutex_queue );
-  if ( !enqueue ( &queue_task, task ) )
-    {
-      free_task ( task );
-      pthread_mutex_unlock ( &mutex_queue );
-      return -1;
-    }
-
-  // wake up a thread to work
-  bsem_post ( &bsem_jobs );
-  pthread_mutex_unlock ( &mutex_queue );
-
-  return 0;
-}
-
-int
 thpool_init ( unsigned int num_workers )
 {
   if ( !num_workers && !( num_workers = get_count_cpu () - 1 ) )
@@ -197,12 +174,36 @@ thpool_init ( unsigned int num_workers )
   return 1;
 }
 
+int
+add_task ( void ( *func ) ( void * ), void *args )
+{
+  struct task *task = create_task ( func, args );
+  if ( !task )
+    return -1;
+
+  // push job in queue
+  pthread_mutex_lock ( &mutex_queue );
+  if ( !enqueue ( &queue_task, task ) )
+    {
+      free_task ( task );
+      pthread_mutex_unlock ( &mutex_queue );
+      return -1;
+    }
+
+  // wake up a thread to work
+  bsem_post ( &bsem_jobs );
+  pthread_mutex_unlock ( &mutex_queue );
+
+  return 0;
+}
+
 void
 thpool_free ( void )
 {
   worker_stop = true;
 
-  while ( workers_alive )
+  int wait = DEFAULT_NUM_WORKERS;
+  while ( workers_alive && wait-- )
     {
       bsem_post_all ( &bsem_jobs );
       bsem_wait ( &bsem_exit );
