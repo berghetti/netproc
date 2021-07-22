@@ -21,7 +21,7 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-#include <stdint.h>  // types uint*_t
+#include <stdint.h>           // types uint*_t
 #include <sys/socket.h>       // setsockopt
 #include <linux/if_packet.h>  // struct tpacket3_hdr
 

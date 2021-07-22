@@ -59,7 +59,7 @@ struct net_stat
   nstats_t tot_Bps_rx;  // trafego total
   nstats_t tot_Bps_tx;
 
-  // used by function log.c/log_to_file()
+  // used by function log.c/log_file()
   nstats_t bytes_last_sec_rx;  // total bytes in last second
   nstats_t bytes_last_sec_tx;
 };

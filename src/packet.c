@@ -234,8 +234,7 @@ END:
 // retorna 0 se não for primeiro fragmento
 // retorna -1 caso de erro, buffer cheio
 static int
-is_first_frag ( const struct iphdr *const l3,
-                const struct tcp_udp_h *const l4 )
+is_first_frag ( const struct iphdr *const l3, const struct tcp_udp_h *const l4 )
 {
   // bit não fragmente ligado, logo não pode ser um fragmento
   if ( ntohs ( l3->frag_off ) & IP_DF )

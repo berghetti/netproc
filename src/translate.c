@@ -32,8 +32,7 @@
 #define LEN_TUPLE ( ( NI_MAXHOST + NI_MAXSERV ) * 2 ) + 7 + 10
 
 char *
-translate ( const conection_t *con,
-            const struct config_op *co )
+translate ( const conection_t *con, const struct config_op *co )
 {
   // tuple ip:port <-> ip:port
   static char tuple[LEN_TUPLE];

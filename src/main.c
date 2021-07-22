@@ -66,10 +66,10 @@ static volatile sig_atomic_t prog_exit = 0;
 struct resources_to_free
 {
   struct ring *ring;
-  FILE *log_file;
-  log_processes *buff_log;
+  // FILE *log_file;
+  // log_processes *buff_log;
   struct processes *procs;
-  size_t len_log;
+  // size_t len_log;
   int sock;
 };
 
@@ -81,14 +81,6 @@ main ( int argc, char **argv )
 {
   struct packet packet = { 0 };
   struct ring ring = { 0 };
-  struct tpacket_block_desc *pbd;
-  struct tpacket3_hdr *ppd;
-  struct config_op *co;
-
-  // feature log in file
-  FILE *log_file = NULL;
-  log_processes *log_file_buffer = NULL;
-  size_t len_log_file_buffer = 0;
 
   int sock;
 
@@ -103,7 +95,7 @@ main ( int argc, char **argv )
   // needle to ncursesw
   setlocale ( LC_CTYPE, "" );
 
-  co = parse_options ( argc, argv );
+  struct config_op *co = parse_options ( argc, argv );
 
   if ( !setup_terminal () )
     {
@@ -114,7 +106,7 @@ main ( int argc, char **argv )
   if ( -1 == ( sock = socket_init ( co ) ) )
     fatal_error ( "Error create socket, is root?" );
 
-  if ( co->log && !( log_file = setup_log_file ( co ) ) )
+  if ( co->log && !log_init ( co ) )
     {
       socket_free ( sock );
       fatal_error ( "Error setup file to file" );
@@ -123,7 +115,7 @@ main ( int argc, char **argv )
   if ( !ring_init ( sock, &ring ) )
     {
       socket_free ( sock );
-      free_log ( log_file, NULL, 0 );
+      log_free ();
       fatal_error ( "Error setup ring" );
     }
 
@@ -131,7 +123,7 @@ main ( int argc, char **argv )
   if ( !set_filter ( sock, co ) )
     {
       socket_free ( sock );
-      free_log ( log_file, NULL, 0 );
+      log_free ();
       ring_free ( &ring );
       fatal_error ( "Error set filter network" );
     }
@@ -139,7 +131,7 @@ main ( int argc, char **argv )
   if ( co->translate_host && !resolver_init ( 0, 0 ) )
     {
       socket_free ( sock );
-      free_log ( log_file, NULL, 0 );
+      log_free ();
       ring_free ( &ring );
       fatal_error ( "Error init thread pool (domain)" );
     }
@@ -149,7 +141,7 @@ main ( int argc, char **argv )
   if ( !tui_init ( co ) )
     {
       socket_free ( sock );
-      free_log ( log_file, NULL, 0 );
+      log_free ();
       ring_free ( &ring );
       fatal_error ( "Error setup terminal user interface" );
     }
@@ -168,7 +160,7 @@ main ( int argc, char **argv )
   if ( !processes_init () )
     {
       socket_free ( sock );
-      free_log ( log_file, NULL, 0 );
+      log_free ();
       ring_free ( &ring );
       tui_free ();
       fatal_error ( "Error process_init" );
@@ -178,7 +170,7 @@ main ( int argc, char **argv )
   if ( !processes_get ( &processes, co ) )
     {
       socket_free ( sock );
-      free_log ( log_file, NULL, 0 );
+      log_free ();
       ring_free ( &ring );
       tui_free ();
       fatal_error ( "Error get processes" );
@@ -187,13 +179,14 @@ main ( int argc, char **argv )
   if ( -1 == ( m_timer = start_timer () ) )
     {
       socket_free ( sock );
-      free_log ( log_file, NULL, 0 );
+      log_free ();
       ring_free ( &ring );
       tui_free ();
       processes_free ( &processes );
       fatal_error ( "Error start timer" );
     }
 
+  struct tpacket_block_desc *pbd;
   pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
 
   // main loop
@@ -204,6 +197,7 @@ main ( int argc, char **argv )
 
       while ( pbd->hdr.bh1.block_status & TP_STATUS_USER )
         {
+          struct tpacket3_hdr *ppd;
           ppd = ( struct tpacket3_hdr * ) ( ( uint8_t * ) pbd +
                                             pbd->hdr.bh1.offset_to_first_pkt );
 
@@ -254,14 +248,10 @@ main ( int argc, char **argv )
 
           tui_show ( &processes, co );
 
-          // if ( co->log && !log_to_file ( processes.proc,
-          //                                processes.total,
-          //                                &log_file_buffer,
-          //                                &len_log_file_buffer,
-          //                                log_file ) )
-          // {
-          //   goto EXIT;
-          // }
+          if ( co->log && !log_file ( processes.proc, processes.total ) )
+            {
+              goto EXIT;
+            }
 
           if ( -1 == ( m_timer = restart_timer () ) )
             goto EXIT;
@@ -305,9 +295,9 @@ main ( int argc, char **argv )
 EXIT:
 
   free_resources (
-          &( struct resources_to_free ){ .log_file = log_file,
-                                         .buff_log = log_file_buffer,
-                                         .len_log = len_log_file_buffer,
+          &( struct resources_to_free ){ //.log_file = log_file,
+                                         // .buff_log = log_file_buffer,
+                                         // .len_log = len_log_file_buffer,
                                          .sock = sock,
                                          .procs = &processes,
                                          .ring = &ring } );
@@ -324,8 +314,8 @@ free_resources ( struct resources_to_free *res )
 
   ring_free ( res->ring );
 
-  if ( res->log_file )
-    free_log ( res->log_file, res->buff_log, res->len_log );
+  // if ( res->log_file )
+  log_free ();
 
   processes_free ( res->procs );
 

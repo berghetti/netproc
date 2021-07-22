@@ -27,8 +27,19 @@
 #include "human_readable.h"
 #include "m_error.h"
 
+struct log_processes
+{
+  char *name;
+  nstats_t tot_Bps_rx;  // trafego total
+  nstats_t tot_Bps_tx;
+};
+
+static FILE *file = NULL;
+static struct log_processes *buffer = NULL;
+static size_t len_buffer = 0;
+
 // qts of process firt len buffer processes to file log
-#define FIRST_LEN_LOG 12
+#define ENTRY_LEN_LOG 12
 
 // space justify column
 #define TAXA 14
@@ -49,9 +60,9 @@ alloc_processes_log ( struct log_processes **buff, const size_t len )
 }
 
 static void
-write_process_to_file ( struct log_processes *restrict processes,
+write_process_to_file ( struct log_processes *processes,
                         const size_t tot_process,
-                        FILE *restrict log_file )
+                        FILE *file )
 {
   char rx_tot[LEN_STR_TOTAL];
   char tx_tot[LEN_STR_TOTAL];
@@ -66,7 +77,7 @@ write_process_to_file ( struct log_processes *restrict processes,
 
       human_readable ( rx_tot, sizeof rx_tot, processes[i].tot_Bps_rx, TOTAL );
 
-      fprintf ( log_file,
+      fprintf ( file,
                 "%*s%*s%s\n",
                 -TAXA,
                 tx_tot,
@@ -76,23 +87,6 @@ write_process_to_file ( struct log_processes *restrict processes,
     }
 }
 
-FILE *
-setup_log_file ( const struct config_op *co )
-{
-  FILE *fd = fopen ( co->path_log, "w+" );
-  if ( !fd )
-    {
-      ERROR_DEBUG ( "Error open/create file '%s': %s",
-                    co->path_log,
-                    strerror ( errno ) );
-      return NULL;
-    }
-
-  fprintf ( fd, "%*s%*s%s\n", -TAXA, "TOTAL TX", -TAXA, "TOTAL RX", "PROGRAM" );
-
-  return fd;
-}
-
 // percorre todos os processos e busca se um processo ( ou outro com mesmo nome,
 // assim podemos ter no arquivo de log, os dados total sobre um programa,
 // não apenas sobre uma executação do programa),
@@ -100,9 +94,9 @@ setup_log_file ( const struct config_op *co )
 // se estiver present incrementa as estaticias de rede desse processo, caso não
 // adiciona ao buffer ( e consequentement sera exibido no arquivo de log)
 static bool
-update_log_process ( const process_t *new_proc,
+update_log_process ( process_t **new_proc,
                      const size_t len_proc,
-                     log_processes **buff_log,
+                     struct log_processes **buff_log,
                      size_t *len_buff )
 {
   static size_t max_len_buff_log = 0;
@@ -111,19 +105,19 @@ update_log_process ( const process_t *new_proc,
 
   for ( size_t i = 0; i < len_proc; i++ )
     {
-      len_name = strlen ( new_proc[i].name );
+      len_name = strlen ( new_proc[i]->name );
       locate = false;
 
       for ( size_t j = 0; j < *len_buff; j++ )
         {
-          if ( !strncmp ( new_proc[i].name, ( *buff_log )[j].name, len_name ) )
+          if ( !strncmp ( new_proc[i]->name, ( *buff_log )[j].name, len_name ) )
             {
               locate = true;
 
               ( *buff_log )[j].tot_Bps_rx +=
-                      new_proc[i].net_stat.bytes_last_sec_rx;
+                      new_proc[i]->net_stat.bytes_last_sec_rx;
               ( *buff_log )[j].tot_Bps_tx +=
-                      new_proc[i].net_stat.bytes_last_sec_tx;
+                      new_proc[i]->net_stat.bytes_last_sec_tx;
 
               // only one process with same name exist in this buffer
               break;
@@ -136,18 +130,20 @@ update_log_process ( const process_t *new_proc,
           if ( *len_buff == max_len_buff_log || !max_len_buff_log )
             {
               if ( !max_len_buff_log )
-                max_len_buff_log = FIRST_LEN_LOG;
+                max_len_buff_log = ENTRY_LEN_LOG;
 
-              max_len_buff_log <<= 1;  // double
+              max_len_buff_log += ENTRY_LEN_LOG;
               if ( !alloc_processes_log ( buff_log, max_len_buff_log ) )
                 return false;
             }
 
           ( *buff_log )[*len_buff].name =
-                  strndup ( new_proc[i].name, len_name );
+                  strndup ( new_proc[i]->name, len_name );
 
-          ( *buff_log )[*len_buff].tot_Bps_rx = new_proc[i].net_stat.tot_Bps_rx;
-          ( *buff_log )[*len_buff].tot_Bps_tx = new_proc[i].net_stat.tot_Bps_tx;
+          ( *buff_log )[*len_buff].tot_Bps_rx =
+                  new_proc[i]->net_stat.tot_Bps_rx;
+          ( *buff_log )[*len_buff].tot_Bps_tx =
+                  new_proc[i]->net_stat.tot_Bps_tx;
           ( *len_buff )++;
         }
     }
@@ -155,35 +151,49 @@ update_log_process ( const process_t *new_proc,
   return true;
 }
 
-void
-free_log ( FILE *file, log_processes *log, size_t len )
+int
+log_init ( const struct config_op *co )
 {
-  fclose ( file );
-  log_processes *temp = log;
+  file = fopen ( co->path_log, "w+" );
 
-  if ( !log )
-    return;
+  if ( !file )
+    {
+      ERROR_DEBUG ( "Error open/create file '%s': %s",
+                    co->path_log,
+                    strerror ( errno ) );
+      return 0;
+    }
 
-  while ( len-- > 0 )
-    free ( temp++->name );
+  fprintf (
+          file, "%*s%*s%s\n", -TAXA, "TOTAL TX", -TAXA, "TOTAL RX", "PROGRAM" );
 
-  free ( log );
+  return 1;
 }
 
 bool
-log_to_file ( process_t *restrict processes,
-              const size_t tot_process,
-              log_processes **process_filtred,
-              size_t *len_buffer_log,
-              FILE *restrict log_file )
+log_file ( process_t **processes, const size_t tot_process )
 {
   if ( !update_log_process (
-               processes, tot_process, process_filtred, len_buffer_log ) )
+               processes, tot_process, &buffer, &len_buffer ) )
     return false;
 
   // set file one line below header
-  fseek ( log_file, LEN_HEADER, SEEK_SET );
-  write_process_to_file ( *process_filtred, *len_buffer_log, log_file );
+  fseek ( file, LEN_HEADER, SEEK_SET );
+  write_process_to_file ( buffer, len_buffer, file );
 
   return true;
+}
+
+void
+log_free ( void )
+{
+  fclose ( file );
+
+  if ( !buffer )
+    return;
+
+  for ( size_t i = 0; i < len_buffer; i++ )
+    free ( buffer[i].name );
+
+  free ( buffer );
 }
