@@ -111,18 +111,18 @@ main ( int argc, char **argv )
       return EXIT_FAILURE;
     }
 
-  if ( -1 == ( sock = create_socket ( co ) ) )
+  if ( -1 == ( sock = socket_init ( co ) ) )
     fatal_error ( "Error create socket, is root?" );
 
   if ( co->log && !( log_file = setup_log_file ( co ) ) )
     {
-      close_socket ( sock );
+      socket_free ( sock );
       fatal_error ( "Error setup file to file" );
     }
 
-  if ( !setup_ring ( sock, &ring ) )
+  if ( !ring_init ( sock, &ring ) )
     {
-      close_socket ( sock );
+      socket_free ( sock );
       free_log ( log_file, NULL, 0 );
       fatal_error ( "Error setup ring" );
     }
@@ -130,17 +130,17 @@ main ( int argc, char **argv )
   // set filter BPF
   if ( !set_filter ( sock, co ) )
     {
-      close_socket ( sock );
+      socket_free ( sock );
       free_log ( log_file, NULL, 0 );
-      free_ring ( &ring );
+      ring_free ( &ring );
       fatal_error ( "Error set filter network" );
     }
 
   if ( co->translate_host && !resolver_init ( 0, 0 ) )
     {
-      close_socket ( sock );
+      socket_free ( sock );
       free_log ( log_file, NULL, 0 );
-      free_ring ( &ring );
+      ring_free ( &ring );
       fatal_error ( "Error init thread pool (domain)" );
     }
 
@@ -148,9 +148,9 @@ main ( int argc, char **argv )
 
   if ( !tui_init ( co ) )
     {
-      close_socket ( sock );
+      socket_free ( sock );
       free_log ( log_file, NULL, 0 );
-      free_ring ( &ring );
+      ring_free ( &ring );
       fatal_error ( "Error setup terminal user interface" );
     }
 
@@ -167,9 +167,9 @@ main ( int argc, char **argv )
 
   if ( !processes_init () )
     {
-      close_socket ( sock );
+      socket_free ( sock );
       free_log ( log_file, NULL, 0 );
-      free_ring ( &ring );
+      ring_free ( &ring );
       tui_free ();
       fatal_error ( "Error process_init" );
     }
@@ -177,18 +177,18 @@ main ( int argc, char **argv )
   struct processes processes = { .proc = NULL };
   if ( !processes_get ( &processes, co ) )
     {
-      close_socket ( sock );
+      socket_free ( sock );
       free_log ( log_file, NULL, 0 );
-      free_ring ( &ring );
+      ring_free ( &ring );
       tui_free ();
       fatal_error ( "Error get processes" );
     }
 
   if ( -1 == ( m_timer = start_timer () ) )
     {
-      close_socket ( sock );
+      socket_free ( sock );
       free_log ( log_file, NULL, 0 );
-      free_ring ( &ring );
+      ring_free ( &ring );
       tui_free ();
       processes_free ( &processes );
       fatal_error ( "Error start timer" );
@@ -320,9 +320,9 @@ free_resources ( struct resources_to_free *res )
 {
   tui_free ();
 
-  close_socket ( res->sock );
+  socket_free ( res->sock );
 
-  free_ring ( res->ring );
+  ring_free ( res->ring );
 
   if ( res->log_file )
     free_log ( res->log_file, res->buff_log, res->len_log );

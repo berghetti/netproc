@@ -41,7 +41,7 @@ static bool
 bind_interface ( int sock, const char *iface );
 
 int
-create_socket ( const struct config_op *co )
+socket_init ( const struct config_op *co )
 {
   int sock;
 
@@ -61,7 +61,7 @@ create_socket ( const struct config_op *co )
 }
 
 void
-close_socket ( int sock )
+socket_free ( int sock )
 {
   if ( sock > 0 )
     close ( sock );

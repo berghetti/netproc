@@ -31,8 +31,8 @@
 #define UPDATE_ID_BUFF( id ) ( ( id ) = ( ( id ) + 1 ) % LEN_BUF_CIRC_RATE )
 
 static bool
-conection_match_packet ( conection_t *restrict conection,
-                         const struct packet *restrict pkt )
+conection_match_packet ( conection_t *conection,
+                         const struct packet *pkt )
 {
   if ( conection->protocol != pkt->protocol )
     return false;

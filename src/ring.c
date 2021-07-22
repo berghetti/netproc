@@ -147,7 +147,7 @@ map_buff ( int sock, struct ring *ring )
 }
 
 bool
-setup_ring ( int sock, struct ring *ring )
+ring_init ( int sock, struct ring *ring )
 {
   if ( !create_ring_buff ( ring ) )
     return false;
@@ -162,7 +162,7 @@ setup_ring ( int sock, struct ring *ring )
 }
 
 void
-free_ring ( struct ring *ring )
+ring_free ( struct ring *ring )
 {
   munmap ( ring->map, ring->req.tp_block_size * ring->req.tp_block_nr );
 

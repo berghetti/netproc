@@ -33,9 +33,9 @@ struct ring
 };
 
 bool
-setup_ring ( int sock, struct ring *ring );
+ring_init ( int sock, struct ring *ring );
 
 void
-free_ring ( struct ring *ring );
+ring_free ( struct ring *ring );
 
 #endif  // RING_H

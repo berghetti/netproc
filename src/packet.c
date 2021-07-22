@@ -88,8 +88,8 @@ struct pkt_ip_fragment
 };
 
 static int
-is_first_frag ( const struct iphdr *const restrict l3,
-                const struct tcp_udp_h *const restrict l4 );
+is_first_frag ( const struct iphdr *const l3,
+                const struct tcp_udp_h *const l4 );
 
 static int
 is_frag ( const struct iphdr *const l3 );
@@ -116,7 +116,7 @@ static uint8_t count_reassemblies;
 
 // separa os dados brutos em suas camadas 2, 3 4
 int
-parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
+parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd )
 {
   int frag;
   int id_frag;
@@ -234,8 +234,8 @@ END:
 // retorna 0 se não for primeiro fragmento
 // retorna -1 caso de erro, buffer cheio
 static int
-is_first_frag ( const struct iphdr *const restrict l3,
-                const struct tcp_udp_h *const restrict l4 )
+is_first_frag ( const struct iphdr *const l3,
+                const struct tcp_udp_h *const l4 )
 {
   // bit não fragmente ligado, logo não pode ser um fragmento
   if ( ntohs ( l3->frag_off ) & IP_DF )

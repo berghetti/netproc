@@ -35,7 +35,7 @@ typedef struct hashtable_entry
   void *value;
 } hashtable_entry_t;
 
-typedef int ( *hashtable_foreach_func ) ( hashtable_t *restrict ht,
+typedef int ( *hashtable_foreach_func ) ( hashtable_t *ht,
                                           void *value,
                                           void *user_data );
 

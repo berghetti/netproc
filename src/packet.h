@@ -22,7 +22,6 @@
 #define NETWORK_H
 
 #include <stdint.h>  // types uint*_t
-// #include <sys/types.h>        // type ssize_t
 #include <sys/socket.h>       // setsockopt
 #include <linux/if_packet.h>  // struct tpacket3_hdr
 
@@ -45,6 +44,6 @@ struct packet
 
 // preenche a struct packet com os dados do pacote recebido
 int
-parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd );
+parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd );
 
 #endif  // NETWORK_H
