@@ -28,6 +28,6 @@ int
 resolver_init ( unsigned int cache_size, unsigned int num_workers );
 
 void
-resolver_clean ( void );
+resolver_free ( void );
 
 #endif  // RESOLVER_H

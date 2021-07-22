@@ -179,12 +179,17 @@ copy_ht_to_array ( hashtable_t *ht, process_t **proc )
   return pp;
 }
 
-int
+struct processes *
 processes_init ( void )
 {
   ht_process = hashtable_new ( free_process );
 
-  return ( ht_process != NULL );
+  struct processes *procs = calloc ( 1, sizeof *procs );
+
+  if ( !procs || !ht_process )
+    return NULL;
+
+  return procs;
 }
 
 /*
@@ -301,6 +306,12 @@ processes_get ( struct processes *procs, struct config_op *co )
 void
 processes_free ( struct processes *processes )
 {
-  free ( processes->proc );
-  hashtable_destroy ( ht_process );
+  if ( processes )
+    {
+      free ( processes->proc );
+      free ( processes );
+    }
+
+  if ( ht_process )
+    hashtable_destroy ( ht_process );
 }

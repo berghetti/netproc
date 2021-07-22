@@ -32,8 +32,8 @@ struct ring
   uint8_t *map;
 };
 
-bool
-ring_init ( int sock, struct ring *ring );
+struct ring *
+ring_init ( int sock );
 
 void
 ring_free ( struct ring *ring );

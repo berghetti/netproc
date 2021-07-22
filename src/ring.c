@@ -84,7 +84,9 @@ create_ring_buff ( struct ring *ring )
   frames_per_block = ring->req.tp_block_size / ring->req.tp_frame_size;
   ring->req.tp_frame_nr = ring->req.tp_block_nr * frames_per_block;
   ring->req.tp_retire_blk_tov = TIMEOUT_FRAME;
+
   ring->req.tp_feature_req_word = 0;
+  ring->req.tp_sizeof_priv = 0;
 
   return true;
 }
@@ -146,26 +148,34 @@ map_buff ( int sock, struct ring *ring )
   return true;
 }
 
-bool
-ring_init ( int sock, struct ring *ring )
+struct ring *
+ring_init ( int sock )
 {
-  if ( !create_ring_buff ( ring ) )
-    return false;
+  struct ring *ring = malloc ( sizeof *ring );
 
-  if ( !config_ring ( sock, ring, TPACKET_V3 ) )
-    return false;
+  if ( ring )
+    {
+      if ( !create_ring_buff ( ring ) )
+        return NULL;
 
-  if ( !map_buff ( sock, ring ) )
-    return false;
+      if ( !config_ring ( sock, ring, TPACKET_V3 ) )
+        return NULL;
 
-  return true;
+      if ( !map_buff ( sock, ring ) )
+        return NULL;
+    }
+
+  return ring;
 }
 
 void
 ring_free ( struct ring *ring )
 {
-  munmap ( ring->map, ring->req.tp_block_size * ring->req.tp_block_nr );
+  if ( ring )
+    {
+      munmap ( ring->map, ring->req.tp_block_size * ring->req.tp_block_nr );
+      free ( ring->rd );
+    }
 
-  if ( ring->rd )
-    free ( ring->rd );
+  free ( ring );
 }

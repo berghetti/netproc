@@ -635,7 +635,9 @@ tui_handle_input ( const struct config_op *co )
 void
 tui_free ( void )
 {
-  delwin ( pad );
+  if ( pad )
+    delwin ( pad );
+
   curs_set ( 1 );  // restore cursor
   endwin ();
 }

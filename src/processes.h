@@ -43,7 +43,7 @@ struct processes
   size_t total;
 };
 
-int
+struct processes *
 processes_init ( void );
 
 int

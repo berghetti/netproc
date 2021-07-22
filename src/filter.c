@@ -29,7 +29,7 @@
 #define ELEMENTS_ARRAY( x ) ( sizeof ( x ) / sizeof ( x[0] ) )
 
 bool
-set_filter ( int sock, const struct config_op *co )
+filter_set ( int sock, const struct config_op *co )
 {
   // pass only tcp or udp, block net address 127.*
   // suport interface ethernet and tun

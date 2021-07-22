@@ -18,16 +18,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <arpa/inet.h>  // htons
-// #include <linux/if_ether.h>   // struct ethhdr
+#include <arpa/inet.h>        // htons
 #include <linux/if_packet.h>  // struct sockaddr_ll
 #include <linux/ip.h>         // struct iphdr
 #include <stdbool.h>          // boolean type
 #include <sys/socket.h>       // setsockopt
 
-#include <stdio.h>  // provisório
-
-#include "m_error.h"
 #include "packet.h"
 #include "timer.h"
 
@@ -247,12 +243,6 @@ is_first_frag ( const struct iphdr *const l3, const struct tcp_udp_h *const l4 )
     {
       if ( ++count_reassemblies > MAX_REASSEMBLIES )
         {
-#ifndef NDEBUG
-          error ( "Maximum number of %d fragmented packets reached, "
-                  "packets surpluses are not calculated.",
-                  MAX_REASSEMBLIES );
-#endif
-
           count_reassemblies = MAX_REASSEMBLIES;
           return -1;
         }
@@ -302,12 +292,6 @@ is_frag ( const struct iphdr *const l3 )
               // se o total de fragmentos de um pacote for atingido
               if ( ++pkt_ip_frag[i].c_frag > MAX_FRAGMENTS )
                 {
-#ifndef NDEBUG
-                  error ( "Maximum number of %d fragments in a "
-                          "package reached",
-                          MAX_FRAGMENTS );
-#endif
-
                   pkt_ip_frag[i].c_frag = MAX_FRAGMENTS;
                   return ER_MAX_FRAGMENTS;
                 }

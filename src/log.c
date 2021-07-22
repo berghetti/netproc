@@ -173,8 +173,7 @@ log_init ( const struct config_op *co )
 bool
 log_file ( process_t **processes, const size_t tot_process )
 {
-  if ( !update_log_process (
-               processes, tot_process, &buffer, &len_buffer ) )
+  if ( !update_log_process ( processes, tot_process, &buffer, &len_buffer ) )
     return false;
 
   // set file one line below header
@@ -187,13 +186,14 @@ log_file ( process_t **processes, const size_t tot_process )
 void
 log_free ( void )
 {
-  fclose ( file );
+  if ( file )
+    fclose ( file );
 
-  if ( !buffer )
-    return;
+  if ( buffer )
+    {
+      for ( size_t i = 0; i < len_buffer; i++ )
+        free ( buffer[i].name );
 
-  for ( size_t i = 0; i < len_buffer; i++ )
-    free ( buffer[i].name );
-
-  free ( buffer );
+      free ( buffer );
+    }
 }

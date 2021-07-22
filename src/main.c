@@ -27,7 +27,6 @@
 #include <poll.h>    // poll
 #include <locale.h>
 
-#include "terminal.h"
 #include "config.h"
 #include "packet.h"
 #include "rate.h"
@@ -52,98 +51,85 @@
 // intervalo de atualização do programa, não alterar
 #define T_REFRESH 1
 
-// 1 segundo = 1000 milisegundos
 #define TIMEOUT_POLL 1000
 
 static void
-sig_handler ( int );
+config_sig_handler ( void );
 
 // handled by function sig_handler
 // if != 0 program exit
 static volatile sig_atomic_t prog_exit = 0;
 
-// all resources that needed free on program exit
-struct resources_to_free
-{
-  struct ring *ring;
-  // FILE *log_file;
-  // log_processes *buff_log;
-  struct processes *procs;
-  // size_t len_log;
-  int sock;
-};
-
-static void
-free_resources ( struct resources_to_free * );
-
 int
 main ( int argc, char **argv )
 {
-  struct packet packet = { 0 };
-  struct ring ring = { 0 };
+  setlocale ( LC_CTYPE, "" );  // needle to ncursesw
 
-  int sock;
-
-  bool packtes_reads;
-  bool fail_process_pkt;
-  int block_num = 0;
-  // int tot_blocks = 64; == ring.req.tp_block_nr
-  int rp;
-
-  double m_timer;
-
-  // needle to ncursesw
-  setlocale ( LC_CTYPE, "" );
+  struct ring *ring = NULL;
+  struct processes *processes = NULL;
 
   struct config_op *co = parse_options ( argc, argv );
 
-  if ( !setup_terminal () )
+  int sock = socket_init ( co );
+  if ( sock == -1 )
     {
-      fprintf ( stderr, "Error setup terminal\n" );
-      return EXIT_FAILURE;
+      fatal_error ( "Error create socket, is root?" );
+      goto EXIT;
     }
 
-  if ( -1 == ( sock = socket_init ( co ) ) )
-    fatal_error ( "Error create socket, is root?" );
+  ring = ring_init ( sock );
+  if ( !ring )
+    {
+      fatal_error ( "Error ring_init" );
+      goto EXIT;
+    }
+
+  // filter BPF
+  if ( !filter_set ( sock, co ) )
+    {
+      fatal_error ( "Error set filter network" );
+      goto EXIT;
+    }
 
   if ( co->log && !log_init ( co ) )
     {
-      socket_free ( sock );
-      fatal_error ( "Error setup file to file" );
+      fatal_error ( "Error log_init" );
+      goto EXIT;
     }
 
-  if ( !ring_init ( sock, &ring ) )
+  processes = processes_init ();
+  if ( !processes )
     {
-      socket_free ( sock );
-      log_free ();
-      fatal_error ( "Error setup ring" );
-    }
-
-  // set filter BPF
-  if ( !set_filter ( sock, co ) )
-    {
-      socket_free ( sock );
-      log_free ();
-      ring_free ( &ring );
-      fatal_error ( "Error set filter network" );
+      fatal_error ( "Error process_init" );
+      goto EXIT;
     }
 
   if ( co->translate_host && !resolver_init ( 0, 0 ) )
     {
-      socket_free ( sock );
-      log_free ();
-      ring_free ( &ring );
-      fatal_error ( "Error init thread pool (domain)" );
+      fatal_error ( "Error resolver_init" );
+      goto EXIT;
     }
 
   define_sufix ( co );
-
   if ( !tui_init ( co ) )
     {
-      socket_free ( sock );
-      log_free ();
-      ring_free ( &ring );
       fatal_error ( "Error setup terminal user interface" );
+      goto EXIT;
+    }
+
+  config_sig_handler ();
+
+  double m_timer;
+  if ( -1 == ( m_timer = start_timer () ) )
+    {
+      fatal_error ( "Error start timer" );
+      goto EXIT;
+    }
+
+  if ( !processes_get ( processes, co ) )
+    {
+      fatal_error ( "Error get processes" );
+      goto EXIT;
     }
 
   const nfds_t nfds = 2;
@@ -151,49 +137,16 @@ main ( int argc, char **argv )
           { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 },
           { .fd = sock, .events = POLLIN | POLLPRI, .revents = 0 } };
 
-  struct sigaction sigact = { .sa_handler = sig_handler };
-  sigemptyset ( &sigact.sa_mask );
-
-  sigaction ( SIGINT, &sigact, NULL );
-  sigaction ( SIGTERM, &sigact, NULL );
-
-  if ( !processes_init () )
-    {
-      socket_free ( sock );
-      log_free ();
-      ring_free ( &ring );
-      tui_free ();
-      fatal_error ( "Error process_init" );
-    }
-
-  struct processes processes = { .proc = NULL };
-  if ( !processes_get ( &processes, co ) )
-    {
-      socket_free ( sock );
-      log_free ();
-      ring_free ( &ring );
-      tui_free ();
-      fatal_error ( "Error get processes" );
-    }
-
-  if ( -1 == ( m_timer = start_timer () ) )
-    {
-      socket_free ( sock );
-      log_free ();
-      ring_free ( &ring );
-      tui_free ();
-      processes_free ( &processes );
-      fatal_error ( "Error start timer" );
-    }
-
+  int block_num = 0;
   struct tpacket_block_desc *pbd;
-  pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
+  pbd = ( struct tpacket_block_desc * ) ring->rd[block_num].iov_base;
 
   // main loop
   while ( !prog_exit )
     {
-      packtes_reads = false;
-      fail_process_pkt = false;
+      struct packet packet;
+      bool packtes_reads = false;
+      bool need_update_processes = false;
 
       while ( pbd->hdr.bh1.block_status & TP_STATUS_USER )
         {
@@ -217,11 +170,9 @@ main ( int argc, char **argv )
               // de um processo existente, que ainda não foi mapeado, então
               // anotamos que sera necessario atualizar a lista de processos
               // com conexões ativas.
-              if ( !add_statistics_in_processes ( &processes, &packet, co ) )
+              if ( !add_statistics_in_processes ( processes, &packet, co ) )
                 {
-                  // mark to update processes
-                  fail_process_pkt = true;
-
+                  need_update_processes = true;
                   continue;
                 }
 
@@ -232,23 +183,23 @@ main ( int argc, char **argv )
           pbd->hdr.bh1.block_status = TP_STATUS_KERNEL;
 
           // rotate block
-          block_num = ( block_num + 1 ) % ring.req.tp_block_nr;
-          pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
+          block_num = ( block_num + 1 ) % ring->req.tp_block_nr;
+          pbd = ( struct tpacket_block_desc * ) ring->rd[block_num].iov_base;
         }
 
       // necessario para zerar contadores quando não ha trafego
       packet.lenght = 0;
-      add_statistics_in_processes ( &processes, &packet, co );
+      add_statistics_in_processes ( processes, &packet, co );
 
       double temp;
       if ( ( temp = timer ( m_timer ) ) >= ( double ) T_REFRESH )
         {
           co->running += temp;
-          calc_avg_rate ( &processes, co );
+          calc_avg_rate ( processes, co );
 
-          tui_show ( &processes, co );
+          tui_show ( processes, co );
 
-          if ( co->log && !log_file ( processes.proc, processes.total ) )
+          if ( co->log && !log_file ( processes->proc, processes->total ) )
             {
               goto EXIT;
             }
@@ -258,13 +209,13 @@ main ( int argc, char **argv )
 
           TIC_TAC ( co->tic_tac );
 
-          if ( fail_process_pkt && !processes_get ( &processes, co ) )
+          if ( need_update_processes && !processes_get ( processes, co ) )
             goto EXIT;
         }
 
       if ( !packtes_reads )
         {
-          rp = poll ( poll_set, nfds, TIMEOUT_POLL );
+          int rp = poll ( poll_set, nfds, TIMEOUT_POLL );
           if ( rp == -1 )
             {
               // signal event
@@ -294,32 +245,19 @@ main ( int argc, char **argv )
 
 EXIT:
 
-  free_resources (
-          &( struct resources_to_free ){ //.log_file = log_file,
-                                         // .buff_log = log_file_buffer,
-                                         // .len_log = len_log_file_buffer,
-                                         .sock = sock,
-                                         .procs = &processes,
-                                         .ring = &ring } );
-
-  return prog_exit;
-}
-
-static void
-free_resources ( struct resources_to_free *res )
-{
   tui_free ();
 
-  socket_free ( res->sock );
+  socket_free ( sock );
 
-  ring_free ( res->ring );
+  ring_free ( ring );
 
-  // if ( res->log_file )
   log_free ();
 
-  processes_free ( res->procs );
+  processes_free ( processes );
 
-  resolver_clean ();
+  resolver_free ();
+
+  return prog_exit;
 }
 
 static void
@@ -329,4 +267,14 @@ sig_handler ( int sig )
   //  or 128+n if the command is terminated by signal n"
   // by man bash
   prog_exit = 128 + sig;
+}
+
+static void
+config_sig_handler ()
+{
+  struct sigaction sigact = { .sa_handler = sig_handler };
+  sigemptyset ( &sigact.sa_mask );
+
+  sigaction ( SIGINT, &sigact, NULL );
+  sigaction ( SIGTERM, &sigact, NULL );
 }
