@@ -34,30 +34,17 @@ struct log_processes
   nstats_t tot_Bps_tx;
 };
 
-static FILE *file = NULL;
 static struct log_processes *buffer = NULL;
 static size_t len_buffer = 0;
+static FILE *file = NULL;
 
-// qts of process firt len buffer processes to file log
-#define ENTRY_LEN_LOG 12
+#define ENTRY_SIZE 12
 
 // space justify column
 #define TAXA 14
 
 // TAXA + TAXA + PROGRAM + '\n'
 #define LEN_HEADER TAXA * 2 + 7 + 1
-
-static void *
-alloc_processes_log ( struct log_processes **buff, const size_t len )
-{
-  if ( !( *buff = realloc ( *buff, len * sizeof ( **buff ) ) ) )
-    {
-      ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-      return NULL;
-    }
-
-  return *buff;
-}
 
 static void
 write_process_to_file ( struct log_processes *processes,
@@ -96,54 +83,55 @@ write_process_to_file ( struct log_processes *processes,
 static bool
 update_log_process ( process_t **new_proc,
                      const size_t len_proc,
-                     struct log_processes **buff_log,
+                     struct log_processes **buff,
                      size_t *len_buff )
 {
-  static size_t max_len_buff_log = 0;
-  size_t len_name;
-  bool locate;
+  static size_t max_len_buff = 0;
 
   for ( size_t i = 0; i < len_proc; i++ )
     {
-      len_name = strlen ( new_proc[i]->name );
-      locate = false;
+      size_t len_name = strlen ( new_proc[i]->name );
+      bool ocate = false;
 
+      if ( *len_buff == max_len_buff )
+        {
+          max_len_buff += ENTRY_SIZE;
+
+          void *tmp = realloc ( *buff, max_len_buff * sizeof ( **buff ) );
+          if ( !tmp )
+            {
+              ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
+              free ( *buff );
+              return false;
+            }
+            
+          *buff = tmp;
+        }
+
+      struct log_processes *log;
       for ( size_t j = 0; j < *len_buff; j++ )
         {
-          if ( !strncmp ( new_proc[i]->name, ( *buff_log )[j].name, len_name ) )
-            {
-              locate = true;
+          log = ( *buff ) + j;
 
-              ( *buff_log )[j].tot_Bps_rx +=
-                      new_proc[i]->net_stat.bytes_last_sec_rx;
-              ( *buff_log )[j].tot_Bps_tx +=
-                      new_proc[i]->net_stat.bytes_last_sec_tx;
+          if ( strncmp ( new_proc[i]->name, log->name, len_name ) )
+            continue;
 
-              // only one process with same name exist in this buffer
-              break;
-            }
+          locate = true;
+          log->tot_Bps_rx += new_proc[i]->net_stat.bytes_last_sec_rx;
+          log->tot_Bps_tx += new_proc[i]->net_stat.bytes_last_sec_tx;
+
+          // only one process with same name exist in this buffer
+          break;
         }
 
       // add new process in buffer
       if ( !locate )
         {
-          if ( *len_buff == max_len_buff_log || !max_len_buff_log )
-            {
-              if ( !max_len_buff_log )
-                max_len_buff_log = ENTRY_LEN_LOG;
+          log = ( *buff ) + ( *len_buff );
 
-              max_len_buff_log += ENTRY_LEN_LOG;
-              if ( !alloc_processes_log ( buff_log, max_len_buff_log ) )
-                return false;
-            }
-
-          ( *buff_log )[*len_buff].name =
-                  strndup ( new_proc[i]->name, len_name );
-
-          ( *buff_log )[*len_buff].tot_Bps_rx =
-                  new_proc[i]->net_stat.tot_Bps_rx;
-          ( *buff_log )[*len_buff].tot_Bps_tx =
-                  new_proc[i]->net_stat.tot_Bps_tx;
+          log->name = strndup ( new_proc[i]->name, len_name );
+          log->tot_Bps_rx = new_proc[i]->net_stat.tot_Bps_rx;
+          log->tot_Bps_tx = new_proc[i]->net_stat.tot_Bps_tx;
           ( *len_buff )++;
         }
     }
