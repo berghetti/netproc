@@ -25,6 +25,8 @@
 #include <stdint.h>   // uint*_t type
 #include <stdlib.h>   // size_t type
 
+#include "config.h"
+
 // mode human readable define sufix utilized
 // RATE sufix/s
 // TOTAL sufix
@@ -33,6 +35,9 @@ enum mode
   RATE = 1,
   TOTAL
 };
+
+void
+define_sufix ( const struct config_op *co );
 
 bool
 human_readable ( char *buffer,

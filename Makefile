@@ -28,14 +28,14 @@ DOCDIR=./doc
 
 CC=gcc
 CPPFLAGS=
-CFLAGS=
+CFLAGS=-Wall -Wextra -pedantic
 
 # environment var
 ifdef DEBUG
-	CFLAGS+=-Wall -Wextra -pedantic -O0 -ggdb
+	CFLAGS+= -O0 -ggdb
 else
 	CPPFLAGS=-D NDEBUG
-	CFLAGS+= -O2 -march=native -Wall -Wextra
+	CFLAGS+= -O2 -march=native
 endif
 
 LDLIBS=-lncursesw -lpthread

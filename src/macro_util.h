@@ -24,7 +24,7 @@
 #define MAX( a, b ) ( ( a ) > ( b ) ? ( a ) : ( b ) )
 
 #ifdef __GNUC__
-#define UNUSED( x ) __attribute__ ( ( __unused__ ) ) ( x )
+#define UNUSED( x ) __attribute__ ( ( __unused__ ) ) x
 #else
 #define UNUSED( x )
 #endif

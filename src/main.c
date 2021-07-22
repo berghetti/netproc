@@ -36,7 +36,7 @@
 #include "ring.h"
 #include "filter.h"
 #include "statistics.h"
-#include "sufix.h"
+#include "human_readable.h"
 #include "timer.h"
 #include "tui.h"
 #include "log.h"
@@ -170,6 +170,7 @@ main ( int argc, char **argv )
       close_socket ( sock );
       free_log ( log_file, NULL, 0 );
       free_ring ( &ring );
+      tui_free ();
       fatal_error ( "Error process_init" );
     }
 
@@ -327,7 +328,7 @@ free_resources ( struct resources_to_free *res )
     free_log ( res->log_file, res->buff_log, res->len_log );
 
   processes_free ( res->procs );
-
+  
   resolver_clean ();
 }
 
