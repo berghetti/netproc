@@ -28,7 +28,7 @@
 #define P_EXIT 1
 #define P_CONTINE 0
 
-void
+int
 tui_init ( const struct config_op *co );
 
 void

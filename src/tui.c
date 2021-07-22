@@ -208,12 +208,13 @@ static WINDOW *
 create_pad ( const int l, const int c )
 {
   WINDOW *p = newpad ( l, c );
-  if ( !p )
-    ERROR_DEBUG ( "%s", strerror ( errno ) );
 
-  nodelay ( p, TRUE );  // no gelay getch()
-  keypad ( p, TRUE );   // get arrow key
-  curs_set ( 0 );       // cursor invisible
+  if ( p )
+    {
+      nodelay ( p, TRUE );  // no gelay getch()
+      keypad ( p, TRUE );   // get arrow key
+      curs_set ( 0 );       // cursor invisible
+    }
 
   return p;
 }
@@ -336,21 +337,26 @@ set_lines_cols ( void )
   cur_lines = MAX ( LINES, MIN_LINES_PAD );
 }
 
-void
+int
 tui_init ( const struct config_op *co )
 {
-  set_lines_cols ();
-
   initscr ();
   cbreak ();  // disable buffering to get keypad
   noecho ();
 
+  set_lines_cols ();
+
   pad = create_pad ( cur_lines, cur_cols );
+  if ( !pad )
+    return 0;
+
   color_scheme = define_color_scheme ();
   max_digits_pid = get_max_digits_pid ();
 
   show_header ( co );
   doupdate ();
+
+  return 1;
 }
 
 void

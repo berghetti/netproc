@@ -146,15 +146,13 @@ main ( int argc, char **argv )
 
   define_sufix ( co );
 
-  // if ( !setup_ui ( co ) )
-  //   {
-  //     close_socket ( sock );
-  //     free_log ( log_file, NULL, 0 );
-  //     free_ring ( &ring );
-  //     fatal_error ( "Error setup user interface" );
-  //   }
-
-  tui_init ( co );
+  if ( !tui_init ( co ) )
+    {
+      close_socket ( sock );
+      free_log ( log_file, NULL, 0 );
+      free_ring ( &ring );
+      fatal_error ( "Error setup terminal user interface" );
+    }
 
   const nfds_t nfds = 2;
   struct pollfd poll_set[2] = {
