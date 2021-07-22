@@ -51,7 +51,7 @@ static int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
 // const int *color_scheme;
 
 int *
-define_color_scheme ( void )
+get_color_scheme ( void )
 {
   if ( !has_colors () )
     return color_schemes[MONO];

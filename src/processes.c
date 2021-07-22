@@ -213,7 +213,7 @@ processes_get ( struct processes *procs, struct config_op *co )
     }
 
   conection_t *conections;
-  int total_conections = get_conections_system ( &conections, co->proto );
+  int total_conections = get_conections ( &conections, co->proto );
 
   if ( -1 == total_conections )
     {

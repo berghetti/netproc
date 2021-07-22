@@ -18,11 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>   // variable errno
 #include <signal.h>  // sigaction
-#include <stdio.h>   // putchar
-#include <stdlib.h>  // exit
-#include <string.h>  // strerror
 #include <unistd.h>  // STDIN_FILENO
 #include <poll.h>    // poll
 #include <locale.h>

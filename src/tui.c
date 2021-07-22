@@ -350,7 +350,7 @@ tui_init ( const struct config_op *co )
   if ( !pad )
     return 0;
 
-  color_scheme = define_color_scheme ();
+  color_scheme = get_color_scheme ();
   max_digits_pid = get_max_digits_pid ();
 
   show_header ( co );

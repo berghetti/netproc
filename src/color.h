@@ -44,6 +44,6 @@ enum elements_in_schemes
 };
 
 int *
-define_color_scheme ( void );
+get_color_scheme ( void );
 
 #endif  // COLOR_H

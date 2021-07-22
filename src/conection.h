@@ -42,6 +42,6 @@ typedef struct conection
 } conection_t;
 
 int
-get_conections_system ( conection_t **buffer, const int proto );
+get_conections ( conection_t **buffer, const int proto );
 
 #endif  // CONECTION_H
