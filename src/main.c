@@ -266,7 +266,7 @@ sig_handler ( int sig )
 }
 
 static void
-config_sig_handler ()
+config_sig_handler ( void )
 {
   struct sigaction sigact = { .sa_handler = sig_handler };
   sigemptyset ( &sigact.sa_mask );
