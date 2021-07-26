@@ -17,7 +17,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #ifndef HASHTABLE_H
 #define HASHTABLE_H
 
@@ -58,9 +58,12 @@ typedef int ( *hashtable_foreach_func ) ( hashtable_t *ht,
                                           void *value,
                                           void *user_data );
 
+/* all function that return a pointer, return NULL on error */
+
 hashtable_t *
 hashtable_new ( fclear clear );
 
+/* return pointer value for convenience on sucess*/
 void *
 hashtable_set ( hashtable_t *ht, const size_t key, void *value );
 

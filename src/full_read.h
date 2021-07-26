@@ -21,6 +21,9 @@
 #ifndef FULL_READ_H
 #define FULL_READ_H
 
+/* read all data from file descriptor fd and alloc memory necessary
+   return total bytes read or -1 on failure,
+   if failure is not necessary free the buffer */
 ssize_t
 full_read ( const int fd, char **buffer );
 

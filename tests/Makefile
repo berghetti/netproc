@@ -3,21 +3,28 @@
 C_SOURCE= ./unity/unity.c
 INC_DIRS= -Iunity
 
-TEST1= test_hashtable
+CFLAGS=-Wall -Wextra -pedantic -ggdb -O0
 
 INC_DIRS += -I../src
-C_SOURCE += ../src/hashtable.c
 
-.PHONY: all clean
+C_SOURCE += ../src/hashtable.c \
+ 						../src/full_read.c
 
-all: $(TEST1) clean
+TEST = exec_tests
 
-test_hashtable: $(TEST1).o
+.PHONY: all clean run
+
+all: $(TEST) run clean
+
+$(TEST): $(TEST).o
 	$(CC) $(LDFLAGS) $(C_SOURCE) $^ $(LDLIBS) -o $@
-	- ./$(TEST1)
 
 %.o : %.c
 	$(CC) $(CFLAGS) $(INC_DIRS) $(CPPFLAGS) -c $< -o $@
 
+run:
+	- ./$(TEST)
+
 clean:
-	@ rm -r *.o
+	@ find . -type f -name '*.o' -delete
+	@ find . -executable -type f -delete
