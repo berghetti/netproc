@@ -53,7 +53,6 @@ full_read ( const int fd, char **buffer )
         {
           if ( errno != EINTR )
             goto ERROR_EXIT;
-          ;
 
           continue;
         }
