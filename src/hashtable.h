@@ -63,13 +63,15 @@ typedef int ( *hashtable_foreach_func ) ( hashtable_t *ht,
 hashtable_t *
 hashtable_new ( fclear clear );
 
-/* return pointer value for convenience on sucess*/
+/* return pointer value for convenience on sucess */
 void *
 hashtable_set ( hashtable_t *ht, const size_t key, void *value );
 
 void *
 hashtable_get ( hashtable_t *ht, const size_t key );
 
+/* to each entries in hashtable, the function 'func' is called
+    and passes as argument the entrie and 'user_data' */
 int
 hashtable_foreach ( hashtable_t *ht,
                     hashtable_foreach_func func,

@@ -1,8 +1,10 @@
 
 #include "unity.h"
 
-#include "test_hashtable.c"
-#include "test_full_read.c"
+// include here test functions definition
+void test_hashtable ( void );
+void test_full_read ( void );
+
 
 void setUp(void) { /* set stuff up here */ }
 void tearDown(void) { /*  clean stuff up here */ }

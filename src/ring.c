@@ -44,11 +44,10 @@
 // quantidade de blocos
 #define N_BLOCKS 4
 
-#define FRAMES_PER_BLOCK 128  // 128 32
+#define FRAMES_PER_BLOCK 128
 // size of frame (packet), considering overhead of struct tpacket (80 bytes)
 // size small cause more usage CPU
 #define LEN_FRAME 2048
-// #define LEN_FRAME 262144
 
 // timeout in miliseconds
 // zero means that the kernel will calculate the timeout

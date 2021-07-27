@@ -18,7 +18,7 @@ cb_func( hashtable_t *ht, void *value, void *user_data )
 
 #define ARRAY_SIZE(a) ( sizeof( a ) / sizeof(a[0]) )
 
-static void
+void
 test_hashtable( void )
 {
   hashtable_t *ht = hashtable_new( NULL );
