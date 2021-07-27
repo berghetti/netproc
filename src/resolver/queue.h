@@ -26,17 +26,26 @@ struct queue_node
   struct queue_node *next;
 };
 
+typedef void (*fclear)( void *);
+
 struct queue
 {
+  fclear clear; // callback user init
   struct queue_node *head;
   struct queue_node *tail;
   unsigned int size;
 };
+
+struct queue *
+queue_new( fclear clear );
 
 struct queue_node *
 enqueue ( struct queue *queue, void *data );
 
 void *
 dequeue ( struct queue *queue );
+
+void
+queue_destroy( struct queue *queue );
 
 #endif  // QUEUE_H

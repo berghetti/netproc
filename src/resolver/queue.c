@@ -34,47 +34,71 @@ create_element ( void *data )
   return e;
 }
 
+struct queue *
+queue_new( fclear clear )
+{
+  struct queue *q = malloc( sizeof *q );
+
+  if ( q )
+    {
+      q->clear = clear;
+      q->size = 0;
+      q->head = q->tail = NULL;
+    }
+
+  return q;
+}
+
 struct queue_node *
-enqueue ( struct queue *queue, void *data )
+enqueue ( struct queue * restrict queue, void * restrict data )
 {
   struct queue_node *element = create_element ( data );
 
-  if ( element )
-    {
-      queue->size++;
+  if ( !element )
+    return NULL;
 
-      if ( !queue->head )
-        {
-          queue->head = queue->tail = element;
-        }
-      else
-        {
-          queue->tail->next = element;
-          queue->tail = element;
-        }
+  queue->size++;
+
+  if ( !queue->head )
+    {
+      queue->head = queue->tail = element;
+    }
+  else
+    {
+      queue->tail->next = element;
+      queue->tail = element;
     }
 
-  return element;
+  return data;
 }
 
 void *
 dequeue ( struct queue *queue )
 {
-  void *data;
-  struct queue_node *tmp;
-
   // empty queue
   if ( !queue->size )
     return NULL;
 
   queue->size--;
+  void *data = queue->head->data;
+  struct queue_node *tmp = queue->head->next;
 
-  data = queue->head->data;
-
-  tmp = queue->head->next;
   free ( queue->head );
-
   queue->head = tmp;
 
   return data;
+}
+
+void
+queue_destroy( struct queue *queue )
+{
+  while( queue->size )
+    {
+      void *data = dequeue( queue );
+
+      if ( queue->clear )
+        queue->clear( data );
+    }
+
+  free ( queue );
 }

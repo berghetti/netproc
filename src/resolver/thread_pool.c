@@ -55,7 +55,7 @@ static volatile unsigned int workers_alive = 0;
 static pthread_mutex_t mutex_workers_alive = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mutex_queue = PTHREAD_MUTEX_INITIALIZER;
 
-static struct queue queue_task = { 0 };
+static struct queue *queue_task;
 
 static void
 bsem_post ( struct bsem *sem )
@@ -128,8 +128,8 @@ th_worker ( __attribute__ ( ( unused ) ) void *args )
         break;
 
       pthread_mutex_lock ( &mutex_queue );
-      struct task *task = dequeue ( &queue_task );
-      if ( queue_task.size )
+      struct task *task = dequeue ( queue_task );
+      if ( queue_task->size )
         bsem_post ( &bsem_jobs );  // rearm other thread
       pthread_mutex_unlock ( &mutex_queue );
 
@@ -153,6 +153,10 @@ th_worker ( __attribute__ ( ( unused ) ) void *args )
 int
 thpool_init ( unsigned int num_workers )
 {
+  queue_task = queue_new( free );
+  if (!queue_task)
+    return 0;
+
   if ( !num_workers && !( num_workers = get_count_cpu () - 1 ) )
     num_workers = DEFAULT_NUM_WORKERS;
 
@@ -183,7 +187,7 @@ add_task ( void ( *func ) ( void * ), void *args )
 
   // push job in queue
   pthread_mutex_lock ( &mutex_queue );
-  if ( !enqueue ( &queue_task, task ) )
+  if ( !enqueue ( queue_task, task ) )
     {
       free_task ( task );
       pthread_mutex_unlock ( &mutex_queue );
@@ -210,10 +214,6 @@ thpool_free ( void )
     }
 
   pthread_mutex_lock ( &mutex_queue );
-  struct task *t;
-  while ( ( t = dequeue ( &queue_task ) ) )
-    {
-      free ( t );
-    }
+  queue_destroy( queue_task );
   pthread_mutex_unlock ( &mutex_queue );
 }
