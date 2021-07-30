@@ -138,7 +138,7 @@ free_dead_process ( hashtable_t *ht, void *value, UNUSED ( void *user_data ) )
   process_t *proc = ( process_t * ) value;
 
   if ( !proc->active )
-    free_process ( hashtable_remove ( ht, proc->pid ) );
+    free_process ( hashtable_remove ( ht, TO_PTR ( proc->pid ) ) );
 
   return 0;
 }
@@ -179,10 +179,25 @@ copy_ht_to_array ( hashtable_t *ht, process_t **proc )
   return pp;
 }
 
+static int
+cb_compare ( const void *key1, const void *key2 )
+{
+  return ( key1 == key2 );
+}
+
+// https://github.com/shemminger/iproute2/blob/main/misc/ss.c
+static hash_t
+cb_hash_func ( const void *key )
+{
+  size_t k = ( size_t ) FROM_PTR ( key );
+
+  return ( k >> 24 ) ^ ( k >> 16 ) ^ ( k >> 8 ) ^ k;
+}
+
 struct processes *
 processes_init ( void )
 {
-  ht_process = hashtable_new ( free_process );
+  ht_process = hashtable_new ( cb_hash_func, cb_compare, free_process );
 
   struct processes *procs = calloc ( 1, sizeof *procs );
 
@@ -233,7 +248,8 @@ processes_get ( struct processes *procs, struct config_op *co )
       if ( total_fd_process == -1 )
         continue;
 
-      process_t *proc = hashtable_get ( ht_process, pids[index_pid] );
+      process_t *proc =
+              hashtable_get ( ht_process, TO_PTR ( pids[index_pid] ) );
 
       if ( proc && ( proc->net_stat.tot_Bps_rx || proc->net_stat.tot_Bps_tx ) )
         {
@@ -282,7 +298,8 @@ processes_get ( struct processes *procs, struct config_op *co )
                   if ( !proc )
                     break;  // no return error, check others processes
 
-                  hashtable_set ( ht_process, pids[index_pid], proc );
+                  hashtable_set (
+                          ht_process, TO_PTR ( pids[index_pid] ), proc );
                 }
 
               add_conection_to_process ( proc, &conections[c] );

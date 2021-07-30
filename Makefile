@@ -102,26 +102,27 @@ endef
 
 
 install:
-	@$(call checkifroot)
-	@$(call checkbin, $(BINDIR)/$(PROG_NAME))
+	@ $(call checkifroot)
+	@ $(call checkbin, $(BINDIR)/$(PROG_NAME))
 	@ install -d -m 755 $(PATH_INSTALL)
 	@ install --strip $(BINDIR)/$(PROG_NAME) $(PATH_INSTALL); \
-	echo "Binary instaled in "$(PATH_INSTALL)"/"$(PROG_NAME)
-	@install -d -m 755 $(PATH_DOC_INSTALL)
-	@install -g 0 -o 0 -m 0644 $(DOCDIR)/$(PROG_NAME).8 $(PATH_DOC_INSTALL); \
-	gzip -9 $(PATH_DOC_INSTALL)/$(PROG_NAME).8 ; \
-	echo "Man page instaled in "$(PATH_DOC_INSTALL)/$(PROG_NAME)".8.gz"
+		echo "Binary instaled in "$(PATH_INSTALL)"/"$(PROG_NAME)
+	@ install -d -m 755 $(PATH_DOC_INSTALL)
+	@ install -g 0 -o 0 -m 0644 $(DOCDIR)/$(PROG_NAME).8 $(PATH_DOC_INSTALL); \
+		gzip -9 $(PATH_DOC_INSTALL)/$(PROG_NAME).8 ; \
+		echo "Man page instaled in "$(PATH_DOC_INSTALL)/$(PROG_NAME)".8.gz"
 
 uninstall:
 	@$(call checkifroot)
 	@ find $(PATH_DOC_INSTALL) $(PATH_INSTALL) -type f -name "$(PROG_NAME)*" \
-	-delete -exec echo "Removed "{} \;
+		-delete -exec echo "Removed "{} \;
 
 format:
 	@ echo "Formating code"
 	@ clang-format -i $(SRCDIR)/*.[ch]
-	@ clang-format -i $(SRCDIR)/resolver/*.[ch]
+	@ clang-format -i $(SRCDIR)/*/*.[ch]
+	@ clang-format -i tests/*.[ch]
 
 man:
 	txt2man -t $(PROG_NAME) -v "$(PROG_NAME) man" -s 8 \
-	$(DOCDIR)/$(PROG_NAME).8.txt > $(DOCDIR)/$(PROG_NAME).8
+		$(DOCDIR)/$(PROG_NAME).8.txt > $(DOCDIR)/$(PROG_NAME).8

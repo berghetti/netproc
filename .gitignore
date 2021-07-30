@@ -5,7 +5,7 @@ bin/netproc
 .gdb_history
 
 #txt
-./*.txt
+*.txt
 
 #obj
 *.o

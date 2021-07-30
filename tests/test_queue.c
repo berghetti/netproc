@@ -12,36 +12,37 @@ struct mydata
 };
 
 static struct mydata *
-create_mydata( size_t i )
+create_mydata ( size_t i )
 {
-  struct mydata *d = malloc (sizeof *d);
-  TEST_ASSERT_NOT_NULL( d );
+  struct mydata *d = malloc ( sizeof *d );
+  TEST_ASSERT_NOT_NULL ( d );
 
   d->data = i;
   return d;
 }
 
-void test_queue ( void )
+void
+test_queue ( void )
 {
-  struct queue *q = queue_new( free );
-  TEST_ASSERT_NOT_NULL( q );
+  struct queue *q = queue_new ( free );
+  TEST_ASSERT_NOT_NULL ( q );
 
-  for (int i = 0; i < TOT_DATA; i++)
+  for ( int i = 0; i < TOT_DATA; i++ )
     {
-      TEST_ASSERT_NOT_NULL ( enqueue( q, create_mydata( i ) ) );
+      TEST_ASSERT_NOT_NULL ( enqueue ( q, create_mydata ( i ) ) );
     }
 
-  TEST_ASSERT_EQUAL_INT( TOT_DATA, q->size );
+  TEST_ASSERT_EQUAL_INT ( TOT_DATA, q->size );
 
   struct mydata *d;
-  for (int i = 0; i < TOT_DATA - 5; i++)
+  for ( int i = 0; i < TOT_DATA - 5; i++ )
     {
-      TEST_ASSERT_NOT_NULL ( ( d = dequeue( q ) ) );
-      TEST_ASSERT_EQUAL_INT( i, d->data );
-      free( d );
+      TEST_ASSERT_NOT_NULL ( ( d = dequeue ( q ) ) );
+      TEST_ASSERT_EQUAL_INT ( i, d->data );
+      free ( d );
     }
 
-  TEST_ASSERT_EQUAL_INT( 5, q->size );
+  TEST_ASSERT_EQUAL_INT ( 5, q->size );
 
-  queue_destroy( q );
+  queue_destroy ( q );
 }

@@ -35,9 +35,9 @@ create_element ( void *data )
 }
 
 struct queue *
-queue_new( fclear clear )
+queue_new ( fclear clear )
 {
-  struct queue *q = malloc( sizeof *q );
+  struct queue *q = malloc ( sizeof *q );
 
   if ( q )
     {
@@ -50,7 +50,7 @@ queue_new( fclear clear )
 }
 
 struct queue_node *
-enqueue ( struct queue * restrict queue, void * restrict data )
+enqueue ( struct queue *restrict queue, void *restrict data )
 {
   struct queue_node *element = create_element ( data );
 
@@ -90,14 +90,14 @@ dequeue ( struct queue *queue )
 }
 
 void
-queue_destroy( struct queue *queue )
+queue_destroy ( struct queue *queue )
 {
-  while( queue->size )
+  while ( queue->size )
     {
-      void *data = dequeue( queue );
+      void *data = dequeue ( queue );
 
       if ( queue->clear )
-        queue->clear( data );
+        queue->clear ( data );
     }
 
   free ( queue );

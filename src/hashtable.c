@@ -57,13 +57,6 @@ round_size ( size_t s )
   return i;
 }
 
-// https://github.com/shemminger/iproute2/blob/main/misc/ss.c
-static hash_t
-hash_func ( size_t key )
-{
-  return ( key >> 24 ) ^ ( key >> 16 ) ^ ( key >> 8 ) ^ key;
-}
-
 static inline void
 hashtable_preprend ( slist_t *list, slist_item_t *item )
 {
@@ -106,15 +99,15 @@ hashtable_rehash ( hashtable_t *ht )
 }
 
 static hashtable_entry_t *
-hashtable_get_entry ( hashtable_t *ht, const size_t key )
+hashtable_get_entry ( hashtable_t *restrict ht, const void *restrict key )
 {
-  hash_t hash = hash_func ( key );
+  hash_t hash = ht->fhash ( key );
   size_t index = hash & ( ht->nbuckets - 1 );
 
   hashtable_entry_t *entry = TABLE_HEAD ( ht, index );
   while ( entry )
     {
-      if ( ( entry )->key == key )
+      if ( ht->fcompare ( entry->key, key ) )
         break;
 
       entry = ENTRY_NEXT ( entry );
@@ -124,7 +117,7 @@ hashtable_get_entry ( hashtable_t *ht, const size_t key )
 }
 
 hashtable_t *
-hashtable_new ( fclear clear )
+hashtable_new ( func_hash fhash, func_compare fcompare, func_clear fclear )
 {
   hashtable_t *ht = malloc ( sizeof *ht );
 
@@ -141,20 +134,22 @@ hashtable_new ( fclear clear )
     }
 
   ht->nentries = 0;
-  ht->clear = clear;
+  ht->fhash = fhash;
+  ht->fcompare = fcompare;
+  ht->fclear = fclear;
 
   return ht;
 }
 
 void *
-hashtable_set ( hashtable_t *restrict ht, const size_t key, void *value )
+hashtable_set ( hashtable_t *restrict ht, const void *key, void *value )
 {
   hashtable_entry_t *entry = malloc ( sizeof *entry );
   if ( !entry )
     return NULL;
 
-  entry->key_hash = hash_func ( key );
-  entry->key = key;
+  entry->key_hash = ht->fhash ( key );
+  entry->key = ( void * ) key;
   entry->value = value;
 
   ht->nentries++;
@@ -175,7 +170,7 @@ hashtable_set ( hashtable_t *restrict ht, const size_t key, void *value )
 }
 
 void *
-hashtable_get ( hashtable_t *ht, const size_t key )
+hashtable_get ( hashtable_t *restrict ht, const void *restrict key )
 {
   hashtable_entry_t *entry = hashtable_get_entry ( ht, key );
   if ( entry )
@@ -212,13 +207,13 @@ hashtable_foreach ( hashtable_t *restrict ht,
 
 // https://github.com/mkirchner/linked-list-good-taste/
 void *
-hashtable_remove ( hashtable_t *ht, const size_t key )
+hashtable_remove ( hashtable_t *ht, const void *key )
 {
-  hash_t hash = hash_func ( key );
+  hash_t hash = ht->fhash ( key );
   size_t index = hash & ( ht->nbuckets - 1 );
 
   hashtable_entry_t **entry = PP_TABLE_HEAD ( ht, index );
-  while ( *entry && ( *entry )->key != key )
+  while ( *entry && !ht->fcompare ( ( *entry )->key, key ) )
     entry = PP_ENTRY_NEXT ( *entry );
 
   if ( *entry == NULL )
@@ -240,8 +235,8 @@ hashtable_remove ( hashtable_t *ht, const size_t key )
 static inline void
 hashtable_destroy_entry ( hashtable_t *ht, hashtable_entry_t *entry )
 {
-  if ( ht->clear )
-    ht->clear ( entry->value );
+  if ( ht->fclear )
+    ht->fclear ( entry->value );
 
   free ( entry );
 }

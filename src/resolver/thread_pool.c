@@ -153,8 +153,8 @@ th_worker ( __attribute__ ( ( unused ) ) void *args )
 int
 thpool_init ( unsigned int num_workers )
 {
-  queue_task = queue_new( free );
-  if (!queue_task)
+  queue_task = queue_new ( free );
+  if ( !queue_task )
     return 0;
 
   if ( !num_workers && !( num_workers = get_count_cpu () - 1 ) )
@@ -214,6 +214,6 @@ thpool_free ( void )
     }
 
   pthread_mutex_lock ( &mutex_queue );
-  queue_destroy( queue_task );
+  queue_destroy ( queue_task );
   pthread_mutex_unlock ( &mutex_queue );
 }
