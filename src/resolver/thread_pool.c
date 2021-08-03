@@ -55,7 +55,7 @@ static volatile unsigned int workers_alive = 0;
 static pthread_mutex_t mutex_workers_alive = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mutex_queue = PTHREAD_MUTEX_INITIALIZER;
 
-static struct queue *queue_task;
+static struct queue *queue_task = NULL;
 
 static void
 bsem_post ( struct bsem *sem )
@@ -213,7 +213,10 @@ thpool_free ( void )
       bsem_wait ( &bsem_exit );
     }
 
-  pthread_mutex_lock ( &mutex_queue );
-  queue_destroy ( queue_task );
-  pthread_mutex_unlock ( &mutex_queue );
+  if ( queue_task )
+    {
+      pthread_mutex_lock ( &mutex_queue );
+      queue_destroy ( queue_task );
+      pthread_mutex_unlock ( &mutex_queue );
+    }
 }

@@ -31,8 +31,8 @@
 // (2048 * sizeof(struct host)) == ~2.31 MiB cache of domain
 #define DEFAULT_CACHE_SIZE 2048
 
-static hashtable_t *ht_hosts;
-static struct host **hosts;
+static hashtable_t *ht_hosts = NULL;
+static struct host **hosts = NULL;
 static size_t cache_size;
 
 static void
@@ -184,6 +184,8 @@ ip2domain ( struct sockaddr_storage *restrict ss,
 void
 cache_domain_free ( void )
 {
-  hashtable_destroy ( ht_hosts );
+  if ( ht_hosts )
+    hashtable_destroy ( ht_hosts );
+
   free ( hosts );
 }

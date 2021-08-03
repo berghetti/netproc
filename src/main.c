@@ -241,8 +241,6 @@ main ( int argc, char **argv )
 
 EXIT:
 
-  tui_free ();
-
   socket_free ( sock );
 
   ring_free ( ring );
@@ -252,6 +250,8 @@ EXIT:
   processes_free ( processes );
 
   resolver_free ();
+
+  tui_free ();
 
   return prog_exit;
 }

@@ -18,7 +18,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdbool.h>
 #include <stdlib.h>           // malloc
 #include <arpa/inet.h>        // htons
 #include <errno.h>            // variable errno
@@ -34,11 +33,54 @@
 #include "sock.h"
 #include "m_error.h"
 
-static bool
-socket_setnonblocking ( int sock );
+static int
+socket_setnonblocking ( int sock )
+{
+  int flag;
 
-static bool
-bind_interface ( int sock, const char *iface );
+  if ( ( flag = fcntl ( sock, F_GETFL ) ) == -1 )
+    {
+      ERROR_DEBUG ( "Cannot get socket flags: \"%s\"", strerror ( errno ) );
+      return 0;
+    }
+
+  if ( fcntl ( sock, F_SETFL, flag | O_NONBLOCK ) == -1 )
+    {
+      ERROR_DEBUG ( "Cannot set socket to non-blocking mode: \"%s\"",
+                    strerror ( errno ) );
+      return 0;
+    }
+
+  return 1;
+}
+
+static int
+bind_interface ( int sock, const char *iface )
+{
+  struct sockaddr_ll my_sock;
+  my_sock.sll_family = AF_PACKET;
+  my_sock.sll_protocol = htons ( ETH_P_ALL );
+
+  // 0 match all interfaces
+  if ( !iface )
+    my_sock.sll_ifindex = 0;
+  else
+    {
+      if ( !( my_sock.sll_ifindex = if_nametoindex ( iface ) ) )
+        {
+          ERROR_DEBUG ( "%s", strerror ( errno ) );
+          return 0;
+        }
+    }
+
+  if ( bind ( sock, ( struct sockaddr * ) &my_sock, sizeof ( my_sock ) ) == -1 )
+    {
+      ERROR_DEBUG ( "Error bind interface %s", strerror ( errno ) );
+      return 0;
+    }
+
+  return 1;
+}
 
 int
 socket_init ( const struct config_op *co )
@@ -52,12 +94,17 @@ socket_init ( const struct config_op *co )
     }
 
   if ( !socket_setnonblocking ( sock ) )
-    return -1;
+    goto ERROR_EXIT;
 
   if ( !bind_interface ( sock, co->iface ) )
-    return -1;
+    goto ERROR_EXIT;
 
   return sock;
+
+ERROR_EXIT:
+
+  close( sock );
+  return -1;
 }
 
 void
@@ -65,53 +112,4 @@ socket_free ( int sock )
 {
   if ( sock > 0 )
     close ( sock );
-}
-
-static bool
-socket_setnonblocking ( int sock )
-{
-  int flag;
-
-  if ( ( flag = fcntl ( sock, F_GETFL ) ) == -1 )
-    {
-      ERROR_DEBUG ( "Cannot get socket flags: \"%s\"", strerror ( errno ) );
-      return false;
-    }
-
-  if ( fcntl ( sock, F_SETFL, flag | O_NONBLOCK ) == -1 )
-    {
-      ERROR_DEBUG ( "Cannot set socket to non-blocking mode: \"%s\"",
-                    strerror ( errno ) );
-      return false;
-    }
-
-  return true;
-}
-
-static bool
-bind_interface ( int sock, const char *iface )
-{
-  struct sockaddr_ll my_sock = { 0 };
-  my_sock.sll_family = AF_PACKET;
-  my_sock.sll_protocol = htons ( ETH_P_ALL );
-
-  // 0 match all interfaces
-  if ( !iface )
-    my_sock.sll_ifindex = 0;
-  else
-    {
-      if ( !( my_sock.sll_ifindex = if_nametoindex ( iface ) ) )
-        {
-          ERROR_DEBUG ( "%s", strerror ( errno ) );
-          return false;
-        }
-    }
-
-  if ( bind ( sock, ( struct sockaddr * ) &my_sock, sizeof ( my_sock ) ) == -1 )
-    {
-      ERROR_DEBUG ( "Error bind interface %s", strerror ( errno ) );
-      return false;
-    }
-
-  return true;
 }
