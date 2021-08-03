@@ -187,8 +187,9 @@ ip2domain ( struct sockaddr_storage *restrict ss,
 void
 cache_domain_free ( void )
 {
-  if ( ht_hosts )
-    hashtable_destroy ( ht_hosts );
+  if ( !ht_hosts )
+    return;
 
+  hashtable_destroy ( ht_hosts );
   free ( hosts );
 }
