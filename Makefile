@@ -109,7 +109,7 @@ install:
 		echo "Binary instaled in "$(PATH_INSTALL)"/"$(PROG_NAME)
 	@ install -d -m 755 $(PATH_DOC_INSTALL)
 	@ install -g 0 -o 0 -m 0644 $(DOCDIR)/$(PROG_NAME).8 $(PATH_DOC_INSTALL); \
-		gzip -9 $(PATH_DOC_INSTALL)/$(PROG_NAME).8 ; \
+		gzip -9 -f $(PATH_DOC_INSTALL)/$(PROG_NAME).8 ; \
 		echo "Man page instaled in "$(PATH_DOC_INSTALL)/$(PROG_NAME)".8.gz"
 
 uninstall:

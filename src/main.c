@@ -242,15 +242,10 @@ main ( int argc, char **argv )
 EXIT:
 
   socket_free ( sock );
-
   ring_free ( ring );
-
   log_free ();
-
   processes_free ( processes );
-
   resolver_free ();
-
   tui_free ();
 
   return prog_exit;

@@ -327,12 +327,10 @@ processes_get ( struct processes *procs, struct config_op *co )
 void
 processes_free ( struct processes *processes )
 {
-  if ( processes )
-    {
-      free ( processes->proc );
-      free ( processes );
-    }
+  if ( !processes )
+    return;
 
-  if ( ht_process )
-    hashtable_destroy ( ht_process );
+  free ( processes->proc );
+  free ( processes );
+  hashtable_destroy ( ht_process );
 }

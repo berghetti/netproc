@@ -4,6 +4,10 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
+0.??.??
+  - invalid interface argument handling
+  - cleanup on error cases
+
 0.6.0 - 2021-08-03
   - automatic calculation of the size of the pid column
   - incorrect sorting
