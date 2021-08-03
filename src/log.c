@@ -158,17 +158,17 @@ log_init ( const struct config_op *co )
   return 1;
 }
 
-bool
+int
 log_file ( process_t **processes, const size_t tot_process )
 {
   if ( !update_log_process ( processes, tot_process, &buffer, &len_buffer ) )
-    return false;
+    return 0;
 
   // set file one line below header
   fseek ( file, LEN_HEADER, SEEK_SET );
   write_process_to_file ( buffer, len_buffer, file );
 
-  return true;
+  return 1;
 }
 
 void

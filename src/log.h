@@ -21,15 +21,13 @@
 #ifndef LOG_FILE
 #define LOG_FILE
 
-#include <stdbool.h>
-
 #include "processes.h"
 #include "rate.h"
 
 int
 log_init ( const struct config_op * );
 
-bool
+int
 log_file ( process_t **processes, const size_t tot_process );
 
 void
