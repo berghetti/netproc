@@ -135,7 +135,7 @@ free_process ( void *arg )
 static int
 free_dead_process ( hashtable_t *ht, void *value, UNUSED ( void *user_data ) )
 {
-  process_t *proc = ( process_t * ) value;
+  process_t *proc = value;
 
   if ( !proc->active )
     free_process ( hashtable_remove ( ht, TO_PTR ( proc->pid ) ) );

@@ -58,10 +58,6 @@ typedef struct hashtable_entry
   void *value;
 } hashtable_entry_t;
 
-typedef int ( *hashtable_foreach_func ) ( hashtable_t *ht,
-                                          void *value,
-                                          void *user_data );
-
 /* all function that return a pointer, return NULL on error */
 
 hashtable_t *
@@ -73,6 +69,10 @@ hashtable_set ( hashtable_t *ht, const void *key, void *value );
 
 void *
 hashtable_get ( hashtable_t *ht, const void *key );
+
+typedef int ( *hashtable_foreach_func ) ( hashtable_t *ht,
+                                          void *value,
+                                          void *user_data );
 
 /* to each entries in hashtable, the function 'func' is called
     and passes as argument the entrie and 'user_data' */
