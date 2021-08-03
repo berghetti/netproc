@@ -4,7 +4,7 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
-0.??.??
+0.6.0 - 2021-08-03
   - automatic calculation of the size of the pid column
   - incorrect sorting
   - minor bug scroll horizontal
@@ -16,7 +16,7 @@ Legend:
     use of system recursions
   * using hashtable implementation in search of processes
 
-0.5.5 - 2021-02.23
+0.5.5 - 2021-02-23
   - connection port number was being displayed incorrectly
   - fixed bug that was not translated to port for a service name, bug since
     version 0.3.1
