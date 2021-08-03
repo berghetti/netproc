@@ -24,6 +24,6 @@
 #include <stdbool.h>
 
 bool
-set_filter ( int sock, const struct config_op *co );
+filter_set ( int sock, const struct config_op *co );
 
 #endif  // FILTER_H

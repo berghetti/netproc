@@ -2,12 +2,11 @@
 /*
  *  Copyright (C) 2020-2021 Mayco S. Berghetti
  *
- *  This file is part of Netproc.
  *
- *  Netproc is free software: you can redistribute it and/or modify
+ *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- *  any later version.
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,29 +17,35 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TERMINAL_H
-#define TERMINAL_H
+#ifndef QUEUE_H
+#define QUEUE_H
 
-#include <ncurses.h>
+struct queue_node
+{
+  void *data;
+  struct queue_node *next;
+};
 
-#include "config.h"
+typedef void ( *fclear ) ( void * );
 
-extern WINDOW *pad;
+struct queue
+{
+  fclear clear;  // callback user init
+  struct queue_node *head;
+  struct queue_node *tail;
+  unsigned int size;
+};
 
-// carrega os parametros do terminal
-bool
-setup_terminal ( void );
+struct queue *
+queue_new ( fclear clear );
 
-// start ncurses
-bool
-setup_ui ( struct config_op *co );
+struct queue_node *
+enqueue ( struct queue *queue, void *data );
 
-// volta configurações original do terminal
+void *
+dequeue ( struct queue *queue );
+
 void
-restore_terminal ( void );
+queue_destroy ( struct queue *queue );
 
-// limpa a tela, podendo tambem limpar o buffer do scroll se disponivel
-// void
-// clear_cmd ( );
-
-#endif  // TERMINAL_H
+#endif  // QUEUE_H

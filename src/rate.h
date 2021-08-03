@@ -52,10 +52,6 @@ struct net_stat
   nstats_t pps_tx[LEN_BUF_CIRC_RATE];
   nstats_t Bps_rx[LEN_BUF_CIRC_RATE];  // bytes/bits por segundos, amostras
   nstats_t Bps_tx[LEN_BUF_CIRC_RATE];
-  // char rx_rate[LEN_STR_RATE];  // taxa de download final
-  // char tx_rate[LEN_STR_RATE];  // taxa de upload final
-  // char rx_tot[LEN_STR_RATE];   // total de bytes recebidos
-  // char tx_tot[LEN_STR_RATE];   //                enviados
   nstats_t avg_Bps_rx;  // média de bytes/bits por segundos
   nstats_t avg_Bps_tx;
   nstats_t avg_pps_rx;  // média de pacotes por segundos
@@ -63,16 +59,14 @@ struct net_stat
   nstats_t tot_Bps_rx;  // trafego total
   nstats_t tot_Bps_tx;
 
-  // used by function log.c/log_to_file()
+  // used by function log.c/log_file()
   nstats_t bytes_last_sec_rx;  // total bytes in last second
   nstats_t bytes_last_sec_tx;
 };
 
-typedef struct process process_t;
+struct processes;
 
 void
-calc_avg_rate ( process_t *restrict proc,
-                const size_t tot_proc,
-                const struct config_op *restrict co );
+calc_avg_rate ( struct processes *processes, const struct config_op *co );
 
 #endif  // RATE_H

@@ -8,7 +8,7 @@ tool to monitor network traffic based on processes
 
 #### [Dependences]
     [Debian based]
-    $ sudo apt install gcc make libncurses5-dev
+    $ sudo apt install gcc make libncursesw5-dev
 
     [Red Hat Based]
     $ sudo yum install gcc make ncurses-devel

@@ -4,9 +4,22 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
-0.5.5 - 2021-02.23
+0.6.0 - 2021-08-03
+  - automatic calculation of the size of the pid column
+  - incorrect sorting
+  - minor bug scroll horizontal
+  * using ncursesw instead of ncurses for better support for
+    ALTCHARSERT characters
+  * readjusting mmap socket values, improving consumed of memory
+  * automatic calculation size pad ncurses, improving consumed of memory
+  * improved dns resolver, now uses thread pool and hashtable, improving the
+    use of system recursions
+  * using hashtable implementation in search of processes
+
+0.5.5 - 2021-02-23
   - connection port number was being displayed incorrectly
-  - fixed bug that was not translated to port for a service name, bug since version 0.3.1
+  - fixed bug that was not translated to port for a service name, bug since
+    version 0.3.1
   * show the name of the process and its arguments
   + implemented mode verbose, that alse show process whitout traffic
   + added man page
@@ -37,10 +50,10 @@ Legend:
   - bug fix that close program when screen on resized
 
 0.4.0 - 2020-06-20
-  * improvements interface user
-    colors;
-    scroll horizontal and vertial;
-    sort by columns;
+  * improvements interface user:
+      colors;
+      scroll horizontal and vertial;
+      sort by columns;
   * improved CPU usage using socket mmap with TPACKET_V3 and poll
   * traffic no necessary discarded with filter BPF
   * check necessary update process more eficient in mode udp
@@ -48,16 +61,17 @@ Legend:
   - statistics conections storage
   + statistics total bytes/bits TX and RX
 
-
 0.3.1 - 2020-05-25
   + translate of host and service
-  * improved parse of options, now code is more readble and checking of parameters is best
+  * improved parse of options, now code is more readble and checking of
+    parameters is best
   * updated [options] of README
   - minor change of function copy_conections in process.c
 
 0.2.0 - 2020-05-22
   + individual statistics by connections, option '-c'
-  * show a error when invalid argument was passed, function parte_options in main.c
+  * show a error when invalid argument was passed, function parte
+   _options in main.c
   * changed the display layout, moved column program to last
   * program column width calculated "automatically"
 

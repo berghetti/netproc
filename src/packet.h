@@ -21,18 +21,9 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-#include <linux/if_packet.h>  // struct tpacket3_hdr
 #include <stdint.h>           // types uint*_t
-#include <sys/types.h>        // type ssize_t
 #include <sys/socket.h>       // setsockopt
-
-#ifndef IPPROTO_UDP
-#define IPPROTO_UDP 17
-#endif
-
-#ifndef IPPROTO_TCP
-#define IPPROTO_TCP 6
-#endif
+#include <linux/if_packet.h>  // struct tpacket3_hdr
 
 // values of packet.direction
 #define PKT_DOWN 1
@@ -53,6 +44,6 @@ struct packet
 
 // preenche a struct packet com os dados do pacote recebido
 int
-parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd );
+parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd );
 
 #endif  // NETWORK_H

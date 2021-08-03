@@ -18,8 +18,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>  // malloc
 #include <stdbool.h>
+#include <stdlib.h>           // malloc
 #include <arpa/inet.h>        // htons
 #include <errno.h>            // variable errno
 #include <linux/if_ether.h>   // defined ETH_P_ALL
@@ -41,7 +41,7 @@ static bool
 bind_interface ( int sock, const char *iface );
 
 int
-create_socket ( const struct config_op *co )
+socket_init ( const struct config_op *co )
 {
   int sock;
 
@@ -61,7 +61,7 @@ create_socket ( const struct config_op *co )
 }
 
 void
-close_socket ( int sock )
+socket_free ( int sock )
 {
   if ( sock > 0 )
     close ( sock );
@@ -91,7 +91,7 @@ socket_setnonblocking ( int sock )
 static bool
 bind_interface ( int sock, const char *iface )
 {
-  struct sockaddr_ll my_sock = {0};
+  struct sockaddr_ll my_sock = { 0 };
   my_sock.sll_family = AF_PACKET;
   my_sock.sll_protocol = htons ( ETH_P_ALL );
 

@@ -29,31 +29,39 @@
 #include "ring.h"
 #include "m_error.h"
 
+// reference
+// https://www.kernel.org/doc/html/latest/networking/packet_mmap.html
+
 #ifndef TPACKET3_HDRLEN
 #error "TPACKET_V3 is necessary, check kernel linux version"
 #endif
 
+// each block will have at least 256KiB of size, because 128 * 2048 = 256KiB
+// this considering a page size of 4096.
+// this conf influences the use of CPU time and mmemory usage
+// keep it as power-of-two
+
 // quantidade de blocos
 #define N_BLOCKS 4
 
-// essa conf influencia o uso do tempo da CPU
-// keep it as power-of-two
 #define FRAMES_PER_BLOCK 128
-
-// tamanho do frame (pacote), descosiderando o overhead do cabeçalho tpacket
+// size of frame (packet), considering overhead of struct tpacket (80 bytes)
 // size small cause more usage CPU
 #define LEN_FRAME 2048
 
 // timeout in miliseconds
+// zero means that the kernel will calculate the timeout
+// https://github.com/torvalds/linux/blob/master/net/packet/af_packet.c#L596
 #define TIMEOUT_FRAME 0
 
 static bool
 create_ring_buff ( struct ring *ring )
 {
   long page_size;
+  size_t frames_per_block;
 
-  ring->req.tp_frame_size =
-          TPACKET_ALIGN ( TPACKET3_HDRLEN ) + TPACKET_ALIGN ( LEN_FRAME );
+  ring->req.tp_frame_size = LEN_FRAME;
+  // TPACKET_ALIGN ( TPACKET3_HDRLEN ) + TPACKET_ALIGN ( LEN_FRAME );
 
   // tamanho inicial de uma pagina de memoria
   errno = 0;
@@ -63,19 +71,21 @@ create_ring_buff ( struct ring *ring )
       return false;
     }
 
-  ring->req.tp_block_size = page_size;
-
+  // The block has to be page size aligned
   // dobra o tamanho do bloco até que caiba a quantidade de frames
+  ring->req.tp_block_size = page_size;
   while ( ring->req.tp_block_size < ring->req.tp_frame_size * FRAMES_PER_BLOCK )
     {
       ring->req.tp_block_size <<= 1;
     }
 
   ring->req.tp_block_nr = N_BLOCKS;
-  size_t frames_per_block = ring->req.tp_block_size / ring->req.tp_frame_size;
+  frames_per_block = ring->req.tp_block_size / ring->req.tp_frame_size;
   ring->req.tp_frame_nr = ring->req.tp_block_nr * frames_per_block;
   ring->req.tp_retire_blk_tov = TIMEOUT_FRAME;
+
   ring->req.tp_feature_req_word = 0;
+  ring->req.tp_sizeof_priv = 0;
 
   return true;
 }
@@ -137,26 +147,34 @@ map_buff ( int sock, struct ring *ring )
   return true;
 }
 
-bool
-setup_ring ( int sock, struct ring *ring )
+struct ring *
+ring_init ( int sock )
 {
-  if ( !create_ring_buff ( ring ) )
-    return false;
+  struct ring *ring = malloc ( sizeof *ring );
 
-  if ( !config_ring ( sock, ring, TPACKET_V3 ) )
-    return false;
+  if ( ring )
+    {
+      if ( !create_ring_buff ( ring ) )
+        return NULL;
 
-  if ( !map_buff ( sock, ring ) )
-    return false;
+      if ( !config_ring ( sock, ring, TPACKET_V3 ) )
+        return NULL;
 
-  return true;
+      if ( !map_buff ( sock, ring ) )
+        return NULL;
+    }
+
+  return ring;
 }
 
 void
-free_ring ( struct ring *ring )
+ring_free ( struct ring *ring )
 {
-  munmap ( ring->map, ring->req.tp_block_size * ring->req.tp_block_nr );
+  if ( ring )
+    {
+      munmap ( ring->map, ring->req.tp_block_size * ring->req.tp_block_nr );
+      free ( ring->rd );
+    }
 
-  if ( ring->rd )
-    free ( ring->rd );
+  free ( ring );
 }

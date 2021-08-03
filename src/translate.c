@@ -27,17 +27,15 @@
 
 #include "translate.h"
 #include "resolver/sock_util.h"
-#include "resolver/domain.h"
-#include "resolver/service.h"
+#include "resolver/resolver.h"
 
 #define LEN_TUPLE ( ( NI_MAXHOST + NI_MAXSERV ) * 2 ) + 7 + 10
 
 char *
-translate ( const conection_t *restrict con,
-            const struct config_op *restrict co )
+translate ( const conection_t *con, const struct config_op *co )
 {
   // tuple ip:port <-> ip:port
-  static char tuple[LEN_TUPLE] = {0};
+  static char tuple[LEN_TUPLE];
   struct sockaddr_in l_sock, r_sock;  // local_socket and remote_socket
 
   const char *proto = ( con->protocol == IPPROTO_UDP ) ? "udp" : "tcp";

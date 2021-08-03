@@ -26,27 +26,6 @@
 #include "directory.h"
 #include "rate.h"
 
-// FIXME:
-// ulimit -a do meu sistema, melhorar isso...
-// #define MAX_PROCESS 13504
-
-// diretorios onde são listados os processos do sistema
-#define PROCESS_DIR "/proc/"
-
-// sizeof ("socket:[99999999]") + 3 safe
-#define MAX_NAME_SOCKET 9 + 8 + 3
-
-// tamanho maximo do nome de um processo a ser exibido
-// #define MAX_NAME 255
-
-// /proc/%d/cmdline
-#define MAX_CMDLINE 25
-
-// maxpid = 2^22 = 4194304 = 7 chars
-//   6  +  7  + 4 + 7
-// /proc/<pid>/fd/<id-fd>
-#define MAX_PATH_FD 24
-
 typedef struct process
 {
   struct net_stat net_stat;   // estatisticas de rede
@@ -55,21 +34,22 @@ typedef struct process
   pid_t pid;                  // pid do processo
   uint32_t total_conections;  // total de conexões apontada por conection_t *
 
-  // variavel de controle, armazena o numero maximo
-  // de conexoes que podem ser armazenada no array *conection_t antes
-  // que a memoria precise ser realocada
-  uint32_t max_n_con;
+  int active;
 } process_t;
 
-// inicializa a estrutura process_t com os processos ativos e
-// retorna a quantidade processos armazenados
-ssize_t
-get_process_active_con ( process_t **procs,
-                         const size_t tot_process_act_old,
-                         const struct config_op *co );
+struct processes
+{
+  process_t **proc;
+  size_t total;
+};
 
-// libera os processos informados (usado para apagar todos os processos)
+struct processes *
+processes_init ( void );
+
+int
+processes_get ( struct processes *procs, struct config_op *co );
+
 void
-free_process ( process_t *proc, const size_t qtd_proc );
+processes_free ( struct processes *procs );
 
 #endif  // PROCESS_H

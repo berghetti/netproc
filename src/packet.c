@@ -18,16 +18,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <arpa/inet.h>  // htons
-// #include <linux/if_ether.h>   // struct ethhdr
+#include <arpa/inet.h>        // htons
 #include <linux/if_packet.h>  // struct sockaddr_ll
 #include <linux/ip.h>         // struct iphdr
 #include <stdbool.h>          // boolean type
 #include <sys/socket.h>       // setsockopt
 
-#include <stdio.h>  // provisório
-
-#include "m_error.h"
 #include "packet.h"
 #include "timer.h"
 
@@ -88,8 +84,8 @@ struct pkt_ip_fragment
 };
 
 static int
-is_first_frag ( const struct iphdr *const restrict l3,
-                const struct tcp_udp_h *const restrict l4 );
+is_first_frag ( const struct iphdr *const l3,
+                const struct tcp_udp_h *const l4 );
 
 static int
 is_frag ( const struct iphdr *const l3 );
@@ -109,14 +105,14 @@ insert_data_packet ( struct packet *pkt,
                      const uint32_t len );
 
 // armazena os dados da camada de transporte dos pacotes fragmentados
-static struct pkt_ip_fragment pkt_ip_frag[MAX_REASSEMBLIES] = {0};
+static struct pkt_ip_fragment pkt_ip_frag[MAX_REASSEMBLIES] = { 0 };
 
 // contador de pacotes IP que estão fragmentados
 static uint8_t count_reassemblies;
 
 // separa os dados brutos em suas camadas 2, 3 4
 int
-parse_packet ( struct packet *restrict pkt, struct tpacket3_hdr *restrict ppd )
+parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd )
 {
   int frag;
   int id_frag;
@@ -234,8 +230,7 @@ END:
 // retorna 0 se não for primeiro fragmento
 // retorna -1 caso de erro, buffer cheio
 static int
-is_first_frag ( const struct iphdr *const restrict l3,
-                const struct tcp_udp_h *const restrict l4 )
+is_first_frag ( const struct iphdr *const l3, const struct tcp_udp_h *const l4 )
 {
   // bit não fragmente ligado, logo não pode ser um fragmento
   if ( ntohs ( l3->frag_off ) & IP_DF )
@@ -248,12 +243,6 @@ is_first_frag ( const struct iphdr *const restrict l3,
     {
       if ( ++count_reassemblies > MAX_REASSEMBLIES )
         {
-#ifndef NDEBUG
-          error ( "Maximum number of %d fragmented packets reached, "
-                  "packets surpluses are not calculated.",
-                  MAX_REASSEMBLIES );
-#endif
-
           count_reassemblies = MAX_REASSEMBLIES;
           return -1;
         }
@@ -303,12 +292,6 @@ is_frag ( const struct iphdr *const l3 )
               // se o total de fragmentos de um pacote for atingido
               if ( ++pkt_ip_frag[i].c_frag > MAX_FRAGMENTS )
                 {
-#ifndef NDEBUG
-                  error ( "Maximum number of %d fragments in a "
-                          "package reached",
-                          MAX_FRAGMENTS );
-#endif
-
                   pkt_ip_frag[i].c_frag = MAX_FRAGMENTS;
                   return ER_MAX_FRAGMENTS;
                 }

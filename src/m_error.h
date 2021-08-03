@@ -24,30 +24,23 @@
 #include <string.h>  // strerror
 #include <errno.h>   // variable errno
 
-#define ERROR "[ERROR]"
-#define FATAL "[FATAL]"
-
-#ifndef NDEBUG
-#define DEBUG 1
+#ifdef NDEBUG
+#define ERROR_DEBUG( fmt, ... )
 #else
-#define DEBUG 0
-#endif
-
-#define ERROR_DEBUG( fmt, ... )                                    \
-  do                                                               \
-    {                                                              \
-      if ( DEBUG )                                                 \
-        error ( "%s:%d - " fmt, __FILE__, __LINE__, __VA_ARGS__ ); \
-    }                                                              \
+#define ERROR_DEBUG( fmt, ... )                                        \
+  do                                                                   \
+    {                                                                  \
+      debug_error ( "%s:%d - " fmt, __FILE__, __LINE__, __VA_ARGS__ ); \
+    }                                                                  \
   while ( 0 )
-
-// exibe mensagem na saida de erro padrão
-void
-error ( const char *msg, ... );
+#endif
 
 // exibe mensagem na saida de erro padrão
 // e sai com EXIT_FAILURE
 void
 fatal_error ( const char *msg, ... );
+
+void
+debug_error ( const char *msg, ... );
 
 #endif  // ERROR_H

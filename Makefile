@@ -8,7 +8,7 @@
 # LDFLAGS		opções para o ligador (-static -L/opt/opencv/lib)
 # LDLIBS		bibliotecas a ligar ao código gerado (-lpthreads -lmath)
 
-
+# https://www.gnu.org/software/make/manual/make.html#Automatic-Variables
 # $@ - representa o alvo
 # $^ - representa a lista de dependencia
 # $< - representa a primeira dependencia
@@ -21,63 +21,69 @@ PROG_NAME=netproc
 PATH_DOC_INSTALL=$(DESTDIR)/usr/local/share/man/man8
 PATH_INSTALL=$(DESTDIR)/usr/local/sbin
 
-SRC=./src
-BIN=./bin
-DOC=./doc
+SRCDIR=./src
+OBJDIR=./obj
+BINDIR=./bin
+DOCDIR=./doc
 
 CC=gcc
-# CPPFLAGS=
-# CFLAGS=
+CPPFLAGS=
+CFLAGS=-Wall -Wextra -pedantic
 
 # environment var
 ifdef DEBUG
-	CFLAGS+=-Wall -Wextra -pedantic -pedantic-errors -O0 -g
+	CFLAGS+= -O0 -ggdb
 else
 	CPPFLAGS=-D NDEBUG
-	CFLAGS+= -O2 -march=native -Wall -Wextra
+	CFLAGS+= -O2 -march=native
 endif
 
-LDLIBS=-lncurses -lpthread
+LDLIBS=-lncursesw -lpthread
 
-#.c files
-C_SOURCE=$(wildcard $(SRC)/*.c)
-C_SOURCE+=$(wildcard $(SRC)/resolver/*.c)
-#
-# .h files
-H_SOURCE=$(wildcard $(SRC)/*.h)
-H_SOURCE+=$(wildcard $(SRC)/resolver/*.h)
-#
+#.c files all subdirectories
+C_SOURCE= $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/*/*.c)
+
+# .h files all subdirectories
+H_SOURCE=$(wildcard $(SRCDIR)/*.h) $(wildcard $(SRCDIR)/*/*.h)
+
+# https://www.gnu.org/software/make/manual/make.html#General-Search
+# search path prerequisits
+VPATH= src src/resolver
+
 # Object files
 # todos arquivos .c trocado a extensão para .o
-OBJECTS=$(C_SOURCE:.c=.o)
+# transforma 'src/foo.c' em 'obj/foo.o'
+OBJECTS=$(addprefix $(OBJDIR)/, $(notdir $(C_SOURCE:.c=.o) ) )
 
 # alvos fake, não são arquivos
 .PHONY: all clean distclean run install uninstall format man
 
-all: $(BIN)/$(PROG_NAME)
+all: $(BINDIR)/$(PROG_NAME)
 
 # linka os arquivos ojetos para o executavel
 # regra ja é implitica dessa forma,
 # adicionado apenas para 'clareza'
-$(BIN)/$(PROG_NAME): $(OBJECTS)
+
+$(BINDIR)/$(PROG_NAME): $(OBJECTS)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 # mascara generica para compilar arquivos .o
 # utiliza todos os arquivos headers como dependencia,
 # caso algum seja atualizado, todo os objetos são recompilados
-%.o: %.c $(H_SOURCE)
-	 $(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.c $(H_SOURCE)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 clean:
 	@ find . -type f -name '*.o' -delete
 	@ echo "Object files removed"
 
 distclean: clean
-	@ find $(BIN) -name $(PROG_NAME) -delete
-	@ echo "Removed "$(BIN)"/"$(PROG_NAME)
+	@ find $(BINDIR) -name $(PROG_NAME) -delete
+	@ echo "Removed "$(BINDIR)"/"$(PROG_NAME)
 
 run:
-	sudo $(BIN)/$(PROG_NAME)
+	sudo $(BINDIR)/$(PROG_NAME)
 
 # check if user has root privileges.
 define checkifroot
@@ -96,25 +102,27 @@ endef
 
 
 install:
-	@$(call checkifroot)
-	@$(call checkbin, $(BIN)/$(PROG_NAME))
+	@ $(call checkifroot)
+	@ $(call checkbin, $(BINDIR)/$(PROG_NAME))
 	@ install -d -m 755 $(PATH_INSTALL)
-	@ install --strip $(BIN)/$(PROG_NAME) $(PATH_INSTALL); \
-	echo "Binary instaled in "$(PATH_INSTALL)"/"$(PROG_NAME)
-	@install -d -m 755 $(PATH_DOC_INSTALL)
-	@install -g 0 -o 0 -m 0644 $(DOC)/$(PROG_NAME).8 $(PATH_DOC_INSTALL); \
-	gzip -9 $(PATH_DOC_INSTALL)/$(PROG_NAME).8 ; \
-	echo "Man page instaled in "$(PATH_DOC_INSTALL)/$(PROG_NAME)".8.gz"
+	@ install --strip $(BINDIR)/$(PROG_NAME) $(PATH_INSTALL); \
+		echo "Binary instaled in "$(PATH_INSTALL)"/"$(PROG_NAME)
+	@ install -d -m 755 $(PATH_DOC_INSTALL)
+	@ install -g 0 -o 0 -m 0644 $(DOCDIR)/$(PROG_NAME).8 $(PATH_DOC_INSTALL); \
+		gzip -9 $(PATH_DOC_INSTALL)/$(PROG_NAME).8 ; \
+		echo "Man page instaled in "$(PATH_DOC_INSTALL)/$(PROG_NAME)".8.gz"
 
 uninstall:
 	@$(call checkifroot)
 	@ find $(PATH_DOC_INSTALL) $(PATH_INSTALL) -type f -name "$(PROG_NAME)*" \
-	-delete -exec echo "Removed "{} \;
+		-delete -exec echo "Removed "{} \;
 
 format:
 	@ echo "Formating code"
-	@ clang-format -i $(SRC)/*.[ch]
-	@ clang-format -i $(SRC)/resolver/*.[ch]
+	@ clang-format -i $(SRCDIR)/*.[ch]
+	@ clang-format -i $(SRCDIR)/*/*.[ch]
+	@ clang-format -i tests/*.[ch]
 
 man:
-	txt2man -t netproc -v "netproc man" -s 8 $(DOC)/netproc.8.txt > $(DOC)/netproc.8
+	txt2man -t $(PROG_NAME) -v "$(PROG_NAME) man" -s 8 \
+		$(DOCDIR)/$(PROG_NAME).8.txt > $(DOCDIR)/$(PROG_NAME).8

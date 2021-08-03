@@ -25,7 +25,6 @@
 #include "config.h"
 
 char *
-translate ( const conection_t *restrictcon,
-            const struct config_op *restrict co );
+translate ( const conection_t *con, const struct config_op *co );
 
 #endif  // TRANSLETE_H

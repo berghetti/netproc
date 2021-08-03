@@ -18,18 +18,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>  // type size_t
+#include <stddef.h>  // type size_t
 
 // retorna o tamanho da string até null byte ou espaço
 // oque ocorrer primeiro
 size_t
 strlen_space ( const char *string )
 {
-  size_t n = 0;
-  while ( *string && *string++ != ' ' )
-    n++;
+  char *string_base = ( char * ) string;
 
-  return n;
+  while ( *string && *string != ' ' )
+    string++;
+
+  return string - string_base;
 }
 
 // return position of last occurrence of character in string
