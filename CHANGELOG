@@ -4,7 +4,7 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
-0.??.??
+0.6.1 - 2021-08-03
   - invalid interface argument handling
   - cleanup on error cases
 
