@@ -21,7 +21,6 @@
 #ifndef RING_H
 #define RING_H
 
-#include <stdbool.h>
 #include <sys/uio.h>          // struct iovec
 #include <linux/if_packet.h>  // strct tpacket_req3
 

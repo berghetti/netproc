@@ -54,7 +54,7 @@
 // https://github.com/torvalds/linux/blob/master/net/packet/af_packet.c#L596
 #define TIMEOUT_FRAME 0
 
-static bool
+static int
 create_ring_buff ( struct ring *ring )
 {
   long page_size;
@@ -68,7 +68,7 @@ create_ring_buff ( struct ring *ring )
   if ( -1 == ( page_size = sysconf ( _SC_PAGESIZE ) ) )
     {
       ERROR_DEBUG ( "%s", ( errno ? strerror ( errno ) : "Error sysconf" ) );
-      return false;
+      return 0;
     }
 
   // The block has to be page size aligned
@@ -87,10 +87,10 @@ create_ring_buff ( struct ring *ring )
   ring->req.tp_feature_req_word = 0;
   ring->req.tp_sizeof_priv = 0;
 
-  return true;
+  return 1;
 }
 
-static bool
+static int
 config_ring ( int sock, struct ring *ring, int version )
 {
   // set version TPACKET
@@ -101,7 +101,7 @@ config_ring ( int sock, struct ring *ring, int version )
                     sizeof ( version ) ) == -1 )
     {
       ERROR_DEBUG ( "%s", strerror ( errno ) );
-      return false;
+      return 0;
     }
 
   // set conf buffer tpacket
@@ -112,13 +112,13 @@ config_ring ( int sock, struct ring *ring, int version )
                     sizeof ( ring->req ) ) == -1 )
     {
       ERROR_DEBUG ( "%s", strerror ( errno ) );
-      return false;
+      return 0;
     }
 
-  return true;
+  return 1;
 }
 
-static bool
+static int
 map_buff ( int sock, struct ring *ring )
 {
   size_t rx_ring_size = ring->req.tp_block_nr * ring->req.tp_block_size;
@@ -128,14 +128,14 @@ map_buff ( int sock, struct ring *ring )
   if ( ring->map == MAP_FAILED )
     {
       ERROR_DEBUG ( "%s", strerror ( errno ) );
-      return false;
+      return 0;
     }
 
-  ring->rd = calloc ( sizeof ( *ring->rd ), ring->req.tp_block_nr );
+  ring->rd = calloc ( ring->req.tp_block_nr, sizeof ( *ring->rd ) );
   if ( !ring->rd )
     {
       ERROR_DEBUG ( "%s", strerror ( errno ) );
-      return false;
+      return 0;
     }
 
   for ( size_t i = 0; i < ring->req.tp_block_nr; ++i )
@@ -144,7 +144,7 @@ map_buff ( int sock, struct ring *ring )
       ring->rd[i].iov_len = ring->req.tp_block_size;
     }
 
-  return true;
+  return 1;
 }
 
 struct ring *
@@ -155,26 +155,29 @@ ring_init ( int sock )
   if ( ring )
     {
       if ( !create_ring_buff ( ring ) )
-        return NULL;
+        goto ERROR_EXIT;
 
       if ( !config_ring ( sock, ring, TPACKET_V3 ) )
-        return NULL;
+        goto ERROR_EXIT;
 
       if ( !map_buff ( sock, ring ) )
-        return NULL;
+        goto ERROR_EXIT;
     }
 
   return ring;
+
+ERROR_EXIT:
+  free ( ring );
+  return NULL;
 }
 
 void
 ring_free ( struct ring *ring )
 {
-  if ( ring )
-    {
-      munmap ( ring->map, ring->req.tp_block_size * ring->req.tp_block_nr );
-      free ( ring->rd );
-    }
+  if ( !ring )
+    return;
 
+  munmap ( ring->map, ring->req.tp_block_size * ring->req.tp_block_nr );
+  free ( ring->rd );
   free ( ring );
 }
