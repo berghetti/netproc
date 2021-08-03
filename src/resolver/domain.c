@@ -95,7 +95,10 @@ cache_domain_init ( unsigned int size )
   ht_hosts = hashtable_new ( cb_ht_hash, cb_ht_compare, cb_ht_free );
 
   if ( !ht_hosts )
-    return 0;
+    {
+      free ( hosts );
+      return 0;
+    }
 
   return 1;
 }

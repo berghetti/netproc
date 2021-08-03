@@ -103,7 +103,7 @@ socket_init ( const struct config_op *co )
 
 ERROR_EXIT:
 
-  close( sock );
+  close ( sock );
   return -1;
 }
 
