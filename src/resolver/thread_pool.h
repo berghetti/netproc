@@ -20,6 +20,8 @@
 #ifndef THREAD_POLL_H
 #define THREAD_POLL_H
 
+/* all functions that return int, return 0 on failure and 1 on sucess */
+
 int
 thpool_init ( unsigned int num_workers );
 

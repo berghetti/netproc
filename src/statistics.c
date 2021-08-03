@@ -90,10 +90,10 @@ add_statistics_in_processes ( struct processes *processes,
     UPDATE_ID_BUFF ( id_buff_circ );
 
   bool locate = false;
-  size_t c;
   for ( process_t **proc = processes->proc; *proc; proc++ )
     {
       process_t *process = *proc;
+      size_t c;
       // caso o indice do buffer circular tenha atualizado,
       // pois ja deu o tempo pre definido, T_REFRESH,
       // apaga os dados antes de começar a escrever

@@ -30,20 +30,20 @@ struct host
   int status;
 };
 
-// hosts status
+// host.status
 #define RESOLVED 1
 #define RESOLVING 2
 
-void
+int
 cache_domain_init ( unsigned int size );
-
-void
-cache_domain_free ( void );
 
 // retorna imediatamente o ip em formato de texto, porém na proxima requisição
 // irá retornar o dominio que estará em cache (se tudo der certo).
 // evitando a latencia que uma consulta DNS pode ter.
 int
 ip2domain ( struct sockaddr_storage *ss, char *buff, const size_t buff_len );
+
+void
+cache_domain_free ( void );
 
 #endif  // DOMAIN_H

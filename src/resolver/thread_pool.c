@@ -183,7 +183,7 @@ add_task ( void ( *func ) ( void * ), void *args )
 {
   struct task *task = create_task ( func, args );
   if ( !task )
-    return -1;
+    return 0;
 
   // push job in queue
   pthread_mutex_lock ( &mutex_queue );
@@ -191,14 +191,14 @@ add_task ( void ( *func ) ( void * ), void *args )
     {
       free_task ( task );
       pthread_mutex_unlock ( &mutex_queue );
-      return -1;
+      return 0;
     }
 
   // wake up a thread to work
   bsem_post ( &bsem_jobs );
   pthread_mutex_unlock ( &mutex_queue );
 
-  return 0;
+  return 1;
 }
 
 void

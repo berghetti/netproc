@@ -197,12 +197,16 @@ cb_hash_func ( const void *key )
 struct processes *
 processes_init ( void )
 {
-  ht_process = hashtable_new ( cb_hash_func, cb_compare, free_process );
-
   struct processes *procs = calloc ( 1, sizeof *procs );
-
-  if ( !procs || !ht_process )
+  if ( !procs )
     return NULL;
+
+  ht_process = hashtable_new ( cb_hash_func, cb_compare, free_process );
+  if ( !ht_process )
+    {
+      free ( procs );
+      return NULL;
+    }
 
   return procs;
 }

@@ -17,43 +17,87 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>      // free
+#include <stdint.h>
+#include <stdlib.h>      // malloc, free
 #include <string.h>      // strncpy
 #include <sys/socket.h>  // getnameinfo
 #include <netdb.h>       // getnameinfo
 
 #include "domain.h"
 #include "thread_pool.h"
-#include "list.h"
 #include "sock_util.h"  // check_addr_equal
+#include "../hashtable.h"
 
 // (2048 * sizeof(struct host)) == ~2.31 MiB cache of domain
-#define DEFAULT_CACHE_ENTRIES 2048
-static unsigned int max_cache_size = DEFAULT_CACHE_ENTRIES;
-static struct list list_hosts = { 0 };
+#define DEFAULT_CACHE_SIZE 2048
 
-void
-cache_domain_init ( unsigned int size )
+static hashtable_t *ht_hosts;
+static struct host **hosts;
+static size_t cache_size;
+
+static void
+cb_ht_free ( void *arg )
 {
-  if ( size )
-    max_cache_size = size;
+  free ( arg );
 }
 
-void
-cache_domain_free ( void )
+static int
+cb_ht_compare ( const void *key1, const void *key2 )
 {
-  struct list_node *node, *temp;
+  return check_addr_equal ( ( void * ) key1, ( void * ) key2 );
+}
 
-  node = list_hosts.head;
-  while ( node )
+static inline uint32_t
+hash_uint32 ( uint32_t v )
+{
+  return ( v >> 24 ) ^ ( v >> 16 ) ^ ( v >> 8 ) ^ ( v >> 4 ) ^ v;
+}
+
+static hash_t
+cb_ht_hash ( const void *key )
+{
+  struct sockaddr_storage *addr = ( struct sockaddr_storage * ) key;
+
+  switch ( addr->ss_family )
     {
-      temp = node->next;
+      case AF_INET:
+        {
+          struct sockaddr_in *sa = ( struct sockaddr_in * ) addr;
+          return hash_uint32 ( sa->sin_addr.s_addr );
 
-      free ( node->data );
-      free ( node );
+          break;
+        }
+      case AF_INET6:
+        {
+          struct sockaddr_in6 *sa = ( struct sockaddr_in6 * ) addr;
 
-      node = temp;
+          int i = 4;
+          hash_t hash = 0;
+          while ( i-- )
+            hash ^= hash_uint32 ( sa->sin6_addr.s6_addr32[i] );
+
+          return hash;
+        }
     }
+
+  return 0;
+}
+
+int
+cache_domain_init ( unsigned int size )
+{
+  cache_size = ( size ) ? size : DEFAULT_CACHE_SIZE;
+  hosts = calloc ( cache_size, sizeof ( struct host * ) );
+
+  if ( !hosts )
+    return 0;
+
+  ht_hosts = hashtable_new ( cb_ht_hash, cb_ht_compare, cb_ht_free );
+
+  if ( !ht_hosts )
+    return 0;
+
+  return 1;
 }
 
 // run on thread
@@ -78,43 +122,16 @@ ip2domain_exec ( void *arg )
   host->status = RESOLVED;
 }
 
-static struct host *
-create_host ( struct sockaddr_storage *ss )
-{
-  struct host *host = malloc ( sizeof *host );
-
-  if ( host )
-    {
-      memcpy ( &host->ss, ss, sizeof ( *ss ) );
-      host->status = RESOLVING;
-    }
-
-  return host;
-}
-
-static struct host *
-search_host ( struct sockaddr_storage *ss )
-{
-  struct list_node *node = list_hosts.head;
-
-  while ( node )
-    {
-      if ( check_addr_equal ( node->data, ss ) )
-        return node->data;
-
-      node = node->next;
-    }
-
-  return NULL;
-}
-
 // return:
 //  1 name resolved
 //  0 name no resolved
+// -1 error
 int
-ip2domain ( struct sockaddr_storage *ss, char *buff, const size_t buff_len )
+ip2domain ( struct sockaddr_storage *restrict ss,
+            char *buff,
+            const size_t buff_len )
 {
-  struct host *host = search_host ( ss );
+  struct host *host = hashtable_get ( ht_hosts, ss );
 
   if ( host )
     {
@@ -131,24 +148,42 @@ ip2domain ( struct sockaddr_storage *ss, char *buff, const size_t buff_len )
     }
   else  // cache miss
     {
-      // transform binary to text
       sockaddr_ntop ( ss, buff, buff_len );
 
-      // add task to workers (thread pool)
-      host = create_host ( ss );
-      add_task ( ip2domain_exec, host );
-      list_push ( &list_hosts, host );
+      static size_t index = 0;
 
-      if ( list_hosts.size > max_cache_size )
+      if ( hosts[index] )
         {
-          host = list_hosts.tail->data;
-          if ( host->status == RESOLVED )
-            {
-              free ( host );
-              list_delete ( &list_hosts, list_hosts.tail );
-            }
+          if ( hosts[index]->status == RESOLVING )
+            return 0;
+
+          hashtable_remove ( ht_hosts, &hosts[index]->ss );
         }
+      else
+        {
+          hosts[index] = malloc ( sizeof ( struct host ) );
+
+          if ( !hosts[index] )
+            return -1;
+        }
+
+      memcpy ( &hosts[index]->ss, ss, sizeof ( struct sockaddr_storage ) );
+      hosts[index]->status = RESOLVING;
+
+      // add task to workers (thread pool)
+      add_task ( ip2domain_exec, hosts[index] );
+
+      hashtable_set ( ht_hosts, &hosts[index]->ss, hosts[index] );
+
+      index = ( index + 1 ) % cache_size;
     }
 
   return 0;
+}
+
+void
+cache_domain_free ( void )
+{
+  hashtable_destroy ( ht_hosts );
+  free ( hosts );
 }
