@@ -64,6 +64,7 @@ create_ring_buff ( struct ring *ring )
   // TPACKET_ALIGN ( TPACKET3_HDRLEN ) + TPACKET_ALIGN ( LEN_FRAME );
 
   // tamanho inicial de uma pagina de memoria
+  errno = 0;
   if ( -1 == ( page_size = sysconf ( _SC_PAGESIZE ) ) )
     {
       ERROR_DEBUG ( "%s", ( errno ? strerror ( errno ) : "Error sysconf" ) );
