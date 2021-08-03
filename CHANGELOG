@@ -12,8 +12,8 @@ Legend:
     ALTCHARSERT characters
   * readjusting mmap socket values, improving consumed of memory
   * automatic calculation size pad ncurses, improving consumed of memory
-  * improved dns resolver, now uses thread pool, improving the use of
-    system recursions
+  * improved dns resolver, now uses thread pool and hashtable, improving the
+    use of system recursions
   * using hashtable implementation in search of processes
 
 0.5.5 - 2021-02.23
@@ -60,7 +60,6 @@ Legend:
   - check argument '-i' improved
   - statistics conections storage
   + statistics total bytes/bits TX and RX
-
 
 0.3.1 - 2020-05-25
   + translate of host and service
