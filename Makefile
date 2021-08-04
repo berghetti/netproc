@@ -20,7 +20,7 @@ PROG_NAME=netproc
 
 prefix= /usr/local
 
-PATH_DOC_INSTALL=$(DESTDIR)/usr/share/man/man8
+PATH_DOC_INSTALL=$(DESTDIR)$(prefix)/share/man/man8
 PATH_INSTALL=$(DESTDIR)$(prefix)/sbin
 
 SRCDIR=./src
