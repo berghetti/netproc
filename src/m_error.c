@@ -29,94 +29,34 @@
 
 #include "m_error.h"
 
-#define RED 1
-#define YELLOW 3
-
-static int
-puterr ( const int c );
+#define DEBUG "[DEBUG] "
+#define ERROR "[ERROR] "
+#define FATAL "[FATAL] "
 
 static void
-print_error ( const char *msg, va_list args );
-
-void
-error ( const char *msg, ... )
+print ( const char *tag, const char *msg, va_list args )
 {
-  va_list args;
-  int istty;
-
-  // imprime caracteres de escape para cores apenas se for para um terminal
-  if ( ( istty = isatty ( STDERR_FILENO ) ) )
-    {
-      tputs ( exit_attribute_mode, 1, puterr );
-      tputs ( tparm ( set_a_foreground, YELLOW ), 1, puterr );
-      // tputs ( enter_bold_mode, 1, puterr );
-    }
-
-  fprintf ( stderr, ERROR " " );
-
-  if ( istty )
-    tputs ( exit_attribute_mode, 1, puterr );
-
-  va_start ( args, msg );
-
-  print_error ( msg, args );
-
-  va_end ( args );
+  fprintf ( stderr, tag );
+  vfprintf ( stderr, msg, args );
+  fprintf ( stderr, "\n" );
 }
 
 void
 fatal_error ( const char *msg, ... )
 {
   va_list args;
-  int istty;
-
-  // imprime caracteres de escape para cores apenas se for para um terminal
-  if ( ( istty = isatty ( STDERR_FILENO ) ) )
-    {
-      tputs ( exit_attribute_mode, 1, puterr );
-      tputs ( tparm ( set_a_foreground, RED ), 1, puterr );
-      tputs ( enter_bold_mode, 1, puterr );
-    }
-
-  fprintf ( stderr, FATAL " " );
-
-  if ( istty )
-    tputs ( exit_attribute_mode, 1, puterr );
 
   va_start ( args, msg );
-
-  print_error ( msg, args );
-
+  print ( FATAL, msg, args );
   va_end ( args );
-  exit ( EXIT_FAILURE );
 }
 
-// inclui '\n' no fim da mensagem e imprime
-// na saida de erro padrão
-static void
-print_error ( const char *msg, va_list args )
+void
+debug_error ( const char *msg, ... )
 {
-  char *msg_formated;
+  va_list args;
 
-  errno = 0;
-  // inclui '\n' na mensagem
-  if ( asprintf ( &msg_formated, "%s\n", msg ) == -1 )
-    {
-      if ( errno )  // asprintf set errno in case fault?
-        perror ( "asprintf" );
-      else
-        fprintf ( stderr, "%s\n", "asprintf: Unknown error" );
-
-      exit ( EXIT_FAILURE );
-    }
-
-  // exibe a mensagem
-  vfprintf ( stderr, msg_formated, args );
-  free ( msg_formated );
-}
-
-static int
-puterr ( const int c )
-{
-  return fputc ( c, stderr );
+  va_start ( args, msg );
+  print ( DEBUG, msg, args );
+  va_end ( args );
 }

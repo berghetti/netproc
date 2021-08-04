@@ -25,9 +25,9 @@
 
 // inicializa o socket para escutar conexões
 int
-create_socket ( const struct config_op *co );
+socket_init ( const struct config_op *co );
 
 void
-close_socket ( int sock );
+socket_free ( int sock );
 
 #endif  // SOCK_SNIFF_H

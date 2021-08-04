@@ -18,8 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>  // malloc
-#include <stdbool.h>
+#include <stdlib.h>           // malloc
 #include <arpa/inet.h>        // htons
 #include <errno.h>            // variable errno
 #include <linux/if_ether.h>   // defined ETH_P_ALL
@@ -34,40 +33,7 @@
 #include "sock.h"
 #include "m_error.h"
 
-static bool
-socket_setnonblocking ( int sock );
-
-static bool
-bind_interface ( int sock, const char *iface );
-
-int
-create_socket ( const struct config_op *co )
-{
-  int sock;
-
-  if ( ( sock = socket ( AF_PACKET, SOCK_RAW, htons ( ETH_P_ALL ) ) ) == -1 )
-    {
-      ERROR_DEBUG ( "Error create socket: %s", strerror ( errno ) );
-      return -1;
-    }
-
-  if ( !socket_setnonblocking ( sock ) )
-    return -1;
-
-  if ( !bind_interface ( sock, co->iface ) )
-    return -1;
-
-  return sock;
-}
-
-void
-close_socket ( int sock )
-{
-  if ( sock > 0 )
-    close ( sock );
-}
-
-static bool
+static int
 socket_setnonblocking ( int sock )
 {
   int flag;
@@ -75,23 +41,23 @@ socket_setnonblocking ( int sock )
   if ( ( flag = fcntl ( sock, F_GETFL ) ) == -1 )
     {
       ERROR_DEBUG ( "Cannot get socket flags: \"%s\"", strerror ( errno ) );
-      return false;
+      return 0;
     }
 
   if ( fcntl ( sock, F_SETFL, flag | O_NONBLOCK ) == -1 )
     {
       ERROR_DEBUG ( "Cannot set socket to non-blocking mode: \"%s\"",
                     strerror ( errno ) );
-      return false;
+      return 0;
     }
 
-  return true;
+  return 1;
 }
 
-static bool
+static int
 bind_interface ( int sock, const char *iface )
 {
-  struct sockaddr_ll my_sock = {0};
+  struct sockaddr_ll my_sock;
   my_sock.sll_family = AF_PACKET;
   my_sock.sll_protocol = htons ( ETH_P_ALL );
 
@@ -103,15 +69,47 @@ bind_interface ( int sock, const char *iface )
       if ( !( my_sock.sll_ifindex = if_nametoindex ( iface ) ) )
         {
           ERROR_DEBUG ( "%s", strerror ( errno ) );
-          return false;
+          return 0;
         }
     }
 
   if ( bind ( sock, ( struct sockaddr * ) &my_sock, sizeof ( my_sock ) ) == -1 )
     {
       ERROR_DEBUG ( "Error bind interface %s", strerror ( errno ) );
-      return false;
+      return 0;
     }
 
-  return true;
+  return 1;
+}
+
+int
+socket_init ( const struct config_op *co )
+{
+  int sock;
+
+  if ( ( sock = socket ( AF_PACKET, SOCK_RAW, htons ( ETH_P_ALL ) ) ) == -1 )
+    {
+      ERROR_DEBUG ( "Error create socket: %s", strerror ( errno ) );
+      return -1;
+    }
+
+  if ( !socket_setnonblocking ( sock ) )
+    goto ERROR_EXIT;
+
+  if ( !bind_interface ( sock, co->iface ) )
+    goto ERROR_EXIT;
+
+  return sock;
+
+ERROR_EXIT:
+
+  close ( sock );
+  return -1;
+}
+
+void
+socket_free ( int sock )
+{
+  if ( sock > 0 )
+    close ( sock );
 }

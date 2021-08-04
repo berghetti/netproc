@@ -18,17 +18,50 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// based in source code of program wget
+// https://github.com/mirror/wget/blob/master/src/utils.c
+
 #include <stdio.h>  // snprintf()
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "human_readable.h"
+#include "config.h"
 #include "integer.h"  // is_integer()
-#include "sufix.h"    // define chosen_base, sufix, sufix_tot,
-                      // TOT_ELEMENTS_SUFIX
+#include "sufix.h"
 
-// based in source code of program wget
-// https://github.com/mirror/wget/blob/master/src/utils.c
+static int base;
+static const char *const *sufix_rate;
+static const char *const *sufix_total;
+
+void
+define_sufix ( const struct config_op *co )
+{
+  if ( co->view_si && co->view_bytes )
+    {
+      base = BASE_SI;
+      sufix_rate = sufix_schemes[SI_BYTE];
+      sufix_total = sufix_schemes[SI_BYTE_TOT];
+    }
+  else if ( co->view_si )
+    {
+      base = BASE_SI;
+      sufix_rate = sufix_schemes[SI_BIT];
+      sufix_total = sufix_schemes[SI_BIT_TOT];
+    }
+  else if ( co->view_bytes )
+    {
+      base = BASE_IEC;
+      sufix_rate = sufix_schemes[IEC_BYTE];
+      sufix_total = sufix_schemes[IEC_BYTE_TOT];
+    }
+  else
+    {  // default
+      base = BASE_IEC;
+      sufix_rate = sufix_schemes[IEC_BIT];
+      sufix_total = sufix_schemes[IEC_BIT_TOT];
+    }
+}
 
 // caso valor final obtido seja maior ou igual que accuracy
 // não será impresso casas decimais
@@ -48,24 +81,18 @@ human_readable ( char *buffer,
                  const uint64_t bytes,
                  int mode )
 {
-  const char *const *sufix;
-  if ( mode == RATE )
-    sufix = sufix_rate;
-  else
-    sufix = sufix_total;
+  const char *const *sufix = ( mode == RATE ) ? sufix_rate : sufix_total;
 
-  // retorno da função snprintf
   ssize_t sn;
 
-  // se 0, não mostra sufixo
   if ( !bytes )
     {
-      sn = snprintf ( buffer, len_buff, "%d", ( int ) bytes );
+      sn = snprintf ( buffer, len_buff, "%c", '0' );
       return ( sn > 0 && ( size_t ) sn < len_buff );
     }
 
   // quantidade de bytes ou bits menor que 1024 ou 1000
-  if ( bytes < ( uint64_t ) chosen_base )
+  if ( bytes < ( uint64_t ) base )
     {
       sn = snprintf ( buffer, len_buff, "%d %s", ( int ) bytes, sufix[0] );
       return ( sn > 0 && ( size_t ) sn < len_buff );
@@ -77,21 +104,17 @@ human_readable ( char *buffer,
   // apropriado.
 
   // pega elemento inverso da base escolhida
-  const double base = INVERSE_BASE ( chosen_base );
+  const double ibase = INVERSE_BASE ( base );
   int decimals;
   double val;
 
-  // not necessary this variable, only val is necessary,
-  // but make the code more readable
   double bytest = bytes;
-
   for ( size_t i = 1; i < TOT_ELEMENTS_SUFIX; i++ )
     {
       /* At each iteration N is greater than the *subsequent* power.
          That way N/1024.0 produces a decimal number in the units of
          *this* power.  */
-      if ( ( val = bytest * base ) < chosen_base ||
-           i == ( TOT_ELEMENTS_SUFIX - 1 ) )
+      if ( ( val = bytest * ibase ) < base || i == ( TOT_ELEMENTS_SUFIX - 1 ) )
         {
           // coloca casas decimais se o valor for menor que ACCURACY
           // e se não for um valor inteiro

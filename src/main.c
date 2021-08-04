@@ -18,30 +18,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>   // variable errno
 #include <signal.h>  // sigaction
-#include <stdio.h>   // putchar
-#include <stdlib.h>  // exit
-#include <string.h>  // strerror
 #include <unistd.h>  // STDIN_FILENO
 #include <poll.h>    // poll
+#include <locale.h>
 
-#include "terminal.h"
 #include "config.h"
 #include "packet.h"
 #include "rate.h"
-#include "process.h"
+#include "processes.h"
 #include "sock.h"
 #include "ring.h"
 #include "filter.h"
 #include "statistics.h"
-// #include "crc32.h"
-#include "sufix.h"
+#include "human_readable.h"
 #include "timer.h"
-#include "show.h"
+#include "tui.h"
 #include "log.h"
 #include "usage.h"
 #include "m_error.h"
+#include "resolver/resolver.h"
 
 // a cada vez que o tempo de T_REFRESH segundo(s) é atingido
 // esse valor é alterado (entre 0 e 1), para que outras partes, statistics_proc,
@@ -51,141 +47,106 @@
 // intervalo de atualização do programa, não alterar
 #define T_REFRESH 1
 
-// 1 segundo = 1000 milisegundos
 #define TIMEOUT_POLL 1000
 
 static void
-sig_handler ( int );
+config_sig_handler ( void );
 
 // handled by function sig_handler
 // if != 0 program exit
 static volatile sig_atomic_t prog_exit = 0;
 
-// all resources that needed free on program exit
-struct resources_to_free
-{
-  FILE *log_file;
-  log_processes *buff_log;
-  size_t len_log;
-  process_t *processes;
-  uint32_t tot_processes;
-  struct ring *ring;
-  int sock;
-};
-
-static void free_resources ( struct resources_to_free );
-
 int
 main ( int argc, char **argv )
 {
-  struct packet packet = {0};
-  struct ring ring = {0};
-  struct tpacket_block_desc *pbd;
-  struct tpacket3_hdr *ppd;
-  struct config_op *co;
+  setlocale ( LC_CTYPE, "" );  // needle to ncursesw
 
-  process_t *processes = NULL;
-  ssize_t tot_process_act = 0;
+  struct ring *ring = NULL;
+  struct processes *processes = NULL;
 
-  // feature log in file
-  FILE *log_file = NULL;
-  log_processes *log_file_buffer = NULL;
-  size_t len_log_file_buffer = 0;
+  struct config_op *co = parse_options ( argc, argv );
 
-  int sock;
-
-  bool packtes_reads;
-  bool fail_process_pkt;
-  int block_num = 0;
-  // int tot_blocks = 64; == ring.req.tp_block_nr
-  int rp;
-
-  double m_timer;
-
-  co = parse_options ( argc, argv );
-
-  if ( !setup_terminal () )
-    fatal_error ( "Error setup terminal" );
-
-  if ( -1 == ( sock = create_socket ( co ) ) )
-    fatal_error ( "Error create socket, is root?" );
-
-  if ( co->log && !( log_file = setup_log_file ( co ) ) )
+  int sock = socket_init ( co );
+  if ( sock == -1 )
     {
-      close_socket ( sock );
-      fatal_error ( "Error setup file to file" );
+      fatal_error ( "Error create socket, is root?" );
+      goto EXIT;
     }
 
-  if ( !setup_ring ( sock, &ring ) )
+  ring = ring_init ( sock );
+  if ( !ring )
     {
-      close_socket ( sock );
-      free_log ( log_file, NULL, 0 );
-      fatal_error ( "Error setup ring" );
+      fatal_error ( "Error ring_init" );
+      goto EXIT;
     }
 
-  // set filter BPF
-  if ( !set_filter ( sock, co ) )
+  // filter BPF
+  if ( !filter_set ( sock, co ) )
     {
-      close_socket ( sock );
-      free_log ( log_file, NULL, 0 );
-      free_ring ( &ring );
       fatal_error ( "Error set filter network" );
+      goto EXIT;
+    }
+
+  if ( co->log && !log_init ( co ) )
+    {
+      fatal_error ( "Error log_init" );
+      goto EXIT;
+    }
+
+  processes = processes_init ();
+  if ( !processes )
+    {
+      fatal_error ( "Error process_init" );
+      goto EXIT;
+    }
+
+  if ( co->translate_host && !resolver_init ( 0, 0 ) )
+    {
+      fatal_error ( "Error resolver_init" );
+      goto EXIT;
     }
 
   define_sufix ( co );
-
-  if ( !setup_ui ( co ) )
+  if ( !tui_init ( co ) )
     {
-      close_socket ( sock );
-      free_log ( log_file, NULL, 0 );
-      free_ring ( &ring );
-      fatal_error ( "Error setup user interface" );
+      fatal_error ( "Error setup terminal user interface" );
+      goto EXIT;
     }
 
-  start_ui ( co );
+  config_sig_handler ();
 
-  // first search by processes
-  tot_process_act = get_process_active_con ( &processes, tot_process_act, co );
-  if ( tot_process_act == -1 )
-    {
-      close_socket ( sock );
-      free_log ( log_file, NULL, 0 );
-      free_ring ( &ring );
-      restore_terminal ();
-      fatal_error ( "Error get processes" );
-    }
-
+  double m_timer;
   if ( -1 == ( m_timer = start_timer () ) )
     {
-      close_socket ( sock );
-      free_log ( log_file, NULL, 0 );
-      free_ring ( &ring );
-      restore_terminal ();
-      free_process ( processes, tot_process_act );
       fatal_error ( "Error start timer" );
+      goto EXIT;
+    }
+
+  if ( !processes_get ( processes, co ) )
+    {
+      fatal_error ( "Error get processes" );
+      goto EXIT;
     }
 
   const nfds_t nfds = 2;
   struct pollfd poll_set[2] = {
-          {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0},
-          {.fd = sock, .events = POLLIN | POLLPRI, .revents = 0}};
+          { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 },
+          { .fd = sock, .events = POLLIN | POLLPRI, .revents = 0 } };
 
-  struct sigaction sigact = {.sa_handler = sig_handler};
-  sigemptyset ( &sigact.sa_mask );
-
-  sigaction ( SIGINT, &sigact, NULL );
-  sigaction ( SIGTERM, &sigact, NULL );
-
-  pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
+  int block_num = 0;
+  struct tpacket_block_desc *pbd;
+  pbd = ( struct tpacket_block_desc * ) ring->rd[block_num].iov_base;
 
   // main loop
   while ( !prog_exit )
     {
-      packtes_reads = false;
-      fail_process_pkt = false;
+      struct packet packet;
+      bool packtes_reads = false;
+      bool need_update_processes = false;
 
       while ( pbd->hdr.bh1.block_status & TP_STATUS_USER )
         {
+          struct tpacket3_hdr *ppd;
           ppd = ( struct tpacket3_hdr * ) ( ( uint8_t * ) pbd +
                                             pbd->hdr.bh1.offset_to_first_pkt );
 
@@ -205,12 +166,9 @@ main ( int argc, char **argv )
               // de um processo existente, que ainda não foi mapeado, então
               // anotamos que sera necessario atualizar a lista de processos
               // com conexões ativas.
-              if ( !add_statistics_in_processes (
-                           processes, tot_process_act, &packet, co ) )
+              if ( !add_statistics_in_processes ( processes, &packet, co ) )
                 {
-                  // mark to update processes
-                  fail_process_pkt = true;
-
+                  need_update_processes = true;
                   continue;
                 }
 
@@ -221,27 +179,23 @@ main ( int argc, char **argv )
           pbd->hdr.bh1.block_status = TP_STATUS_KERNEL;
 
           // rotate block
-          block_num = ( block_num + 1 ) % ring.req.tp_block_nr;
-          pbd = ( struct tpacket_block_desc * ) ring.rd[block_num].iov_base;
+          block_num = ( block_num + 1 ) % ring->req.tp_block_nr;
+          pbd = ( struct tpacket_block_desc * ) ring->rd[block_num].iov_base;
         }
 
       // necessario para zerar contadores quando não ha trafego
       packet.lenght = 0;
-      add_statistics_in_processes ( processes, tot_process_act, &packet, co );
+      add_statistics_in_processes ( processes, &packet, co );
 
       double temp;
       if ( ( temp = timer ( m_timer ) ) >= ( double ) T_REFRESH )
         {
           co->running += temp;
-          calc_avg_rate ( processes, tot_process_act, co );
+          calc_avg_rate ( processes, co );
 
-          show_process ( processes, tot_process_act, co );
+          tui_show ( processes, co );
 
-          if ( co->log && !log_to_file ( processes,
-                                         tot_process_act,
-                                         &log_file_buffer,
-                                         &len_log_file_buffer,
-                                         log_file ) )
+          if ( co->log && !log_file ( processes->proc, processes->total ) )
             {
               goto EXIT;
             }
@@ -251,16 +205,13 @@ main ( int argc, char **argv )
 
           TIC_TAC ( co->tic_tac );
 
-          // update processes case necessary
-          if ( fail_process_pkt &&
-               -1 == ( tot_process_act = get_process_active_con (
-                               &processes, tot_process_act, co ) ) )
+          if ( need_update_processes && !processes_get ( processes, co ) )
             goto EXIT;
         }
 
       if ( !packtes_reads )
         {
-          rp = poll ( poll_set, nfds, TIMEOUT_POLL );
+          int rp = poll ( poll_set, nfds, TIMEOUT_POLL );
           if ( rp == -1 )
             {
               // signal event
@@ -280,7 +231,7 @@ main ( int argc, char **argv )
                     continue;
 
                   if ( poll_set[i].fd == STDIN_FILENO &&
-                       running_input ( co ) == P_EXIT )
+                       tui_handle_input ( co ) == P_EXIT )
                     goto EXIT;
                 }
             }
@@ -290,32 +241,14 @@ main ( int argc, char **argv )
 
 EXIT:
 
-  free_resources (
-          ( struct resources_to_free ){.log_file = log_file,
-                                       .buff_log = log_file_buffer,
-                                       .len_log = len_log_file_buffer,
-                                       .sock = sock,
-                                       .processes = processes,
-                                       .tot_processes = tot_process_act,
-                                       .ring = &ring} );
+  socket_free ( sock );
+  ring_free ( ring );
+  log_free ();
+  processes_free ( processes );
+  resolver_free ();
+  tui_free ();
 
   return prog_exit;
-}
-
-static void
-free_resources ( struct resources_to_free res )
-{
-  restore_terminal ();
-
-  close_socket ( res.sock );
-
-  free_ring ( res.ring );
-
-  if ( res.log_file )
-    free_log ( res.log_file, res.buff_log, res.len_log );
-
-  if ( res.tot_processes )
-    free_process ( res.processes, res.tot_processes );
 }
 
 static void
@@ -325,4 +258,14 @@ sig_handler ( int sig )
   //  or 128+n if the command is terminated by signal n"
   // by man bash
   prog_exit = 128 + sig;
+}
+
+static void
+config_sig_handler ( void )
+{
+  struct sigaction sigact = { .sa_handler = sig_handler };
+  sigemptyset ( &sigact.sa_mask );
+
+  sigaction ( SIGINT, &sigact, NULL );
+  sigaction ( SIGTERM, &sigact, NULL );
 }

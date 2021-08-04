@@ -21,29 +21,16 @@
 #ifndef LOG_FILE
 #define LOG_FILE
 
-#include <stdbool.h>
-
-#include "process.h"
+#include "processes.h"
 #include "rate.h"
 
-typedef struct log_processes
-{
-  char *name;
-  nstats_t tot_Bps_rx;  // trafego total
-  nstats_t tot_Bps_tx;
-} log_processes;
+int
+log_init ( const struct config_op * );
 
-FILE *
-setup_log_file ( const struct config_op * );
-
-bool
-log_to_file ( process_t *restrict processes,
-              const size_t tot_process,
-              log_processes **process_filtred,
-              size_t *len_buffer_log,
-              FILE *restrict log_file );
+int
+log_file ( process_t **processes, const size_t tot_process );
 
 void
-free_log ( FILE *file, log_processes *log, size_t len );
+log_free ( void );
 
 #endif  // LOG_FILE

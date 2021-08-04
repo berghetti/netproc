@@ -24,15 +24,14 @@
 #include <stdbool.h>
 
 #include "config.h"
-#include "process.h"
+#include "processes.h"
 
 // encontra o processo ao qual o fluxo de dados pertence
 // e adiciona/incrementa estatisticas de pacotes por segundo
 // e total de bytes
 bool
-add_statistics_in_processes ( process_t *restrict processes,
-                              const size_t tot_proc,
-                              const struct packet *restrict pkt,
-                              const struct config_op *restrict co );
+add_statistics_in_processes ( struct processes *processes,
+                              const struct packet *pkt,
+                              const struct config_op *co );
 
 #endif  // STATISTICS_PROC_H

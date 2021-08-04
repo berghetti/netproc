@@ -22,12 +22,13 @@
 #define CONFIG_H
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdbool.h>
 
 #define PROG_NAME "netproc"
 #define PROG_NAME_LOG PROG_NAME ".log"
 
-#define PROG_VERSION "0.5.5"
+#define PROG_VERSION "0.6.0"
 
 // values field proto in struct config_op
 #define TCP ( 1 << 0 )
@@ -37,7 +38,6 @@ struct config_op
 {
   char *iface;             // bind interface
   char *path_log;          // path to log in file
-  int *color_scheme;       // scheme colors
   int proto;               // tcp or udp
   bool log;                // log in file
   bool view_si;            // SI or IEC prefix
