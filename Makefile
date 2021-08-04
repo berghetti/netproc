@@ -18,8 +18,10 @@
 
 PROG_NAME=netproc
 
+prefix= /usr/local
+
 PATH_DOC_INSTALL=$(DESTDIR)/usr/share/man/man8
-PATH_INSTALL=$(DESTDIR)/usr/sbin
+PATH_INSTALL=$(DESTDIR)$(prefix)/sbin
 
 SRCDIR=./src
 OBJDIR=./obj
@@ -87,11 +89,6 @@ run:
 
 
 install:
-<<<<<<< HEAD
-=======
-	@ $(call checkifroot)
-	@ $(call checkbin, $(BINDIR)/$(PROG_NAME))
->>>>>>> master
 	@ install -d -m 755 $(PATH_INSTALL)
 	@ install --strip $(BINDIR)/$(PROG_NAME) $(PATH_INSTALL); \
 		echo "Binary instaled in "$(PATH_INSTALL)"/"$(PROG_NAME)
