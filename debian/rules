@@ -7,3 +7,6 @@ export DEB_LDFLAGS_MAINT_APPEND = -fPIE -pie
 
 %:
 	dh $@
+
+override_dh_auto_install:
+	dh_auto_install -- prefix=/usr
