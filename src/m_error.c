@@ -34,29 +34,29 @@
 #define FATAL "[FATAL] "
 
 static void
-print ( const char *tag, const char *msg, va_list args )
+print ( const char *restrict tag, const char *restrict fmt, va_list args )
 {
-  fprintf ( stderr, tag );
-  vfprintf ( stderr, msg, args );
+  fprintf ( stderr, "%s", tag );
+  vfprintf ( stderr, fmt, args );
   fprintf ( stderr, "\n" );
 }
 
 void
-fatal_error ( const char *msg, ... )
+fatal_error ( const char *fmt, ... )
 {
   va_list args;
 
-  va_start ( args, msg );
-  print ( FATAL, msg, args );
+  va_start ( args, fmt );
+  print ( FATAL, fmt, args );
   va_end ( args );
 }
 
 void
-debug_error ( const char *msg, ... )
+debug_error ( const char *fmt, ... )
 {
   va_list args;
 
-  va_start ( args, msg );
-  print ( DEBUG, msg, args );
+  va_start ( args, fmt );
+  print ( DEBUG, fmt, args );
   va_end ( args );
 }
