@@ -29,14 +29,13 @@ BINDIR=./bin
 DOCDIR=./doc
 
 CC=gcc
-CPPFLAGS=
-CFLAGS=-Wall -Wextra -pedantic
+CFLAGS+= -Wall -Wextra -pedantic
 
 # environment var
 ifdef DEBUG
 	CFLAGS+= -O0 -ggdb
 else
-	CPPFLAGS=-D NDEBUG
+	CPPFLAGS+=-D NDEBUG
 	CFLAGS+= -O2
 endif
 
