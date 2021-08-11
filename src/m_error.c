@@ -33,6 +33,12 @@
 #define ERROR "[ERROR] "
 #define FATAL "[FATAL] "
 
+/*
+ * vsprintf() in print() uses nonliteral format string. It may break
+ * compilation if user enables corresponding warning. Disable it explicitly.
+ */
+ #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+
 static void
 print ( const char *restrict tag, const char *restrict fmt, va_list args )
 {

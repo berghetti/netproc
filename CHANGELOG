@@ -4,6 +4,9 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
+?? - ??
+  - makefile LDLIBS
+
 0.6.0 - 2021-08-03
   - invalid interface argument handling
   - cleanup on error cases

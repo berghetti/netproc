@@ -18,7 +18,7 @@
 
 PROG_NAME=netproc
 
-prefix= /usr/local
+prefix ?= /usr/local
 
 PATH_DOC_INSTALL=$(DESTDIR)$(prefix)/share/man/man8
 PATH_INSTALL=$(DESTDIR)$(prefix)/sbin
@@ -33,7 +33,7 @@ CFLAGS+= -Wall -Wextra -pedantic
 
 # environment var
 ifdef DEBUG
-	CFLAGS+= -O0 -ggdb
+	CFLAGS+= -O0 -ggdb -Wformat=2
 else
 	CPPFLAGS+=-D NDEBUG
 	CFLAGS+= -O2
@@ -85,7 +85,6 @@ distclean: clean
 
 run:
 	sudo $(BINDIR)/$(PROG_NAME)
-
 
 install:
 	@ install -d -m 755 $(PATH_INSTALL)
