@@ -83,7 +83,10 @@ get_name_process ( char **buffer, const pid_t pid )
   close ( fd );
 
   if ( total_read == -1 )
-    return -1;
+    {
+      ERROR_DEBUG ( "%s", "error read process name" );
+      return -1;
+    }
 
   char *p = *buffer;
 

@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stddef.h>  // type size_t
+#include <sys/types.h>  // type size_t
 
 // retorna o tamanho da string até null byte ou espaço
 // oque ocorrer primeiro
@@ -37,8 +37,8 @@ strlen_space ( const char *string )
 // char *str, pointer to string
 // size_t len, lenght of string
 // char ch, character to search
-int
-find_last_char ( const char *str, size_t len, const char ch )
+ssize_t
+find_last_char ( const char *str, size_t len, const int ch )
 {
   while ( len-- )
     if ( str[len] == ch )

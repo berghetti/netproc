@@ -64,9 +64,9 @@
 static WINDOW *pad = NULL;
 static int *color_scheme;
 
-// FIXME: const lenght value no ok
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
-static chtype line_original[1000] = { 0 };
+static chtype *line_original;
+static int size_line_original;
 
 static int sort_by = RATE_RX;  // ordenação padrão
 static int scroll_x = 0;
@@ -91,7 +91,7 @@ static int max_digits_pid;
 static void
 paint_selected ( void )
 {
-  for ( int i = 0; i < cur_cols; i++ )
+  for ( int i = 0; i < cur_cols && i < size_line_original; i++ )
     waddch ( pad,
              ( line_original[i] & ( A_CHARTEXT | A_ALTCHARSET ) ) |
                      color_scheme[SELECTED_L] );
@@ -226,6 +226,17 @@ resize_pad ( const int l, const int c )
   cur_cols = MAX ( c, cur_cols );
 
   wresize ( pad, cur_lines, cur_cols );
+
+  size_t new_size = cur_cols * sizeof ( *line_original );
+  void *tmp = realloc ( line_original, new_size );
+  if ( !tmp )
+    {
+      ERROR_DEBUG ( "%s", strerror ( errno ) );
+      return;
+    }
+
+  line_original = tmp;
+  size_line_original = new_size;
 }
 
 static inline bool
@@ -345,6 +356,12 @@ tui_init ( const struct config_op *co )
   noecho ();
 
   set_lines_cols ();
+  size_t size = cur_cols * sizeof ( *line_original );
+  line_original = malloc ( size );
+  if ( !line_original )
+    return 0;
+
+  size_line_original = size;
 
   pad = create_pad ( cur_lines, cur_cols );
   if ( !pad )
@@ -428,20 +445,30 @@ tui_show ( const struct processes *processes, const struct config_op *co )
                 J_RATE,
                 rx_tot );
 
-      // "/usr/bin/programa-nome"
+      // "/usr/bin/program-name"
       size_t len_path_name = strlen_space ( process->name );
 
-      // "programa-nome"
-      size_t len_name = find_last_char ( process->name, len_path_name, '/' );
+      // "program-name"
+      ssize_t len_name = find_last_char ( process->name, len_path_name, '/' );
+      if ( len_name == -1 )
+        len_name = 0;
 
       for ( size_t j = 0; j < len_full_name; j++ )
         {
-          if ( j > len_name && j < len_path_name )
+          chtype ch;
             // destaca somente o nome do programa
-            waddch ( pad, process->name[j] | color_scheme[NAME_PROG_BOLD] );
+          if ( process->name[j] != '/' &&
+               j >= ( size_t ) len_name &&
+               j < len_path_name )
+            {
+              ch = process->name[j] | color_scheme[NAME_PROG_BOLD];
+            }
           else
-            // pinta todo o caminho do programa e parametros
-            waddch ( pad, process->name[j] | color_scheme[NAME_PROG] );
+            { // pinta todo o caminho do programa e parametros
+              ch = process->name[j] | color_scheme[NAME_PROG];
+            }
+
+          waddch ( pad, ch );
         }
 
       waddch ( pad, '\n' );
