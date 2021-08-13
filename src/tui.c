@@ -92,7 +92,7 @@ paint_selected ( void )
   // save current line selected without colors to line_original
   // after this is restored
   mvwinchnstr ( pad, selected, 0, line_original, cur_cols - 1 );
-  line_original[cur_cols - 1] = ' '; // remove '\n' end of line
+  line_original[cur_cols - 1] = ' ';  // remove '\n' end of line
 
   // print current line selected with colors
   for ( int i = 0; i < cur_cols; i++ )
@@ -226,7 +226,7 @@ create_pad ( const int l, const int c )
 static void
 resize_pad ( const int l, const int c )
 {
-  if (l < cur_lines && c < cur_cols)
+  if ( l < cur_lines && c < cur_cols )
     return;
 
   cur_lines = MAX ( l, cur_lines );
@@ -234,7 +234,7 @@ resize_pad ( const int l, const int c )
 
   wresize ( pad, cur_lines, cur_cols );
 
-  size_t new_size = cur_cols * sizeof ( *line_original ) + 1; // +1 null byte
+  size_t new_size = cur_cols * sizeof ( *line_original ) + 1;  // +1 null byte
   void *tmp = realloc ( line_original, new_size );
   if ( !tmp )
     {
@@ -355,7 +355,7 @@ tui_init ( const struct config_op *co )
   noecho ();
 
   set_lines_cols ();
-  size_t size = cur_cols * sizeof ( *line_original ) + 1; // + 1 null byte
+  size_t size = cur_cols * sizeof ( *line_original ) + 1;  // + 1 null byte
   line_original = malloc ( size );
   if ( !line_original )
     return 0;
@@ -408,7 +408,7 @@ tui_show ( const struct processes *processes, const struct config_op *co )
 
       // +1 because'\n'
       tot_cols = MAX ( ( size_t ) tot_cols,
-                       len_full_name + PROGRAM + max_digits_pid + 1);
+                       len_full_name + PROGRAM + max_digits_pid + 1 );
 
       resize_pad ( 0, tot_cols );
 
@@ -590,7 +590,7 @@ tui_handle_input ( const struct config_op *co )
                   scroll_y++;
 
                 // restore current line
-                restore_line( selected - 1);
+                restore_line ( selected - 1 );
 
                 paint_selected ();
 
@@ -616,7 +616,7 @@ tui_handle_input ( const struct config_op *co )
                   scroll_y--;
 
                 // restore current line
-                restore_line( selected + 1);
+                restore_line ( selected + 1 );
 
                 paint_selected ();
 

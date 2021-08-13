@@ -15,7 +15,8 @@ TEST = tests_all
 # include here source module to test
 C_SOURCE += ../src/hashtable.c \
  						../src/full_read.c \
-						../src/resolver/queue.c
+						../src/resolver/queue.c \
+						../src/str.c
 
 .PHONY: all clean run
 
