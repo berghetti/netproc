@@ -4,8 +4,9 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
-?? - ??
-  - makefile LDLIBS
+0.6.1 - 2021-08-13
+  - fixed link ncurses on certain systems, LDLIBS in makefile, PR #2
+  - fixed when displaying process with long name, issue #5
 
 0.6.0 - 2021-08-03
   - invalid interface argument handling
