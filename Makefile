@@ -28,7 +28,7 @@ OBJDIR=./obj
 BINDIR=./bin
 DOCDIR=./doc
 
-CC=gcc
+CC ?= gcc
 CFLAGS+= -Wall -Wextra -pedantic
 
 # environment var

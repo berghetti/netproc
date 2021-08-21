@@ -21,6 +21,7 @@
 #include <signal.h>  // sigaction
 #include <unistd.h>  // STDIN_FILENO
 #include <poll.h>    // poll
+#include <time.h>    // clock_gettime
 #include <locale.h>
 
 #include "config.h"
@@ -42,10 +43,10 @@
 // a cada vez que o tempo de T_REFRESH segundo(s) é atingido
 // esse valor é alterado (entre 0 e 1), para que outras partes, statistics_proc,
 // do programa possam ter uma referencia de tempo
-#define TIC_TAC( t ) ( ( t ) ? ( t = 0 ) : ( t = 1 ) )
+#define TIC_TAC( t ) ( t = !t )
 
-// intervalo de atualização do programa, não alterar
-#define T_REFRESH 1
+// tome to refresh in milliseconds
+#define T_REFRESH 1000
 
 #define TIMEOUT_POLL 1000
 
@@ -115,8 +116,9 @@ main ( int argc, char **argv )
 
   config_sig_handler ();
 
-  double m_timer;
-  if ( -1 == ( m_timer = start_timer () ) )
+  // long m_timer;
+  struct timespec m_timer;
+  if ( !start_timer2 ( &m_timer ) )
     {
       fatal_error ( "Error start timer" );
       goto EXIT;
@@ -144,6 +146,7 @@ main ( int argc, char **argv )
       bool packtes_reads = false;
       bool need_update_processes = false;
 
+      // read all blocks availables
       while ( pbd->hdr.bh1.block_status & TP_STATUS_USER )
         {
           struct tpacket3_hdr *ppd;
@@ -187,52 +190,63 @@ main ( int argc, char **argv )
       packet.lenght = 0;
       add_statistics_in_processes ( processes, &packet, co );
 
-      double temp;
-      if ( ( temp = timer ( m_timer ) ) >= ( double ) T_REFRESH )
-        {
-          co->running += temp;
-          calc_avg_rate ( processes, co );
-
-          tui_show ( processes, co );
-
-          if ( co->log && !log_file ( processes->proc, processes->total ) )
-            {
-              goto EXIT;
-            }
-
-          if ( -1 == ( m_timer = restart_timer () ) )
-            goto EXIT;
-
-          TIC_TAC ( co->tic_tac );
-
-          if ( need_update_processes && !processes_get ( processes, co ) )
-            goto EXIT;
-        }
-
       if ( !packtes_reads )
         {
-          int rp = poll ( poll_set, nfds, TIMEOUT_POLL );
-          if ( rp == -1 )
+          long temp_diff = 0;
+          int stop = 0;
+          while ( !stop )
             {
-              // signal event
-              if ( errno == EINTR )
-                continue;
-              else
+              int rp;
+              do
+                {
+                  errno = 0;
+                  rp = poll ( poll_set, nfds, TIMEOUT_POLL - temp_diff );
+                }
+              while ( errno == EINTR );
+
+              if ( rp == -1 )
                 {
                   ERROR_DEBUG ( "poll: \"%s\"", strerror ( errno ) );
                   goto EXIT;
                 }
-            }
-          else if ( rp > 0 )
-            {
-              for ( size_t i = 0; i < nfds; i++ )
+              else if ( rp > 0 )
                 {
-                  if ( !poll_set[i].revents )
-                    continue;
+                  for ( size_t i = 0; i < nfds; i++ )
+                    {
+                      if ( !poll_set[i].revents )
+                        continue;
 
-                  if ( poll_set[i].fd == STDIN_FILENO &&
-                       tui_handle_input ( co ) == P_EXIT )
+                      if ( poll_set[i].fd == STDIN_FILENO &&
+                           tui_handle_input ( co ) == P_EXIT )
+                        goto EXIT;
+
+                      if ( poll_set[i].fd == sock )
+                        stop = 1;
+                    }
+                }
+
+              if ( ( temp_diff = diff_timer ( &m_timer ) ) >= T_REFRESH )
+                {
+                  co->running += temp_diff;
+                  temp_diff = 0;
+                  TIC_TAC ( co->tic_tac );
+                  start_timer2 ( &m_timer );
+
+                  calc_avg_rate ( processes, co );
+
+                  tui_show ( processes, co );
+
+                  if ( co->log &&
+                       !log_file ( processes->proc, processes->total ) )
+                    {
+                      goto EXIT;
+                    }
+
+                  if ( need_update_processes &&
+                       !processes_get ( processes, co ) )
                     goto EXIT;
+
+                  stop = 1;
                 }
             }
         }

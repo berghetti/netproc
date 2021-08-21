@@ -38,6 +38,7 @@ struct config_op
 {
   char *iface;             // bind interface
   char *path_log;          // path to log in file
+  uint64_t running;        // time the program is running
   int proto;               // tcp or udp
   bool log;                // log in file
   bool view_si;            // SI or IEC prefix
@@ -47,9 +48,7 @@ struct config_op
   bool translate_service;  // translate port to service
   bool verbose;            // show process without traffic alse
 
-  // internal
   uint8_t tic_tac;  // sinc program, internal control
-  double running;   // time the program is running
 };
 
 struct config_op *

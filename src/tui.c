@@ -116,7 +116,7 @@ show_resume ( const struct config_op *co )
   wclrtoeol ( pad );  // erase the current line
   wprintw ( pad, "Running: " );
   wattrset ( pad, color_scheme[RESUME_VALUE] );
-  wprintw ( pad, "%s", sec2clock ( ( uint64_t ) co->running ) );
+  wprintw ( pad, "%s", sec2clock ( co->running ) );
 
   wattrset ( pad, color_scheme[RESUME] );
   mvwprintw ( pad, 2, 25, "pps tx: " );

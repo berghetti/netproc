@@ -24,6 +24,13 @@
 // para facilitar a leitura do codigo
 #define restart_timer start_timer
 
+int
+start_timer2 ( struct timespec *ts );
+
+// return diff in milliseconds
+uint64_t
+diff_timer ( struct timespec *old_time );
+
 // retorna a diferença entre o tempo atual em segundos
 // e o valor em segundos passado por parametro
 double
@@ -33,8 +40,8 @@ timer ( const float old_time );
 double
 start_timer ( void );
 
-// translaete seconds in format hh:mm:ss
+// translaete milliseconds in format hh:mm:ss
 char *
-sec2clock ( uint64_t secs );
+sec2clock ( uint64_t milliseconds );
 
 #endif  // MTIME_H
