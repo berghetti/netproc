@@ -24,46 +24,8 @@
 #include <string.h>
 #include <time.h>
 
-#include "m_error.h"
-
-static inline int
-get_time ( struct timespec *buff_time )
-{
-  if ( clock_gettime ( CLOCK_MONOTONIC, buff_time ) == -1 )
-    {
-      ERROR_DEBUG ( "%s", strerror ( errno ) );
-      return 0;
-    }
-
-  return 1;
-}
-
-#define NSTOMS 1E-6  // nanoseconds to milliseconds
-#define STOMS 1000   // seconds to milliseconds
-
-long
-start_timer ( void )
-{
-  struct timespec time;
-  if ( !get_time ( &time ) )
-    return -1;
-
-  return ( time.tv_sec * STOMS ) + ( time.tv_nsec * NSTOMS );
-}
-
-long
-timer ( const long old_time )
-{
-  struct timespec new_time;
-  if ( !get_time ( &new_time ) )
-    return -1;
-
-  return ( ( ( new_time.tv_sec * STOMS ) + ( new_time.tv_nsec * NSTOMS ) ) ) -
-         old_time;
-}
-
 int
-start_timer2 ( struct timespec *ts )
+start_timer ( struct timespec *ts )
 {
   return ( clock_gettime ( CLOCK_MONOTONIC, ts ) != -1 );
 }
@@ -72,15 +34,12 @@ uint64_t
 diff_timer ( struct timespec *old_time )
 {
   struct timespec new_time;
-  if ( clock_gettime ( CLOCK_MONOTONIC, &new_time ) == -1 )
-    {
-      ERROR_DEBUG ( "%s", strerror ( errno ) );
-      return -1;
-    }
+  clock_gettime ( CLOCK_MONOTONIC, &new_time );
 
   new_time.tv_sec -= old_time->tv_sec;
   new_time.tv_nsec -= old_time->tv_nsec;
 
+  // convert to milliseconds
   return new_time.tv_sec * 1000 + new_time.tv_nsec / 1E6;
 }
 

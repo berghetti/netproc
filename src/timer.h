@@ -21,26 +21,14 @@
 #ifndef M_TIME_H
 #define M_TIME_H
 
-// para facilitar a leitura do codigo
-#define restart_timer start_timer
-
 int
-start_timer2 ( struct timespec *ts );
+start_timer ( struct timespec *ts );
 
-// return diff in milliseconds
+// return diff in milliseconds od old time and current time in milliseconds
 uint64_t
 diff_timer ( struct timespec *old_time );
 
-// retorna a diferença entre o tempo atual em segundos
-// e o valor em segundos passado por parametro
-double
-timer ( const float old_time );
-
-// retorna a tempo atual em segundos
-double
-start_timer ( void );
-
-// translaete milliseconds in format hh:mm:ss
+// transform milliseconds in format hh:mm:ss
 char *
 sec2clock ( uint64_t milliseconds );
 

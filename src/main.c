@@ -118,7 +118,7 @@ main ( int argc, char **argv )
 
   // long m_timer;
   struct timespec m_timer;
-  if ( !start_timer2 ( &m_timer ) )
+  if ( !start_timer ( &m_timer ) )
     {
       fatal_error ( "Error start timer" );
       goto EXIT;
@@ -230,7 +230,7 @@ main ( int argc, char **argv )
                   co->running += temp_diff;
                   temp_diff = 0;
                   TIC_TAC ( co->tic_tac );
-                  start_timer2 ( &m_timer );
+                  start_timer ( &m_timer );
 
                   calc_avg_rate ( processes, co );
 

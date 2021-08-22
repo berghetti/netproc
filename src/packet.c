@@ -23,65 +23,68 @@
 #include <linux/ip.h>         // struct iphdr
 #include <stdbool.h>          // boolean type
 #include <sys/socket.h>       // setsockopt
+#include <time.h>             // time
 
 #include "packet.h"
-#include "timer.h"
 
-// bit dont fragment flag do cabeçalho IP
-#define IP_DF 0x4000
+// masks header IP
+#define IP_DF 0x4000      // dont fragment
+#define IP_MF 0x2000      // more fragments
+#define IP_OFFMASK 0x1FFF // offset do fragmento
 
-// bit more fragments do cabeçalho IP
-#define IP_MF 0x2000
-
-// mascara para testar o offset do fragmento
-#define IP_OFFMASK 0x1FFF
-
-// máximo de pacotes IP que podem estar fragmentados simultaneamente,
-// os pacotes que chegarem alem desse limite não serão calculados
-// e um log sera enviado na saida de erro padrão
+/* máximo de pacotes IP que podem estar fragmentados simultaneamente,
+ os pacotes que chegarem alem desse limite não serão calculados
+ e um log sera enviado na saida de erro padrão.
+ reference cisco default value: 16 */
 #define MAX_REASSEMBLIES 32
 
-// maximo de fragmentos que um pacote IP pode ter,
-// acima disso um erro sera emitido, e os demais fragmentos desse pacote
-// não serão computados e um log sera enviado na saida de erro padrão
+/* maximo de fragmentos que um pacote IP pode ter,
+acima disso um erro sera emitido, e os demais fragmentos desse pacote
+não serão computados e um log sera enviado na saida de erro padrão
+reference cisco default value: 32 */
 #define MAX_FRAGMENTS 64
 
-// tempo de vida maximo de um pacote fragmentado em segundos,
-// caso não chegue todos os fragmentos do pacote nesse periodo, o fragmento
-// é descartado.
-// cada pacote possui um contador unico, independente da frequencia de
-// atualização do programa
+/* tempo de vida maximo de um pacote fragmentado em segundos,
+caso não chegue todos os fragmentos do pacote nesse periodo,
+o fragmento é descartado, cada pacote possui um contador unico
+reference cisco default value: 3 seconds*/
 #define LIFETIME_FRAG 3
 
 // codigo de erro para numero maximo de fragmentos de um pacote aitigido
 #define ER_MAX_FRAGMENTS -2
 
-// atualiza o total de pacotes fragmentados
-#define DEC_REASSEMBLE( var ) ( ( var > 0 ) ? ( var )-- : ( var = 0 ) )
+// decrementa o total de pacotes fragmentados
+#define DEC_REASSEMBLE( var ) ( (var) -= ( (var) != 0 ) )
 
-// Aproveitamos do fato dos cabeçalhos TCP e UDP
-// receberem as portas de origem e destino na mesma ordem,
-// e como atributos iniciais, assim podemos utilizar esse estrutura
-// simplificada para extrair as portas tanto de pacotes
-// TCP quanto UDP, lembrando que não utilizaremos outros campos
-// dos respectivos cabeçalhos.
+/* Aproveitamos do fato dos cabeçalhos TCP e UDP
+receberem as portas de origem e destino na mesma ordem,
+e como atributos iniciais, assim podemos utilizar esse estrutura
+simplificada para extrair as portas tanto de pacotes
+TCP quanto UDP, lembrando que não utilizaremos outros campos
+dos respectivos cabeçalhos. */
 struct tcp_udp_h
 {
   uint16_t source;
   uint16_t dest;
 };
 
-// utilzado para identificar a camada de transporte (TCP, UDP)
-// dos fragmentos de um pacote e tambem ter controle de tempo de vida
-// do pacote e numero de fragmentos do pacote
+/* utilzado para identificar a camada de transporte (TCP, UDP)
+dos fragmentos de um pacote e tambem ter controle de tempo de vida
+do pacote e numero de fragmentos do pacote */
 struct pkt_ip_fragment
 {
+  time_t ttl;            // lifetime of packet
   uint16_t pkt_id;       // IP header ID value
   uint16_t source_port;  // IP header source port value
   uint16_t dest_port;    // IP header dest port value
   uint8_t c_frag;        // count of fragments, limit is MAX_FRAGMENTS
-  double ttl;            // lifetime of packet
 };
+
+// armazena os dados da camada de transporte dos pacotes fragmentados
+static struct pkt_ip_fragment pkt_ip_frag[MAX_REASSEMBLIES] = { 0 };
+
+// contador de pacotes IP que estão fragmentados
+static uint8_t count_reassemblies = 0;
 
 static int
 is_first_frag ( const struct iphdr *const l3,
@@ -103,12 +106,6 @@ insert_data_packet ( struct packet *pkt,
                      const uint16_t local_port,
                      const uint16_t remote_port,
                      const uint32_t len );
-
-// armazena os dados da camada de transporte dos pacotes fragmentados
-static struct pkt_ip_fragment pkt_ip_frag[MAX_REASSEMBLIES] = { 0 };
-
-// contador de pacotes IP que estão fragmentados
-static uint8_t count_reassemblies;
 
 // separa os dados brutos em suas camadas 2, 3 4
 int
@@ -256,7 +253,7 @@ is_first_frag ( const struct iphdr *const l3, const struct tcp_udp_h *const l4 )
               pkt_ip_frag[i].source_port = l4->source;
               pkt_ip_frag[i].dest_port = l4->dest;
               pkt_ip_frag[i].c_frag = 1;            // first fragment
-              pkt_ip_frag[i].ttl = start_timer ();  // anota tempo atual
+              pkt_ip_frag[i].ttl = time (NULL);     // get current time
 
               // it's first fragment
               return 1;
@@ -324,12 +321,14 @@ is_frag ( const struct iphdr *const l3 )
 static void
 clear_frag ( void )
 {
-  for ( size_t i = 0; i < MAX_REASSEMBLIES; i++ )
+  for ( size_t i = 0; i < MAX_REASSEMBLIES && count_reassemblies; i++ )
     {
       if ( !pkt_ip_frag[i].ttl )
         continue;
 
-      if ( timer ( pkt_ip_frag[i].ttl ) >= ( double ) LIFETIME_FRAG ||
+      time_t now = time(NULL);
+
+      if ( ( now - pkt_ip_frag[i].ttl ) >= LIFETIME_FRAG ||
            pkt_ip_frag[i].c_frag == MAX_FRAGMENTS )
         {
           pkt_ip_frag[i].ttl = 0;

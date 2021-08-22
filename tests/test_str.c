@@ -22,4 +22,7 @@ test_str ()
   TEST_ASSERT_EQUAL_INT ( 306, find_last_char ( str, strlen ( str ), 'C' ) );
   TEST_ASSERT_EQUAL_INT ( 'E',
                           str[find_last_char ( str, strlen ( str ), 'E' )] );
+
+  TEST_ASSERT_EQUAL_INT ( -1,
+                          str[find_last_char ( str, strlen ( str ), 'G' )] );
 }
