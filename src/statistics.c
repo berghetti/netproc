@@ -25,10 +25,13 @@
 
 #include "config.h"
 #include "packet.h"
+#include "rate.h"        // LEN_BUF_CIRC_RATE
 #include "processes.h"
 
 // incremento circular de 0 até LEN_BUF_CIRC_RATE - 1
 #define UPDATE_ID_BUFF( id ) ( ( id ) = ( ( id ) + 1 ) % LEN_BUF_CIRC_RATE )
+
+static uint8_t id_buff_circ = 0;
 
 static bool
 conection_match_packet ( conection_t *conection, const struct packet *pkt )
@@ -78,72 +81,20 @@ conection_match_packet ( conection_t *conection, const struct packet *pkt )
 }
 
 bool
-add_statistics_in_processes ( struct processes *processes,
+statistics_add ( struct processes *processes,
                               const struct packet *pkt,
                               const struct config_op *co )
 {
-  static int last_tic;
-  static uint8_t id_buff_circ;
-
-  // time geral do programa atualizou, desloca o indice do buffer
-  if ( last_tic != co->tic_tac )
-    UPDATE_ID_BUFF ( id_buff_circ );
-
-  bool locate = false;
   for ( process_t **proc = processes->proc; *proc; proc++ )
     {
       process_t *process = *proc;
-      size_t c;
-      // caso o indice do buffer circular tenha atualizado,
-      // pois ja deu o tempo pre definido, T_REFRESH,
-      // apaga os dados antes de começar a escrever
-      // para não incrementar em cima de valores antigos
-      if ( last_tic != co->tic_tac )
-        {
-          process->net_stat.Bps_rx[id_buff_circ] = 0;
-          process->net_stat.Bps_tx[id_buff_circ] = 0;
-          process->net_stat.pps_rx[id_buff_circ] = 0;
-          process->net_stat.pps_tx[id_buff_circ] = 0;
-
-          process->net_stat.bytes_last_sec_rx = 0;
-          process->net_stat.bytes_last_sec_tx = 0;
-
-          // zera estatisticas da conexões tambem
-          if ( co->view_conections )
-            {
-              for ( c = 0; c < process->total_conections; c++ )
-                {
-                  process->conection[c].net_stat.Bps_rx[id_buff_circ] = 0;
-                  process->conection[c].net_stat.Bps_tx[id_buff_circ] = 0;
-                  process->conection[c].net_stat.pps_rx[id_buff_circ] = 0;
-                  process->conection[c].net_stat.pps_tx[id_buff_circ] = 0;
-                }
-            }
-        }
-
-      // caso o pacote<->processo ja tenha sido localizado e/ou não tenha
-      // dados para atualizar
-      // e o tempo para refresh não alterou,
-      // podemos retornar pois não ha nada para atualizar
-      if ( ( locate || !pkt->lenght ) && last_tic == co->tic_tac )
-        return true;
-
-      // processo<->pacote ja localizado ou sem dados para atualizar
-      // e o tempo para refresh alterou,
-      // apenas continua para zerar buffer dos demais processos
-      // no co->tic_tac(segundo) atual
-      if ( ( locate || !pkt->lenght ) && last_tic != co->tic_tac )
-        continue;
 
       // percorre todas as conexões do processo...
-      for ( c = 0; c < process->total_conections; c++ )
+      for ( size_t c = 0; c < process->total_conections; c++ )
         {
           // check if packet math con conection from this process
           if ( !conection_match_packet ( &process->conection[c], pkt ) )
             continue;
-
-          // pass all test
-          locate = true;
 
           process->conection[c].if_index = pkt->if_index;
 
@@ -182,11 +133,40 @@ add_statistics_in_processes ( struct processes *processes,
                 }
             }
 
-          break;
+          return true;
         }
     }
 
-  // atualiza para id de buffer atual
-  last_tic = co->tic_tac;
-  return locate;
+  return false;
+}
+
+void
+statistics_prepare( struct processes *processes, const struct config_op *co )
+{
+  UPDATE_ID_BUFF ( id_buff_circ );
+
+  for ( process_t **proc = processes->proc; *proc; proc++ )
+    {
+      process_t *process = *proc;
+
+      process->net_stat.Bps_rx[id_buff_circ] = 0;
+      process->net_stat.Bps_tx[id_buff_circ] = 0;
+      process->net_stat.pps_rx[id_buff_circ] = 0;
+      process->net_stat.pps_tx[id_buff_circ] = 0;
+
+      process->net_stat.bytes_last_sec_rx = 0;
+      process->net_stat.bytes_last_sec_tx = 0;
+
+      // zera estatisticas da conexões tambem
+      if ( co->view_conections )
+        {
+          for ( size_t c = 0; c < process->total_conections; c++ )
+            {
+              process->conection[c].net_stat.Bps_rx[id_buff_circ] = 0;
+              process->conection[c].net_stat.Bps_tx[id_buff_circ] = 0;
+              process->conection[c].net_stat.pps_rx[id_buff_circ] = 0;
+              process->conection[c].net_stat.pps_tx[id_buff_circ] = 0;
+            }
+        }
+    }
 }

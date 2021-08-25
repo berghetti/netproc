@@ -38,9 +38,6 @@ static struct config_op co = { .iface = NULL,  // all interfaces
                                .translate_host = true,
                                .translate_service = true,
                                .verbose = false,
-
-                               // internal control sinc of program, NOT REMOVE
-                               .tic_tac = 0,
                                .running = 0 };
 
 struct config_op *

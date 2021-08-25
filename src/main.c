@@ -21,7 +21,6 @@
 #include <signal.h>  // sigaction
 #include <unistd.h>  // STDIN_FILENO
 #include <poll.h>    // poll
-#include <time.h>    // clock_gettime
 #include <locale.h>
 
 #include "config.h"
@@ -40,15 +39,8 @@
 #include "m_error.h"
 #include "resolver/resolver.h"
 
-// a cada vez que o tempo de T_REFRESH segundo(s) é atingido
-// esse valor é alterado (entre 0 e 1), para que outras partes, statistics_proc,
-// do programa possam ter uma referencia de tempo
-#define TIC_TAC( t ) ( t = !t )
-
-// tome to refresh in milliseconds
+// time to refresh in milliseconds
 #define T_REFRESH 1000
-
-#define TIMEOUT_POLL 1000
 
 static void
 config_sig_handler ( void );
@@ -169,7 +161,7 @@ main ( int argc, char **argv )
               // de um processo existente, que ainda não foi mapeado, então
               // anotamos que sera necessario atualizar a lista de processos
               // com conexões ativas.
-              if ( !add_statistics_in_processes ( processes, &packet, co ) )
+              if ( !statistics_add ( processes, &packet, co ) )
                 {
                   need_update_processes = true;
                   continue;
@@ -186,10 +178,6 @@ main ( int argc, char **argv )
           pbd = ( struct tpacket_block_desc * ) ring->rd[block_num].iov_base;
         }
 
-      // necessario para zerar contadores quando não ha trafego
-      packet.lenght = 0;
-      add_statistics_in_processes ( processes, &packet, co );
-
       if ( !packtes_reads )
         {
           long temp_diff = 0;
@@ -200,7 +188,7 @@ main ( int argc, char **argv )
               do
                 {
                   errno = 0;
-                  rp = poll ( poll_set, nfds, TIMEOUT_POLL - temp_diff );
+                  rp = poll ( poll_set, nfds, T_REFRESH - temp_diff );
                 }
               while ( errno == EINTR );
 
@@ -229,7 +217,6 @@ main ( int argc, char **argv )
                 {
                   co->running += temp_diff;
                   temp_diff = 0;
-                  TIC_TAC ( co->tic_tac );
                   start_timer ( &m_timer );
 
                   calc_avg_rate ( processes, co );
@@ -246,7 +233,7 @@ main ( int argc, char **argv )
                        !processes_get ( processes, co ) )
                     goto EXIT;
 
-                  stop = 1;
+                  statistics_prepare( processes, co );
                 }
             }
         }

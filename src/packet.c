@@ -208,12 +208,8 @@ parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd )
       ret = 1;
     }
 
-// caso exista pacotes que foram fragmentados,
-// faz checagem e descarta pacotes que ainda não enviaram todos
-// os fragmentos no tempo limite de LIFETIME_FRAG segundos
 END:
-  if ( count_reassemblies )
-    clear_frag ();
+  clear_frag ();
 
   return ret;
 }
@@ -321,7 +317,7 @@ is_frag ( const struct iphdr *const l3 )
 static void
 clear_frag ( void )
 {
-  for ( size_t i = 0; i < MAX_REASSEMBLIES && count_reassemblies; i++ )
+  for ( size_t i = 0; count_reassemblies && i < MAX_REASSEMBLIES; i++ )
     {
       if ( !pkt_ip_frag[i].ttl )
         continue;

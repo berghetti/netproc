@@ -30,7 +30,7 @@
 
 #define PROG_VERSION "0.6.2"
 
-// values field proto in struct config_op
+// values struct config_op.proto
 #define TCP ( 1 << 0 )
 #define UDP ( 1 << 1 )
 
@@ -47,8 +47,6 @@ struct config_op
   bool translate_host;     // translate ip to name using DNS
   bool translate_service;  // translate port to service
   bool verbose;            // show process without traffic alse
-
-  uint8_t tic_tac;  // sinc program, internal control
 };
 
 struct config_op *

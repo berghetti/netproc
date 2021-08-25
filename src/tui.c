@@ -250,9 +250,9 @@ show_conections ( const process_t *process, const struct config_op *co )
 {
   resize_pad ( process->total_conections + tot_rows, 0 );
 
-  bool last_con = false;
   for ( size_t i = 0; i < process->total_conections; i++ )
     {
+      bool last_con = false;
       tot_rows++;
 
       // se a proxima conexão estiver com estatisticas zeradas, essa é a ultima
@@ -328,13 +328,11 @@ show_conections ( const process_t *process, const struct config_op *co )
       wprintw ( pad, " %s\n", tuple );
 
       if ( last_con )
-        break;
-    }
-  // se teve conexões exibidas, pula uma linha
-  if ( last_con )
-    {
-      tot_rows++;
-      waddch ( pad, '\n' );
+        {
+          tot_rows++;
+          waddch ( pad, '\n' );
+          break;
+        }
     }
 
   wattrset ( pad, color_scheme[RESET] );
