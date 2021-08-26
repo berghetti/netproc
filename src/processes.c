@@ -26,7 +26,6 @@
 #include <sys/types.h>  // open
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <netinet/tcp.h>  // TCP_ESTABLISHED, TCP_TIME_WAIT...
 
 #include "hashtable.h"
 #include "full_read.h"
@@ -286,10 +285,6 @@ processes_get ( struct processes *procs, struct config_op *co )
 
           for ( int c = 0; c < total_conections; c++ )
             {
-              if ( conections[c].state == TCP_TIME_WAIT ||
-                   conections[c].state == TCP_LISTEN )
-                continue;
-
               char socket[MAX_NAME_SOCKET];
               snprintf ( socket,
                          MAX_NAME_SOCKET,

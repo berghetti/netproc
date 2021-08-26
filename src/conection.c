@@ -26,6 +26,7 @@
 #include <stdio.h>     // FILE *
 #include <string.h>    // strlen, strerror
 #include <linux/in.h>  // IPPROTO_UDP | IPPROTO_TCP
+#include <netinet/tcp.h>  // TCP_ESTABLISHED, TCP_TIME_WAIT...
 
 #include "conection.h"
 #include "config.h"  // define TCP | UDP
@@ -122,6 +123,10 @@ get_info_conections ( conection_t **conection,
           count = -1;
           goto EXIT;
         }
+
+      // ignore this conections
+      if ( state == TCP_TIME_WAIT || state == TCP_LISTEN )
+        continue;
 
       rs = sscanf ( local_addr, "%x", &( *conection )[count].local_address );
       if ( rs != 1 )

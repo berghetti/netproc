@@ -27,9 +27,9 @@
 #include "sort.h"
 
 static int
-compara_processo ( const void *restrict p1,
-                   const void *restrict p2,
-                   void *restrict mode )
+compare_process ( const void *restrict p1,
+                  const void *restrict p2,
+                  void *restrict mode )
 {
   process_t *proc1 = *( process_t ** ) p1;
   process_t *proc2 = *( process_t ** ) p2;
@@ -65,9 +65,9 @@ compara_processo ( const void *restrict p1,
 }
 
 static int
-compara_conexao ( const void *restrict p1,
-                  const void *restrict p2,
-                  void *restrict mode )
+compare_conection ( const void *restrict p1,
+                    const void *restrict p2,
+                    void *restrict mode )
 {
   conection_t *con1 = ( conection_t * ) p1;
   conection_t *con2 = ( conection_t * ) p2;
@@ -102,7 +102,7 @@ sort ( process_t **proc,
   qsort_r ( proc,
             tot_process,
             sizeof ( process_t * ),
-            compara_processo,
+            compare_process,
             ( void * ) &mode );
 
   if ( co->view_conections )
@@ -110,6 +110,6 @@ sort ( process_t **proc,
       qsort_r ( proc[i]->conection,
                 proc[i]->total_conections,
                 sizeof ( conection_t ),
-                compara_conexao,
+                compare_conection,
                 ( void * ) &mode );
 }
