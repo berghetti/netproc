@@ -29,7 +29,7 @@
 // espaço amostral para calcular a média
 // de estatisticas de rede.
 // 5 é um bom valor...
-#define LEN_BUF_CIRC_RATE 5
+#define SAMPLE_SPACE_SIZE 5
 
 // Considerando que a cada 1024 bits ou bytes (bits por segundo ou bytes por
 // segundo), caso escolhido o padrão IEC com base 2, ou 1000 bits/bytes caso
@@ -48,10 +48,10 @@ typedef uint64_t nstats_t;
 
 struct net_stat
 {
-  nstats_t pps_rx[LEN_BUF_CIRC_RATE];  // pacotes por segundo, amostras
-  nstats_t pps_tx[LEN_BUF_CIRC_RATE];
-  nstats_t Bps_rx[LEN_BUF_CIRC_RATE];  // bytes/bits por segundos, amostras
-  nstats_t Bps_tx[LEN_BUF_CIRC_RATE];
+  nstats_t pps_rx[SAMPLE_SPACE_SIZE];  // pacotes por segundo, amostras
+  nstats_t pps_tx[SAMPLE_SPACE_SIZE];
+  nstats_t Bps_rx[SAMPLE_SPACE_SIZE];  // bytes/bits por segundos, amostras
+  nstats_t Bps_tx[SAMPLE_SPACE_SIZE];
   nstats_t avg_Bps_rx;  // média de bytes/bits por segundos
   nstats_t avg_Bps_tx;
   nstats_t avg_pps_rx;  // média de pacotes por segundos
@@ -67,6 +67,6 @@ struct net_stat
 struct processes;
 
 void
-calc_avg_rate ( struct processes *processes, const struct config_op *co );
+rate_calc ( struct processes *processes, const struct config_op *co );
 
 #endif  // RATE_H

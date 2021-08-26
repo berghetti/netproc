@@ -28,9 +28,9 @@
 #include "packet.h"
 
 // masks header IP
-#define IP_DF 0x4000      // dont fragment
-#define IP_MF 0x2000      // more fragments
-#define IP_OFFMASK 0x1FFF // offset do fragmento
+#define IP_DF 0x4000       // dont fragment
+#define IP_MF 0x2000       // more fragments
+#define IP_OFFMASK 0x1FFF  // offset do fragmento
 
 /* máximo de pacotes IP que podem estar fragmentados simultaneamente,
  os pacotes que chegarem alem desse limite não serão calculados
@@ -54,7 +54,7 @@ reference cisco default value: 3 seconds*/
 #define ER_MAX_FRAGMENTS -2
 
 // decrementa o total de pacotes fragmentados
-#define DEC_REASSEMBLE( var ) ( (var) -= ( (var) != 0 ) )
+#define DEC_REASSEMBLE( var ) ( ( var ) -= ( ( var ) != 0 ) )
 
 /* Aproveitamos do fato dos cabeçalhos TCP e UDP
 receberem as portas de origem e destino na mesma ordem,
@@ -248,8 +248,8 @@ is_first_frag ( const struct iphdr *const l3, const struct tcp_udp_h *const l4 )
               pkt_ip_frag[i].pkt_id = l3->id;
               pkt_ip_frag[i].source_port = l4->source;
               pkt_ip_frag[i].dest_port = l4->dest;
-              pkt_ip_frag[i].c_frag = 1;            // first fragment
-              pkt_ip_frag[i].ttl = time (NULL);     // get current time
+              pkt_ip_frag[i].c_frag = 1;           // first fragment
+              pkt_ip_frag[i].ttl = time ( NULL );  // get current time
 
               // it's first fragment
               return 1;
@@ -322,7 +322,7 @@ clear_frag ( void )
       if ( !pkt_ip_frag[i].ttl )
         continue;
 
-      time_t now = time(NULL);
+      time_t now = time ( NULL );
 
       if ( ( now - pkt_ip_frag[i].ttl ) >= LIFETIME_FRAG ||
            pkt_ip_frag[i].c_frag == MAX_FRAGMENTS )

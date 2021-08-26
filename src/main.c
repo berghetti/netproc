@@ -219,7 +219,9 @@ main ( int argc, char **argv )
                   temp_diff = 0;
                   start_timer ( &m_timer );
 
-                  calc_avg_rate ( processes, co );
+                  rate_calc ( processes, co );
+
+                  statistics_prepare ( processes, co );
 
                   tui_show ( processes, co );
 
@@ -232,8 +234,6 @@ main ( int argc, char **argv )
                   if ( need_update_processes &&
                        !processes_get ( processes, co ) )
                     goto EXIT;
-
-                  statistics_prepare( processes, co );
                 }
             }
         }

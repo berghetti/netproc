@@ -25,13 +25,13 @@
 
 #include "config.h"
 #include "packet.h"
-#include "rate.h"        // LEN_BUF_CIRC_RATE
+#include "rate.h"  // SAMPLE_SPACE_SIZE
 #include "processes.h"
 
-// incremento circular de 0 até LEN_BUF_CIRC_RATE - 1
-#define UPDATE_ID_BUFF( id ) ( ( id ) = ( ( id ) + 1 ) % LEN_BUF_CIRC_RATE )
+// incremento circular de 0 até SAMPLE_SPACE_SIZE - 1
+#define UPDATE_ID_BUFF( id ) ( ( id ) = ( ( id ) + 1 ) % SAMPLE_SPACE_SIZE )
 
-static uint8_t id_buff_circ = 0;
+static uint8_t idx_cir = 0;
 
 static bool
 conection_match_packet ( conection_t *conection, const struct packet *pkt )
@@ -82,8 +82,8 @@ conection_match_packet ( conection_t *conection, const struct packet *pkt )
 
 bool
 statistics_add ( struct processes *processes,
-                              const struct packet *pkt,
-                              const struct config_op *co )
+                 const struct packet *pkt,
+                 const struct config_op *co )
 {
   for ( process_t **proc = processes->proc; *proc; proc++ )
     {
@@ -100,8 +100,8 @@ statistics_add ( struct processes *processes,
 
           if ( pkt->direction == PKT_DOWN )
             {  // estatisticas geral do processo
-              process->net_stat.pps_rx[id_buff_circ]++;
-              process->net_stat.Bps_rx[id_buff_circ] += pkt->lenght;
+              process->net_stat.pps_rx[idx_cir]++;
+              process->net_stat.Bps_rx[idx_cir] += pkt->lenght;
 
               process->net_stat.bytes_last_sec_rx += pkt->lenght;
 
@@ -110,15 +110,15 @@ statistics_add ( struct processes *processes,
               // adicionado estatisticas exclusiva da conexão
               if ( co->view_conections )
                 {
-                  process->conection[c].net_stat.pps_rx[id_buff_circ]++;
-                  process->conection[c].net_stat.Bps_rx[id_buff_circ] +=
+                  process->conection[c].net_stat.pps_rx[idx_cir]++;
+                  process->conection[c].net_stat.Bps_rx[idx_cir] +=
                           pkt->lenght;
                 }
             }
           else
             {  // estatisticas geral do processo
-              process->net_stat.pps_tx[id_buff_circ]++;
-              process->net_stat.Bps_tx[id_buff_circ] += pkt->lenght;
+              process->net_stat.pps_tx[idx_cir]++;
+              process->net_stat.Bps_tx[idx_cir] += pkt->lenght;
 
               process->net_stat.bytes_last_sec_tx += pkt->lenght;
 
@@ -127,8 +127,8 @@ statistics_add ( struct processes *processes,
               // adicionado estatisticas exclusiva da conexão
               if ( co->view_conections )
                 {
-                  process->conection[c].net_stat.pps_tx[id_buff_circ]++;
-                  process->conection[c].net_stat.Bps_tx[id_buff_circ] +=
+                  process->conection[c].net_stat.pps_tx[idx_cir]++;
+                  process->conection[c].net_stat.Bps_tx[idx_cir] +=
                           pkt->lenght;
                 }
             }
@@ -141,18 +141,18 @@ statistics_add ( struct processes *processes,
 }
 
 void
-statistics_prepare( struct processes *processes, const struct config_op *co )
+statistics_prepare ( struct processes *processes, const struct config_op *co )
 {
-  UPDATE_ID_BUFF ( id_buff_circ );
+  UPDATE_ID_BUFF ( idx_cir );
 
   for ( process_t **proc = processes->proc; *proc; proc++ )
     {
       process_t *process = *proc;
 
-      process->net_stat.Bps_rx[id_buff_circ] = 0;
-      process->net_stat.Bps_tx[id_buff_circ] = 0;
-      process->net_stat.pps_rx[id_buff_circ] = 0;
-      process->net_stat.pps_tx[id_buff_circ] = 0;
+      process->net_stat.Bps_rx[idx_cir] = 0;
+      process->net_stat.Bps_tx[idx_cir] = 0;
+      process->net_stat.pps_rx[idx_cir] = 0;
+      process->net_stat.pps_tx[idx_cir] = 0;
 
       process->net_stat.bytes_last_sec_rx = 0;
       process->net_stat.bytes_last_sec_tx = 0;
@@ -162,10 +162,10 @@ statistics_prepare( struct processes *processes, const struct config_op *co )
         {
           for ( size_t c = 0; c < process->total_conections; c++ )
             {
-              process->conection[c].net_stat.Bps_rx[id_buff_circ] = 0;
-              process->conection[c].net_stat.Bps_tx[id_buff_circ] = 0;
-              process->conection[c].net_stat.pps_rx[id_buff_circ] = 0;
-              process->conection[c].net_stat.pps_tx[id_buff_circ] = 0;
+              process->conection[c].net_stat.Bps_rx[idx_cir] = 0;
+              process->conection[c].net_stat.Bps_tx[idx_cir] = 0;
+              process->conection[c].net_stat.pps_rx[idx_cir] = 0;
+              process->conection[c].net_stat.pps_tx[idx_cir] = 0;
             }
         }
     }
