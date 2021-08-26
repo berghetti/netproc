@@ -61,12 +61,7 @@ compara_processo ( const void *restrict p1,
         r = proc1->pid - proc2->pid;
     }
 
-  if ( r > 0 )
-    return 1;
-  else if ( r < 0 )
-    return -1;
-  else
-    return 0;
+  return ( r > 0 ) - ( r < 0 );
 }
 
 static int
@@ -94,12 +89,8 @@ compara_conexao ( const void *restrict p1,
       default:
         r = con2->net_stat.avg_Bps_rx - con1->net_stat.avg_Bps_rx;
     }
-  if ( r > 0 )
-    return 1;
-  else if ( r < 0 )
-    return -1;
-  else
-    return 0;
+
+  return ( r > 0 ) - ( r < 0 );
 }
 
 void

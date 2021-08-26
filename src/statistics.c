@@ -96,20 +96,20 @@ statistics_add ( struct processes *processes,
           if ( pkt->direction == PKT_DOWN )
             {
               // estatisticas geral do processo
-              rate_add_rx( &process->net_stat, pkt->lenght );
+              rate_add_rx ( &process->net_stat, pkt->lenght );
 
               // adicionado estatisticas exclusiva da conexão
               if ( co->view_conections )
-                rate_add_rx( &process->conection[c].net_stat, pkt->lenght );
+                rate_add_rx ( &process->conection[c].net_stat, pkt->lenght );
             }
           else
             {
               // estatisticas geral do processo
-              rate_add_tx( &process->net_stat, pkt->lenght );
+              rate_add_tx ( &process->net_stat, pkt->lenght );
 
               // adicionado estatisticas exclusiva da conexão
               if ( co->view_conections )
-                rate_add_tx( &process->conection[c].net_stat, pkt->lenght );
+                rate_add_tx ( &process->conection[c].net_stat, pkt->lenght );
             }
 
           return true;

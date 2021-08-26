@@ -67,15 +67,15 @@ struct net_stat
 struct processes;
 
 void
-rate_add_tx( struct net_stat *ns, size_t lenght );
+rate_add_tx ( struct net_stat *ns, size_t lenght );
 
 void
-rate_add_rx( struct net_stat *ns, size_t lenght );
+rate_add_rx ( struct net_stat *ns, size_t lenght );
 
 void
 rate_calc ( struct processes *processes, const struct config_op *co );
 
 void
-rate_update( struct processes *processes, const struct config_op *co );
+rate_update ( struct processes *processes, const struct config_op *co );
 
 #endif  // RATE_H
