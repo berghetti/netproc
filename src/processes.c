@@ -34,15 +34,17 @@
 #include "m_error.h"  // ERROR_DEBUG
 #include "macro_util.h"
 
+// 4294967295
+#define LEN_MAX_INT 10
+
 // /proc/%d/cmdline
-#define MAX_CMDLINE 25
+#define MAX_CMDLINE 14 + LEN_MAX_INT
 
-//   6  +  7  + 4 + 7
-// /proc/<pid>/fd/<id-fd>
-#define MAX_PATH_FD 24
+// /proc/<pid>/fd/<id-fd> + 2 align
+#define MAX_PATH_FD 10 + LEN_MAX_INT + LEN_MAX_INT + 2
 
-// strlen ("socket:[99999999]") + 3 safe
-#define MAX_NAME_SOCKET 9 + 8 + 3
+// strlen ("socket:[4294967295]") + 5 align
+#define MAX_NAME_SOCKET 9 + LEN_MAX_INT + 5
 
 static hashtable_t *ht_process;
 
@@ -247,7 +249,7 @@ processes_get ( struct processes *procs, struct config_op *co )
   for ( int index_pid = 0; index_pid < total_process; index_pid++ )
     {
       char path_fd[MAX_PATH_FD];
-      snprintf ( path_fd, MAX_PATH_FD, "/proc/%d/fd/", pids[index_pid] );
+      snprintf ( path_fd, sizeof ( path_fd ), "/proc/%d/fd/", pids[index_pid] );
 
       int total_fd_process = get_numeric_directory ( &fds, path_fd );
 
@@ -266,13 +268,14 @@ processes_get ( struct processes *procs, struct config_op *co )
       for ( int index_fd = 0; index_fd < total_fd_process; index_fd++ )
         {
           snprintf ( path_fd,
-                     MAX_PATH_FD,
+                     sizeof ( path_fd ),
                      "/proc/%d/fd/%d",
                      pids[index_pid],
                      fds[index_fd] );
 
           char data_fd[MAX_NAME_SOCKET];
-          ssize_t len_link = readlink ( path_fd, data_fd, MAX_NAME_SOCKET );
+          ssize_t len_link =
+                  readlink ( path_fd, data_fd, sizeof ( data_fd ) - 1 );
 
           if ( len_link == -1 )
             continue;
@@ -287,7 +290,7 @@ processes_get ( struct processes *procs, struct config_op *co )
             {
               char socket[MAX_NAME_SOCKET];
               snprintf ( socket,
-                         MAX_NAME_SOCKET,
+                         sizeof ( socket ),
                          "socket:[%d]",
                          conections[c].inode );
 

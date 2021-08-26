@@ -23,9 +23,9 @@
 
 #include <errno.h>  // variable errno
 #include <stdbool.h>
-#include <stdio.h>     // FILE *
-#include <string.h>    // strlen, strerror
-#include <linux/in.h>  // IPPROTO_UDP | IPPROTO_TCP
+#include <stdio.h>        // FILE *
+#include <string.h>       // strlen, strerror
+#include <linux/in.h>     // IPPROTO_UDP | IPPROTO_TCP
 #include <netinet/tcp.h>  // TCP_ESTABLISHED, TCP_TIME_WAIT...
 
 #include "conection.h"
