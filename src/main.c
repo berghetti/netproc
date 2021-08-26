@@ -221,7 +221,7 @@ main ( int argc, char **argv )
 
                   rate_calc ( processes, co );
 
-                  statistics_prepare ( processes, co );
+                  rate_update ( processes, co );
 
                   tui_show ( processes, co );
 

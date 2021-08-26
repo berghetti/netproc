@@ -34,7 +34,4 @@ statistics_add ( struct processes *processes,
                  const struct packet *pkt,
                  const struct config_op *co );
 
-void
-statistics_prepare ( struct processes *processes, const struct config_op *co );
-
 #endif  // STATISTICS_PROC_H

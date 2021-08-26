@@ -73,3 +73,59 @@ rate_calc ( struct processes *processes, const struct config_op *co )
         }
     }
 }
+
+// incremento circular de 0 até SAMPLE_SPACE_SIZE - 1
+#define UPDATE_ID_BUFF( id ) ( ( id ) = ( ( id ) + 1 ) % SAMPLE_SPACE_SIZE )
+
+static uint8_t idx_cir = 0;
+
+void
+rate_add_rx( struct net_stat *ns, size_t lenght )
+{
+  ns->pps_rx[idx_cir]++;
+  ns->Bps_rx[idx_cir] += lenght;
+
+  ns->bytes_last_sec_rx += lenght;
+  ns->tot_Bps_rx += lenght;
+}
+
+void
+rate_add_tx( struct net_stat *ns, size_t lenght )
+{
+  ns->pps_tx[idx_cir]++;
+  ns->Bps_tx[idx_cir] += lenght;
+
+  ns->bytes_last_sec_tx += lenght;
+  ns->tot_Bps_tx += lenght;
+}
+
+void
+rate_update( struct processes *processes, const struct config_op *co )
+{
+  UPDATE_ID_BUFF ( idx_cir );
+
+  for ( process_t **proc = processes->proc; *proc; proc++ )
+    {
+      process_t *process = *proc;
+
+      process->net_stat.Bps_rx[idx_cir] = 0;
+      process->net_stat.Bps_tx[idx_cir] = 0;
+      process->net_stat.pps_rx[idx_cir] = 0;
+      process->net_stat.pps_tx[idx_cir] = 0;
+
+      process->net_stat.bytes_last_sec_rx = 0;
+      process->net_stat.bytes_last_sec_tx = 0;
+
+      // zera estatisticas da conexões tambem
+      if ( co->view_conections )
+        {
+          for ( size_t c = 0; c < process->total_conections; c++ )
+            {
+              process->conection[c].net_stat.Bps_rx[idx_cir] = 0;
+              process->conection[c].net_stat.Bps_tx[idx_cir] = 0;
+              process->conection[c].net_stat.pps_rx[idx_cir] = 0;
+              process->conection[c].net_stat.pps_tx[idx_cir] = 0;
+            }
+        }
+    }
+}

@@ -25,13 +25,8 @@
 
 #include "config.h"
 #include "packet.h"
-#include "rate.h"  // SAMPLE_SPACE_SIZE
+#include "rate.h"
 #include "processes.h"
-
-// incremento circular de 0 até SAMPLE_SPACE_SIZE - 1
-#define UPDATE_ID_BUFF( id ) ( ( id ) = ( ( id ) + 1 ) % SAMPLE_SPACE_SIZE )
-
-static uint8_t idx_cir = 0;
 
 static bool
 conection_match_packet ( conection_t *conection, const struct packet *pkt )
@@ -69,7 +64,7 @@ conection_match_packet ( conection_t *conection, const struct packet *pkt )
       // unable to assign the state TCP_CLOSE, and it ends up not
       // exporting some data in /proc/net/udp, but we can "retrieve"
       // that information from the captured packet
-      else if ( conection->state == TCP_CLOSE )
+      if ( conection->state == TCP_CLOSE )
         {
           conection->local_address = pkt->local_address;
           conection->remote_address = pkt->remote_address;
@@ -99,38 +94,22 @@ statistics_add ( struct processes *processes,
           process->conection[c].if_index = pkt->if_index;
 
           if ( pkt->direction == PKT_DOWN )
-            {  // estatisticas geral do processo
-              process->net_stat.pps_rx[idx_cir]++;
-              process->net_stat.Bps_rx[idx_cir] += pkt->lenght;
-
-              process->net_stat.bytes_last_sec_rx += pkt->lenght;
-
-              process->net_stat.tot_Bps_rx += pkt->lenght;
+            {
+              // estatisticas geral do processo
+              rate_add_rx( &process->net_stat, pkt->lenght );
 
               // adicionado estatisticas exclusiva da conexão
               if ( co->view_conections )
-                {
-                  process->conection[c].net_stat.pps_rx[idx_cir]++;
-                  process->conection[c].net_stat.Bps_rx[idx_cir] +=
-                          pkt->lenght;
-                }
+                rate_add_rx( &process->conection[c].net_stat, pkt->lenght );
             }
           else
-            {  // estatisticas geral do processo
-              process->net_stat.pps_tx[idx_cir]++;
-              process->net_stat.Bps_tx[idx_cir] += pkt->lenght;
-
-              process->net_stat.bytes_last_sec_tx += pkt->lenght;
-
-              process->net_stat.tot_Bps_tx += pkt->lenght;
+            {
+              // estatisticas geral do processo
+              rate_add_tx( &process->net_stat, pkt->lenght );
 
               // adicionado estatisticas exclusiva da conexão
               if ( co->view_conections )
-                {
-                  process->conection[c].net_stat.pps_tx[idx_cir]++;
-                  process->conection[c].net_stat.Bps_tx[idx_cir] +=
-                          pkt->lenght;
-                }
+                rate_add_tx( &process->conection[c].net_stat, pkt->lenght );
             }
 
           return true;
@@ -138,35 +117,4 @@ statistics_add ( struct processes *processes,
     }
 
   return false;
-}
-
-void
-statistics_prepare ( struct processes *processes, const struct config_op *co )
-{
-  UPDATE_ID_BUFF ( idx_cir );
-
-  for ( process_t **proc = processes->proc; *proc; proc++ )
-    {
-      process_t *process = *proc;
-
-      process->net_stat.Bps_rx[idx_cir] = 0;
-      process->net_stat.Bps_tx[idx_cir] = 0;
-      process->net_stat.pps_rx[idx_cir] = 0;
-      process->net_stat.pps_tx[idx_cir] = 0;
-
-      process->net_stat.bytes_last_sec_rx = 0;
-      process->net_stat.bytes_last_sec_tx = 0;
-
-      // zera estatisticas da conexões tambem
-      if ( co->view_conections )
-        {
-          for ( size_t c = 0; c < process->total_conections; c++ )
-            {
-              process->conection[c].net_stat.Bps_rx[idx_cir] = 0;
-              process->conection[c].net_stat.Bps_tx[idx_cir] = 0;
-              process->conection[c].net_stat.pps_rx[idx_cir] = 0;
-              process->conection[c].net_stat.pps_tx[idx_cir] = 0;
-            }
-        }
-    }
 }

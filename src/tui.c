@@ -259,9 +259,7 @@ show_conections ( const process_t *process, const struct config_op *co )
       // conexão, as conexões são ordenadas de forma decrescente previamente
       if ( ( i < process->total_conections - 1 &&
              process->conection[i + 1].net_stat.avg_Bps_rx == 0 &&
-             process->conection[i + 1].net_stat.avg_Bps_tx == 0 &&
-             process->conection[i + 1].net_stat.tot_Bps_rx == 0 &&
-             process->conection[i + 1].net_stat.tot_Bps_rx == 0 ) ||
+             process->conection[i + 1].net_stat.avg_Bps_tx == 0 ) ||
            i == process->total_conections - 1 )
         last_con = true;
 
