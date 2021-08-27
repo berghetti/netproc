@@ -3,7 +3,7 @@
 C_SOURCE= ./unity/unity.c
 INC_DIRS= -Iunity
 
-CFLAGS=-Wall -Wextra -pedantic -ggdb -O0
+CFLAGS=-Wall -Wextra -pedantic -ggdb -O2
 
 INC_DIRS += -I../src -I ../src/resolver
 
@@ -18,7 +18,8 @@ C_SOURCE += ../src/hashtable.c \
 						../src/resolver/queue.c \
 						../src/str.c \
 						../src/rate.c \
-						../src/round.c
+						../src/round.c \
+						../src/human_readable.c
 
 .PHONY: all clean run
 

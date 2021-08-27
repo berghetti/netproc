@@ -21,12 +21,6 @@
 #ifndef SUFIX_H
 #define SUFIX_H
 
-#define BASE_IEC 1024  // default
-#define BASE_SI 1000
-
-// n = BASE_IEC ? 1 /1024 : 1/1000
-#define INVERSE_BASE( n ) ( ( n ) == BASE_IEC ) ? 9.76562E-4 : 1E-3
-
 enum sufix_types
 {
   IEC_BYTE = 0,

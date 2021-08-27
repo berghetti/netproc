@@ -23,6 +23,5 @@ test_str ()
   TEST_ASSERT_EQUAL_INT ( 'E',
                           str[find_last_char ( str, strlen ( str ), 'E' )] );
 
-  TEST_ASSERT_EQUAL_INT ( -1,
-                          find_last_char ( str, strlen ( str ), 'G' ) );
+  TEST_ASSERT_EQUAL_INT ( -1, find_last_char ( str, strlen ( str ), 'G' ) );
 }
