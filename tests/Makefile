@@ -16,7 +16,9 @@ TEST = tests_all
 C_SOURCE += ../src/hashtable.c \
  						../src/full_read.c \
 						../src/resolver/queue.c \
-						../src/str.c
+						../src/str.c \
+						../src/rate.c \
+						../src/round.c
 
 .PHONY: all clean run
 
