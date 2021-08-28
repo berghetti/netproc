@@ -83,7 +83,7 @@ test_bit_per_second_iec ( struct config_op *co )
                        "1.02 Kb/s",
                        "6.00 Kb/s",
                        "10.00 Kb/s",
-                       "10.49 Mb/s" };
+                       "10.48 Mb/s" };
 
   // prerequisite set sufix
   co->view_si = true;
