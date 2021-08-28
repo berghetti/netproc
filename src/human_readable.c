@@ -18,22 +18,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// based in source code of program wget
-// https://github.com/mirror/wget/blob/master/src/utils.c#L1675
-
 #include <stdio.h>  // snprintf()
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "human_readable.h"
 #include "config.h"
-#include "integer.h"  // is_integer()
 #include "sufix.h"
 
 #define BASE_IEC 1024  // default
 #define BASE_SI 1000
 
-static int base;
+static unsigned int base;
 static const char *const *sufix_rate;
 static const char *const *sufix_total;
 
@@ -66,6 +62,9 @@ define_sufix ( const struct config_op *co )
     }
 }
 
+// based in source code of program wget
+// https://github.com/mirror/wget/blob/master/src/utils.c#L1675
+
 bool
 human_readable ( char *buffer, size_t len_buff, uint64_t bytes, int mode )
 {
@@ -80,7 +79,7 @@ human_readable ( char *buffer, size_t len_buff, uint64_t bytes, int mode )
     }
 
   // quantidade de bytes ou bits menor que 1024 ou 1000
-  if ( bytes < ( uint64_t ) base )
+  if ( bytes < base )
     {
       sn = snprintf ( buffer, len_buff, "%ld %s", bytes, sufix[0] );
       return ( sn > 0 && ( size_t ) sn < len_buff );
@@ -90,16 +89,18 @@ human_readable ( char *buffer, size_t len_buff, uint64_t bytes, int mode )
    1024) quando o valor for menor que sua base, ou ja estejamos no ultimo
    elemento do array de sufixos, temos a melhor aproximação com o sufixo
    apropriado. */
-  double val = bytes;
+  // double val = bytes;
   for ( size_t i = 1; i < TOT_ELEMENTS_SUFIX; i++ )
     {
-      // if ( ( val = bytes * ibase ) < base || i == ( TOT_ELEMENTS_SUFIX - 1 )
-      // )
-      if ( ( val /= base ) < base || i == ( TOT_ELEMENTS_SUFIX - 1 ) )
+      if ( ( bytes / base ) < base || i == ( TOT_ELEMENTS_SUFIX - 1 ) )
         {
+          double val = (double) bytes / base;
+
           sn = snprintf ( buffer, len_buff, "%.2f %s", val, sufix[i] );
           return ( sn > 0 && ( size_t ) sn < len_buff );
         }
+
+      bytes /= base;
     }
 
   return false; /* unreached */
