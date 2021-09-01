@@ -49,7 +49,7 @@ queue_new ( fclear clear )
   return q;
 }
 
-struct queue_node *
+void *
 enqueue ( struct queue *restrict queue, void *restrict data )
 {
   struct queue_node *element = create_element ( data );
