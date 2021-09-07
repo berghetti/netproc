@@ -43,7 +43,6 @@ queue_new ( fclear clear )
     {
       q->clear = clear;
       q->size = 0;
-      q->head = q->tail = NULL;
     }
 
   return q;
@@ -57,19 +56,15 @@ enqueue ( struct queue *restrict queue, void *restrict data )
   if ( !element )
     return 0;
 
-  queue->size++;
-
-  if ( !queue->head )
-    {
-      queue->head = queue->tail = element;
-    }
+  if ( !queue->size )
+    queue->head = element;
   else
-    {
-      queue->tail->next = element;
-      queue->tail = element;
-    }
+    queue->tail->next = element;
 
-  return 1;
+  queue->tail = element;
+
+  queue->size++;
+  return queue->size;
 }
 
 void *

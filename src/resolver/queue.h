@@ -39,9 +39,11 @@ struct queue
 struct queue *
 queue_new ( fclear clear );
 
+// returns 0 on failure and queue length on success
 int
 enqueue ( struct queue *queue, void *data );
 
+// return NULL on failure
 void *
 dequeue ( struct queue *queue );
 
