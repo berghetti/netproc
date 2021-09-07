@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+// return -1 on failure or number of found directories 
 int
 get_numeric_directory ( uint32_t **buffer, const char *path_dir );
 
