@@ -49,13 +49,13 @@ queue_new ( fclear clear )
   return q;
 }
 
-void *
+int
 enqueue ( struct queue *restrict queue, void *restrict data )
 {
   struct queue_node *element = create_element ( data );
 
   if ( !element )
-    return NULL;
+    return 0;
 
   queue->size++;
 
@@ -69,7 +69,7 @@ enqueue ( struct queue *restrict queue, void *restrict data )
       queue->tail = element;
     }
 
-  return data;
+  return 1;
 }
 
 void *

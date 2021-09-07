@@ -39,7 +39,7 @@ struct queue
 struct queue *
 queue_new ( fclear clear );
 
-void *
+int
 enqueue ( struct queue *queue, void *data );
 
 void *
