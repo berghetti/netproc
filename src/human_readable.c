@@ -94,7 +94,7 @@ human_readable ( char *buffer, size_t len_buff, uint64_t bytes, int mode )
     {
       if ( ( bytes / base ) < base || i == ( TOT_ELEMENTS_SUFIX - 1 ) )
         {
-          double val = (double) bytes / base;
+          double val = ( double ) bytes / base;
 
           sn = snprintf ( buffer, len_buff, "%.2f %s", val, sufix[i] );
           return ( sn > 0 && ( size_t ) sn < len_buff );

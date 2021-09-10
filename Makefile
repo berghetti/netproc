@@ -57,7 +57,7 @@ VPATH= src src/resolver
 OBJECTS=$(addprefix $(OBJDIR)/, $(notdir $(C_SOURCE:.c=.o) ) )
 
 # alvos fake, não são arquivos
-.PHONY: all clean distclean run install uninstall format man
+.PHONY: all clean distclean run install uninstall format man release
 
 all: $(BINDIR)/$(PROG_NAME)
 
@@ -108,3 +108,7 @@ format:
 man:
 	txt2man -t $(PROG_NAME) -v "$(PROG_NAME) man" -s 8 \
 		$(DOCDIR)/$(PROG_NAME).8.txt > $(DOCDIR)/$(PROG_NAME).8
+
+VERSION = $(shell ./get_version.sh)
+tarball:
+	git archive -o "netproc-$(VERSION).tar.gz" $(VERSION)
