@@ -54,4 +54,6 @@ test_rate ( void )
   struct processes processes = { .proc = pp_procs, .total = 1 };
 
   exec ( &processes );
+
+  free( proc );
 }
