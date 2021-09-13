@@ -55,5 +55,5 @@ test_rate ( void )
 
   exec ( &processes );
 
-  free( proc );
+  free ( proc );
 }

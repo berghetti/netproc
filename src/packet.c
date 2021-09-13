@@ -62,7 +62,7 @@ e como atributos iniciais, assim podemos utilizar esse estrutura
 simplificada para extrair as portas tanto de pacotes
 TCP quanto UDP, lembrando que não utilizaremos outros campos
 dos respectivos cabeçalhos. */
-struct tcp_udp_h
+struct layer_4
 {
   uint16_t source;
   uint16_t dest;
@@ -87,8 +87,7 @@ static struct pkt_ip_fragment pkt_ip_frag[MAX_REASSEMBLIES] = { 0 };
 static uint8_t count_reassemblies = 0;
 
 static int
-is_first_frag ( const struct iphdr *const l3,
-                const struct tcp_udp_h *const l4 );
+is_first_frag ( const struct iphdr *const l3, const struct layer_4 *const l4 );
 
 static int
 is_frag ( const struct iphdr *const l3 );
@@ -118,14 +117,14 @@ parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd )
   struct sockaddr_ll *ll;
   // struct ethhdr *l2;
   struct iphdr *l3;
-  struct tcp_udp_h *l4;
+  struct layer_4 *l4;
 
   ll = ( struct sockaddr_ll * ) ( ( uint8_t * ) ppd + TPACKET3_HDRLEN -
                                   sizeof ( struct sockaddr_ll ) );
   // l2 = ( struct ethhdr * ) ( ( uint8_t * ) ppd + ppd->tp_mac );
   l3 = ( struct iphdr * ) ( ( uint8_t * ) ppd + ppd->tp_net );
-  l4 = ( struct tcp_udp_h * ) ( ( uint8_t * ) ppd + ppd->tp_net +
-                                ( l3->ihl * 4 ) );
+  l4 = ( struct layer_4 * ) ( ( uint8_t * ) ppd + ppd->tp_net +
+                              ( l3->ihl * 4 ) );
 
   // fprintf(stderr, "ll->sll_pkttype - %d\n", ll->sll_pkttype);
   // fprintf(stderr, "ll->sll_hatype - %d\n", ll->sll_hatype);
@@ -223,7 +222,7 @@ END:
 // retorna 0 se não for primeiro fragmento
 // retorna -1 caso de erro, buffer cheio
 static int
-is_first_frag ( const struct iphdr *const l3, const struct tcp_udp_h *const l4 )
+is_first_frag ( const struct iphdr *const l3, const struct layer_4 *const l4 )
 {
   // bit não fragmente ligado, logo não pode ser um fragmento
   if ( ntohs ( l3->frag_off ) & IP_DF )
@@ -249,7 +248,7 @@ is_first_frag ( const struct iphdr *const l3, const struct tcp_udp_h *const l4 )
               pkt_ip_frag[i].source_port = l4->source;
               pkt_ip_frag[i].dest_port = l4->dest;
               pkt_ip_frag[i].c_frag = 1;           // first fragment
-              pkt_ip_frag[i].ttl = time ( NULL );  // get current time
+              pkt_ip_frag[i].ttl = time ( NULL );
 
               // it's first fragment
               return 1;
@@ -279,6 +278,10 @@ is_frag ( const struct iphdr *const l3 )
       // percorre todo array de pacotes fragmentados...
       for ( size_t i = 0; i < MAX_REASSEMBLIES; i++ )
         {
+          // free slot
+          if ( !pkt_ip_frag[i].ttl )
+            continue;
+
           // ... e procura o fragmento com base no campo id do cabeçalho IP
           if ( pkt_ip_frag[i].pkt_id == l3->id )
             {
@@ -317,12 +320,12 @@ is_frag ( const struct iphdr *const l3 )
 static void
 clear_frag ( void )
 {
+  time_t now = time ( NULL );
+  
   for ( size_t i = 0; count_reassemblies && i < MAX_REASSEMBLIES; i++ )
     {
       if ( !pkt_ip_frag[i].ttl )
         continue;
-
-      time_t now = time ( NULL );
 
       if ( ( now - pkt_ip_frag[i].ttl ) >= LIFETIME_FRAG ||
            pkt_ip_frag[i].c_frag == MAX_FRAGMENTS )
