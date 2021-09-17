@@ -18,16 +18,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE  // for asprintf
-#include <errno.h>   // variable errno
 #include <stdarg.h>  // va_*
 #include <stdio.h>
-#include <stdlib.h>
-#include <term.h>    // tputs
-#include <signal.h>  // raise
-#include <unistd.h>
-
-#include "m_error.h"
 
 #define DEBUG "[DEBUG] "
 #define ERROR "[ERROR] "

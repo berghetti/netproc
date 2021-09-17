@@ -77,8 +77,8 @@ struct pkt_ip_fragment
   uint32_t saddr;
   uint32_t daddr;
   uint16_t id;           // IP header ID value
-  uint16_t source_port;  // IP header source port value
-  uint16_t dest_port;    // IP header dest port value
+  uint16_t source_port;  // transport header source port
+  uint16_t dest_port;    // transport header dest port
 };
 
 // armazena os dados da camada de transporte dos pacotes fragmentados
@@ -309,7 +309,7 @@ parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd )
           }
         break;
       default:
-        ret = 0;  // failts parse
+        ret = 0;  // fail parse
     }
 
 END:
