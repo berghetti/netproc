@@ -85,7 +85,7 @@ test_clear_frag ( void )
 }
 
 static void
-test_err_fragment( void )
+test_err_fragment ( void )
 {
   struct pkt pkt = { .l3 = { .frag_off = htons ( IP_MF ),
                              .id = 3,
@@ -93,7 +93,7 @@ test_err_fragment( void )
                              .daddr = 0x02020202 },
                      .l4 = { .source = 1025, .dest = 80 } };
 
-  pkt.l3.frag_off |= 1; // make this a fragment whith offset diferente de 0
+  pkt.l3.frag_off |= 1;  // make this a fragment whith offset diferente de 0
 
   // is a fragment, but as offset is not 0, not was stored in buffer
   TEST_ASSERT_EQUAL_INT ( ERR_FRAGMENT, get_fragment ( &pkt.l3, &pkt.l4 ) );
@@ -105,5 +105,5 @@ test_packet ( void )
   test_dont_fragment ();
   test_more_fragment ();
   test_clear_frag ();
-  test_err_fragment();
+  test_err_fragment ();
 }

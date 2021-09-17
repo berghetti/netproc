@@ -242,7 +242,7 @@ parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd )
 
   int ret = 1;
   int id_frag = get_fragment ( l3, l4 );
-  if (id_frag == ERR_FRAGMENT)
+  if ( id_frag == ERR_FRAGMENT )
     {
       ret = 0;
       goto END;

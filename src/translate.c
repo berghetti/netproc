@@ -34,22 +34,17 @@
 char *
 translate ( const conection_t *con, const struct config_op *co )
 {
-  // tuple ip:port <-> ip:port
-  static char tuple[LEN_TUPLE];
-  struct sockaddr_in l_sock, r_sock;  // local_socket and remote_socket
-
-  const char *proto = ( con->protocol == IPPROTO_UDP ) ? "udp" : "tcp";
+  // local_socket
+  struct sockaddr_in l_sock = { .sin_family = AF_INET,
+                                .sin_port = con->local_port,
+                                .sin_addr.s_addr = con->local_address };
+  // remote_socket
+  struct sockaddr_in r_sock = { .sin_family = AF_INET,
+                                .sin_port = con->remote_port,
+                                .sin_addr.s_addr = con->remote_address };
 
   char l_host[NI_MAXHOST], l_service[NI_MAXSERV];
   char r_host[NI_MAXHOST], r_service[NI_MAXSERV];
-
-  l_sock.sin_family = AF_INET;
-  l_sock.sin_port = con->local_port;
-  l_sock.sin_addr.s_addr = con->local_address;
-
-  r_sock.sin_family = AF_INET;
-  r_sock.sin_port = con->remote_port;
-  r_sock.sin_addr.s_addr = con->remote_address;
 
   if ( co->translate_host )
     {
@@ -72,6 +67,8 @@ translate ( const conection_t *con, const struct config_op *co )
 
   if ( co->translate_service )
     {
+      const char *proto = ( con->protocol == IPPROTO_UDP ) ? "udp" : "tcp";
+
       if ( !port2serv (
                    l_sock.sin_port, proto, l_service, sizeof ( l_service ) ) )
         snprintf ( l_service, sizeof ( l_service ), "%u", con->local_port );
@@ -85,6 +82,9 @@ translate ( const conection_t *con, const struct config_op *co )
       snprintf ( l_service, sizeof ( l_service ), "%u", con->local_port );
       snprintf ( r_service, sizeof ( r_service ), "%u", con->remote_port );
     }
+
+  // tuple ip:port <-> ip:port
+  static char tuple[LEN_TUPLE];
 
   snprintf ( tuple,
              sizeof ( tuple ),
