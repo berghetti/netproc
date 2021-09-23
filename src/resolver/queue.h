@@ -20,21 +20,10 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-struct queue_node
-{
-  void *data;
-  struct queue_node *next;
-};
+// Forward declaration
+struct queue;
 
 typedef void ( *fclear ) ( void * );
-
-struct queue
-{
-  fclear clear;  // callback user init
-  struct queue_node *head;
-  struct queue_node *tail;
-  unsigned int size;
-};
 
 struct queue *
 queue_new ( fclear clear );
@@ -49,5 +38,8 @@ dequeue ( struct queue *queue );
 
 void
 queue_destroy ( struct queue *queue );
+
+unsigned int
+get_queue_size( struct queue *queue );
 
 #endif  // QUEUE_H

@@ -33,7 +33,7 @@ test_queue ( void )
       TEST_ASSERT_EQUAL_INT ( i + 1, enqueue ( q, create_mydata ( i ) ) );
     }
 
-  TEST_ASSERT_EQUAL_INT ( TOT_DATA, q->size );
+  TEST_ASSERT_EQUAL_INT ( TOT_DATA, get_queue_size ( q ) );
 
   struct mydata *d;
   for ( int i = 0; i < TOT_DATA - 5; i++ )
@@ -43,7 +43,7 @@ test_queue ( void )
       free ( d );
     }
 
-  TEST_ASSERT_EQUAL_INT ( 5, q->size );
+  TEST_ASSERT_EQUAL_INT ( 5, get_queue_size ( q ) );
 
   queue_destroy ( q );
 }

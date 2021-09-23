@@ -129,7 +129,7 @@ th_worker ( __attribute__ ( ( unused ) ) void *args )
 
       pthread_mutex_lock ( &mutex_queue );
       struct task *task = dequeue ( queue_task );
-      if ( queue_task->size )
+      if ( get_queue_size ( queue_task ) )
         bsem_post ( &bsem_jobs );  // rearm other thread
       pthread_mutex_unlock ( &mutex_queue );
 

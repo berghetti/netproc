@@ -20,6 +20,20 @@
 #include <stdlib.h>  // malloc
 #include "queue.h"
 
+struct queue_node
+{
+  void *data;
+  struct queue_node *next;
+};
+
+struct queue
+{
+  fclear clear;  // callback user init
+  struct queue_node *head;
+  struct queue_node *tail;
+  unsigned int size;
+};
+
 static struct queue_node *
 create_element ( void *data )
 {
@@ -96,4 +110,10 @@ queue_destroy ( struct queue *queue )
     }
 
   free ( queue );
+}
+
+unsigned int
+get_queue_size( struct queue *queue )
+{
+  return queue->size;
 }
