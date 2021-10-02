@@ -22,8 +22,8 @@
 
 struct queue_node
 {
-  void *data;
   struct queue_node *next;
+  void *data;
 };
 
 struct queue

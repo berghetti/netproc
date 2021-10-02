@@ -282,7 +282,7 @@ processes_get ( struct processes *procs, struct config_op *co )
 
           data_fd[len_link] = '\0';
 
-          if ( data_fd[0] != 's' &&
+          if ( data_fd[0] != 's' ||
                strncmp ( data_fd + 1, "ocket:[", strlen ( "ocket:[" ) ) )
             continue;
 
