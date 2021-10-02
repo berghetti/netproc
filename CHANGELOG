@@ -4,6 +4,11 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
+?? - ??
+  * improved timer of packets fragments
+  * internal timer now return in milliseconds instead of seconds
+  - resolved possible buffoverflow in call readlink
+
 0.6.2 - 2021-08-13
   - fixed link ncurses on certain systems, LDLIBS in makefile, PR #2
   - fixed when displaying process with long name, issue #5
