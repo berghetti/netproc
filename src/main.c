@@ -38,6 +38,7 @@
 #include "usage.h"
 #include "m_error.h"
 #include "resolver/resolver.h"
+#include "macro_util.h"
 
 // time to refresh in milliseconds
 #define T_REFRESH 1000
@@ -46,7 +47,6 @@ static void
 config_sig_handler ( void );
 
 // handled by function sig_handler
-// if != 0 program exit
 static volatile sig_atomic_t prog_exit = 0;
 
 int
@@ -122,7 +122,6 @@ main ( int argc, char **argv )
       goto EXIT;
     }
 
-  const nfds_t nfds = 2;
   struct pollfd poll_set[2] = {
           { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 },
           { .fd = sock, .events = POLLIN | POLLPRI, .revents = 0 } };
@@ -131,17 +130,19 @@ main ( int argc, char **argv )
   struct tpacket_block_desc *pbd;
   pbd = ( struct tpacket_block_desc * ) ring->rd[block_num].iov_base;
 
+  bool need_update_processes = false;
+
   // main loop
   while ( !prog_exit )
     {
-      struct packet packet;
       bool packtes_reads = false;
-      bool need_update_processes = false;
 
       // read all blocks availables
       while ( pbd->hdr.bh1.block_status & TP_STATUS_USER )
         {
+          struct packet packet;
           struct tpacket3_hdr *ppd;
+
           ppd = ( struct tpacket3_hdr * ) ( ( uint8_t * ) pbd +
                                             pbd->hdr.bh1.offset_to_first_pkt );
 
@@ -178,62 +179,67 @@ main ( int argc, char **argv )
           pbd = ( struct tpacket_block_desc * ) ring->rd[block_num].iov_base;
         }
 
-      if ( !packtes_reads )
-        {
-          long temp_diff = 0;
-          int stop = 0;
-          while ( !stop )
-            {
-              int rp;
-              do
-                {
-                  errno = 0;
-                  rp = poll ( poll_set, nfds, T_REFRESH - temp_diff );
-                }
-              while ( errno == EINTR );
+      if ( packtes_reads )
+        continue;
 
-              if ( rp == -1 )
+      long temp_diff = 0;
+      int stop = 0;
+      while ( !stop )
+        {
+          int rp;
+          do
+            {
+              errno = 0;
+              rp = poll ( poll_set,
+                          ARRAY_SIZE ( poll_set ),
+                          T_REFRESH - temp_diff );
+            }
+          while ( errno == EINTR );
+
+          if ( rp == -1 )
+            {
+              ERROR_DEBUG ( "poll: \"%s\"", strerror ( errno ) );
+              goto EXIT;
+            }
+          else if ( rp > 0 )
+            {
+              for ( size_t i = 0; i < ARRAY_SIZE ( poll_set ); i++ )
                 {
-                  ERROR_DEBUG ( "poll: \"%s\"", strerror ( errno ) );
+                  if ( !poll_set[i].revents )
+                    continue;
+
+                  if ( poll_set[i].fd == STDIN_FILENO &&
+                       tui_handle_input ( co ) == P_EXIT )
+                    goto EXIT;
+
+                  if ( poll_set[i].fd == sock )
+                    stop = 1;
+                }
+            }
+
+          if ( ( temp_diff = diff_timer ( &m_timer ) ) >= T_REFRESH )
+            {
+              co->running += temp_diff;
+              temp_diff = 0;
+              start_timer ( &m_timer );
+
+              rate_calc ( processes, co );
+
+              rate_update ( processes, co );
+
+              tui_show ( processes, co );
+
+              if ( co->log && !log_file ( processes->proc, processes->total ) )
+                {
                   goto EXIT;
                 }
-              else if ( rp > 0 )
+
+              if ( need_update_processes )
                 {
-                  for ( size_t i = 0; i < nfds; i++ )
-                    {
-                      if ( !poll_set[i].revents )
-                        continue;
-
-                      if ( poll_set[i].fd == STDIN_FILENO &&
-                           tui_handle_input ( co ) == P_EXIT )
-                        goto EXIT;
-
-                      if ( poll_set[i].fd == sock )
-                        stop = 1;
-                    }
-                }
-
-              if ( ( temp_diff = diff_timer ( &m_timer ) ) >= T_REFRESH )
-                {
-                  co->running += temp_diff;
-                  temp_diff = 0;
-                  start_timer ( &m_timer );
-
-                  rate_calc ( processes, co );
-
-                  rate_update ( processes, co );
-
-                  tui_show ( processes, co );
-
-                  if ( co->log &&
-                       !log_file ( processes->proc, processes->total ) )
-                    {
-                      goto EXIT;
-                    }
-
-                  if ( need_update_processes &&
-                       !processes_get ( processes, co ) )
+                  if ( !processes_get ( processes, co ) )
                     goto EXIT;
+
+                  need_update_processes = false;
                 }
             }
         }

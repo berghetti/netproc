@@ -36,7 +36,7 @@ ifdef DEBUG
 	CFLAGS+= -O0 -ggdb -Wformat=2
 else
 	CPPFLAGS+=-D NDEBUG
-	CFLAGS+= -O2 -ggdb
+	CFLAGS+= -O2
 endif
 
 LDLIBS=$(shell ncursesw6-config --libs) -lpthread

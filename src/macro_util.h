@@ -23,6 +23,8 @@
 
 #define MAX( a, b ) ( ( a ) > ( b ) ? ( a ) : ( b ) )
 
+#define ARRAY_SIZE( x ) ( sizeof ( x ) / sizeof ( x[0] ) )
+
 #ifdef __GNUC__
 #define UNUSED( x ) __attribute__ ( ( __unused__ ) ) x
 #else

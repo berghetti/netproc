@@ -19,14 +19,13 @@
  */
 
 #include <stdbool.h>
-#include <linux/filter.h> // struct sock_filter, sock_fprog
-#include <sys/socket.h>   // setsockopt
+#include <linux/filter.h>  // struct sock_filter, sock_fprog
+#include <sys/socket.h>    // setsockopt
 
 #include "config.h"
 #include "conection.h"
 #include "m_error.h"
-
-#define ARRAY_SIZE( x ) ( sizeof ( x ) / sizeof ( x[0] ) )
+#include "macro_util.h"
 
 bool
 filter_set ( int sock, const struct config_op *co )
@@ -92,15 +91,15 @@ filter_set ( int sock, const struct config_op *co )
     {
       case ( TCP | UDP ):
         bpf.len = ARRAY_SIZE ( ip_tcp_udp );
-        bpf.filter = ( struct sock_filter *) ip_tcp_udp;
+        bpf.filter = ( struct sock_filter * ) ip_tcp_udp;
         break;
       case TCP:
         bpf.len = ARRAY_SIZE ( ip_tcp );
-        bpf.filter = ( struct sock_filter *) ip_tcp;
+        bpf.filter = ( struct sock_filter * ) ip_tcp;
         break;
       case UDP:
         bpf.len = ARRAY_SIZE ( ip_udp );
-        bpf.filter = ( struct sock_filter *) ip_udp;
+        bpf.filter = ( struct sock_filter * ) ip_udp;
         break;
       default:
         ERROR_DEBUG ( "%s", "Protocol filter bpf invalid" );

@@ -40,6 +40,6 @@ void
 queue_destroy ( struct queue *queue );
 
 unsigned int
-get_queue_size( struct queue *queue );
+get_queue_size ( struct queue *queue );
 
 #endif  // QUEUE_H
