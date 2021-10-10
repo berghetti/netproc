@@ -18,31 +18,28 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sys/types.h>  // type size_t
+#include <sys/types.h>  // type ssize_t
+#include <string.h>     // strrchr
 
-// retorna o tamanho da string até null byte ou espaço
-// oque ocorrer primeiro
+// returns string length up to null byte or space, which comes first
 size_t
-strlen_space ( const char *string )
+strlen_space ( const char *str )
 {
-  char *string_base = ( char * ) string;
+  char *p = strchr ( str, ' ' );
+  if ( p )
+    return p - str;
 
-  while ( *string && *string != ' ' )
-    string++;
-
-  return string - string_base;
+  return strlen ( str );
 }
 
 // return position of last occurrence of character in string
-// char *str, pointer to string
-// size_t len, lenght of string
-// char ch, character to search
 ssize_t
-find_last_char ( const char *str, size_t len, const int ch )
+index_last_char ( const char *str, const int ch )
 {
-  while ( len-- )
-    if ( str[len] == ch )
-      return len;
+  char *p = strrchr ( str, ch );
+
+  if ( p )
+    return p - str;
 
   // not found
   return -1;

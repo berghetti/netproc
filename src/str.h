@@ -31,6 +31,6 @@ strlen_space ( const char *string );
 // retorna a posição do ultimo caracter pesquisado,
 // ou -1 caso não encontre
 ssize_t
-find_last_char ( const char *str, size_t len, const int ch );
+index_last_char ( const char *str, const int ch );
 
 #endif  // STR_H

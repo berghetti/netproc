@@ -442,17 +442,23 @@ tui_show ( const struct processes *processes, const struct config_op *co )
       // "/usr/bin/program-name"
       size_t len_path_name = strlen_space ( process->name );
 
+       // simulate end of string to index_last_char
+      char tmp = process->name[len_path_name];
+      process->name[len_path_name] = '\0';
+
       // "program-name"
-      ssize_t len_name = find_last_char ( process->name, len_path_name, '/' );
-      if ( len_name == -1 )
-        len_name = 0;
+      ssize_t start_name = index_last_char ( process->name, '/' );
+
+      process->name[len_path_name] = tmp;
+
+      // if start_name == -1, name program starting in 0 position, else skip '/'
+      start_name++;
 
       for ( size_t j = 0; j < len_full_name; j++ )
         {
           chtype ch;
           // destaca somente o nome do programa
-          if ( process->name[j] != '/' && j >= ( size_t ) len_name &&
-               j < len_path_name )
+          if ( j >= ( size_t ) start_name && j < len_path_name )
             {
               ch = process->name[j] | color_scheme[NAME_PROG_BOLD];
             }
