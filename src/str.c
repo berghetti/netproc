@@ -21,7 +21,6 @@
 #include <sys/types.h>  // type ssize_t
 #include <string.h>     // strrchr
 
-// returns string length up to null byte or space, which comes first
 size_t
 strlen_space ( const char *str )
 {
@@ -32,7 +31,6 @@ strlen_space ( const char *str )
   return strlen ( str );
 }
 
-// return position of last occurrence of character in string
 ssize_t
 index_last_char ( const char *str, const int ch )
 {

@@ -23,13 +23,11 @@
 
 #include <sys/types.h>  // type size_t
 
-// retorna o tamanho da string até null byte ou espaço
-// oque ocorrer primeiro
+// returns string length up to null byte or space, which comes first
 size_t
 strlen_space ( const char *string );
 
-// retorna a posição do ultimo caracter pesquisado,
-// ou -1 caso não encontre
+// return position of last occurrence of character in string
 ssize_t
 index_last_char ( const char *str, const int ch );
 

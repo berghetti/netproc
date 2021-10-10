@@ -213,11 +213,8 @@ get_conections ( conection_t **buffer, const int proto )
     *p_buff++ = *p_conn++;
 
 EXIT:
-  if ( temp_conections_tcp )
-    free ( temp_conections_tcp );
-
-  if ( temp_conections_udp )
-    free ( temp_conections_udp );
+  free ( temp_conections_tcp );
+  free ( temp_conections_udp );
 
   return tot_con;
 }

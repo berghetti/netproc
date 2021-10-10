@@ -23,9 +23,9 @@
 // based in https://www.codeproject.com/Articles/58289/C-Round-Function
 
 /* input never is negative here then
-  we not verify number negative for more performance */
-
-/* examples:
+  we not verify number negative for more performance
+  
+ examples:
  input 1.1 - output 1
  input 1.4 - output 1
  input 1.5 - output 2
