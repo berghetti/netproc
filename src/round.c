@@ -24,7 +24,7 @@
 
 /* input never is negative here then
   we not verify number negative for more performance
-  
+
  examples:
  input 1.1 - output 1
  input 1.4 - output 1

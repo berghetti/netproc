@@ -69,7 +69,6 @@ get_info_conections ( conection_t **conection,
     }
 
   count = 0;
-  *conection = NULL;
   size_t buff_size = 0;
   while ( ( getline ( &line, &len, arq ) ) != -1 )
     {
@@ -103,11 +102,12 @@ get_info_conections ( conection_t **conection,
       // clang-format on
 
       char local_addr[10], rem_addr[10];  // enough for ipv4
-      unsigned int local_port, rem_port, state;
       unsigned long int inode;
+      uint16_t local_port, rem_port;
+      uint8_t state;
 
       int rs = sscanf ( line,
-                        "%*d: %9[0-9A-Fa-f]:%X %9[0-9A-Fa-f]:%X %X"
+                        "%*d: %9[0-9A-Fa-f]:%hX %9[0-9A-Fa-f]:%hX %hhX"
                         " %*X:%*X %*X:%*X %*X %*d %*d %lu %*512s\n",
                         local_addr,
                         &local_port,
@@ -160,6 +160,12 @@ EXIT:
   return count;
 }
 
+static void
+copy_conections ( conection_t *dst, conection_t *src, size_t n )
+{
+  memcpy ( dst, src, n * sizeof ( *src ) );
+}
+
 // return total conections or -1 on failure
 int
 get_conections ( conection_t **buffer, const int proto )
@@ -168,13 +174,12 @@ get_conections ( conection_t **buffer, const int proto )
   int tot_con_udp = 0;
   int tot_con;
 
-  conection_t *temp_conections_tcp = NULL, *temp_conections_udp = NULL;
-  conection_t *p_buff, *p_conn;
+  conection_t *temp_con_tcp = NULL, *temp_con_udp = NULL;
 
   if ( proto & TCP )
     {
       if ( -1 == ( tot_con_tcp = get_info_conections (
-                           &temp_conections_tcp, IPPROTO_TCP, PATH_TCP ) ) )
+                           &temp_con_tcp, IPPROTO_TCP, PATH_TCP ) ) )
         {
           ERROR_DEBUG ( "%s", "backtrace" );
           tot_con = -1;
@@ -185,7 +190,7 @@ get_conections ( conection_t **buffer, const int proto )
   if ( proto & UDP )
     {
       if ( -1 == ( tot_con_udp = get_info_conections (
-                           &temp_conections_udp, IPPROTO_UDP, PATH_UDP ) ) )
+                           &temp_con_udp, IPPROTO_UDP, PATH_UDP ) ) )
         {
           ERROR_DEBUG ( "%s", "backtrace" );
           tot_con = -1;
@@ -194,7 +199,7 @@ get_conections ( conection_t **buffer, const int proto )
     }
 
   tot_con = tot_con_tcp + tot_con_udp;
-  *buffer = calloc ( tot_con, sizeof ( **buffer ) );
+  *buffer = malloc ( tot_con * sizeof ( **buffer ) );
   if ( !*buffer )
     {
       ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
@@ -202,19 +207,16 @@ get_conections ( conection_t **buffer, const int proto )
       goto EXIT;
     }
 
-  p_buff = *buffer;
+  conection_t *p_buff = *buffer;
 
-  p_conn = temp_conections_tcp;
-  while ( tot_con_tcp-- )
-    *p_buff++ = *p_conn++;
+  copy_conections ( p_buff, temp_con_tcp, tot_con_tcp );
 
-  p_conn = temp_conections_udp;
-  while ( tot_con_udp-- )
-    *p_buff++ = *p_conn++;
+  p_buff += tot_con_tcp;
+  copy_conections ( p_buff, temp_con_udp, tot_con_udp );
 
 EXIT:
-  free ( temp_conections_tcp );
-  free ( temp_conections_udp );
+  free ( temp_con_tcp );
+  free ( temp_con_udp );
 
   return tot_con;
 }

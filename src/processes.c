@@ -291,7 +291,7 @@ processes_get ( struct processes *procs, struct config_op *co )
               char socket[MAX_NAME_SOCKET];
               snprintf ( socket,
                          sizeof ( socket ),
-                         "socket:[%d]",
+                         "socket:[%ld]",
                          conections[c].inode );
 
               if ( strncmp ( socket, data_fd, len_link ) )
