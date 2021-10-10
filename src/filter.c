@@ -85,21 +85,21 @@ filter_set ( int sock, const struct config_op *co )
           { 0x6, 0, 0, 0x00000000 },
   };
 
-  struct sock_fprog bpf;
+  struct sock_fprog fprog;
 
   switch ( co->proto )
     {
       case ( TCP | UDP ):
-        bpf.len = ARRAY_SIZE ( ip_tcp_udp );
-        bpf.filter = ( struct sock_filter * ) ip_tcp_udp;
+        fprog.len = ARRAY_SIZE ( ip_tcp_udp );
+        fprog.filter = ( struct sock_filter * ) ip_tcp_udp;
         break;
       case TCP:
-        bpf.len = ARRAY_SIZE ( ip_tcp );
-        bpf.filter = ( struct sock_filter * ) ip_tcp;
+        fprog.len = ARRAY_SIZE ( ip_tcp );
+        fprog.filter = ( struct sock_filter * ) ip_tcp;
         break;
       case UDP:
-        bpf.len = ARRAY_SIZE ( ip_udp );
-        bpf.filter = ( struct sock_filter * ) ip_udp;
+        fprog.len = ARRAY_SIZE ( ip_udp );
+        fprog.filter = ( struct sock_filter * ) ip_udp;
         break;
       default:
         ERROR_DEBUG ( "%s", "Protocol filter bpf invalid" );
@@ -107,7 +107,7 @@ filter_set ( int sock, const struct config_op *co )
     }
 
   if ( setsockopt (
-               sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof ( bpf ) ) ==
+               sock, SOL_SOCKET, SO_ATTACH_FILTER, &fprog, sizeof ( fprog ) ) ==
        -1 )
     {
       ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
