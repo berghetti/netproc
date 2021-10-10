@@ -21,7 +21,14 @@
 #include <ncurses.h>
 #include "color.h"
 
-static int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
+enum schemes
+{
+  DEFAULT,
+  MONO,
+  TOT_SCHEMES
+};
+
+static const int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
         [DEFAULT] =
                 {
                         [RESET] = A_NORMAL | COLOR_PAIR ( 4 ),
@@ -48,26 +55,21 @@ static int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
                 [RESUME_VALUE] = A_BOLD,
         } };
 
-// const int *color_scheme;
-
 int *
 get_color_scheme ( void )
 {
   if ( !has_colors () )
-    return color_schemes[MONO];
-  else
-    {
-      start_color ();
+    return ( int * ) color_schemes[MONO];
 
-      if ( use_default_colors () == ERR )
-        assume_default_colors ( COLOR_WHITE, COLOR_BLACK );
+  start_color ();
 
-      init_pair ( 1, COLOR_CYAN, -1 );            // color tree, name program
-      init_pair ( 2, COLOR_BLACK, COLOR_GREEN );  // color header
-      init_pair ( 3, COLOR_BLACK, COLOR_CYAN );  // line selected, column sorted
-      init_pair ( 4, COLOR_WHITE, -1 );
+  if ( use_default_colors () == ERR )
+    assume_default_colors ( COLOR_WHITE, COLOR_BLACK );
 
-      // color_scheme = color_schemes[DEFAULT];
-      return color_schemes[DEFAULT];
-    }
+  init_pair ( 1, COLOR_CYAN, -1 );            // color tree, name program
+  init_pair ( 2, COLOR_BLACK, COLOR_GREEN );  // color header
+  init_pair ( 3, COLOR_BLACK, COLOR_CYAN );   // line selected, column sorted
+  init_pair ( 4, COLOR_WHITE, -1 );
+
+  return ( int * ) color_schemes[DEFAULT];
 }

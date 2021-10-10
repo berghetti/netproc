@@ -21,13 +21,6 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-enum schemes
-{
-  DEFAULT,
-  MONO,
-  TOT_SCHEMES
-};
-
 enum elements_in_schemes
 {
   RESET,
