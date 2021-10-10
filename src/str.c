@@ -37,7 +37,6 @@ ssize_t
 index_last_char ( const char *str, const int ch )
 {
   char *p = strrchr ( str, ch );
-
   if ( p )
     return p - str;
 

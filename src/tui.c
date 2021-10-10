@@ -442,7 +442,7 @@ tui_show ( const struct processes *processes, const struct config_op *co )
       // "/usr/bin/program-name"
       size_t len_path_name = strlen_space ( process->name );
 
-       // simulate end of string to index_last_char
+      // simulate end of string to index_last_char
       char tmp = process->name[len_path_name];
       process->name[len_path_name] = '\0';
 
