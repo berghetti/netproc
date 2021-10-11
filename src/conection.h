@@ -32,7 +32,7 @@ typedef struct conection
 {
   struct net_stat net_stat;  // this assign in src/statistics.c
   unsigned long int inode;
-  uint32_t if_index;         // this assign in src/statistics.c
+  uint32_t if_index;  // this assign in src/statistics.c
   uint32_t local_address;
   uint32_t remote_address;
   uint16_t local_port;

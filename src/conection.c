@@ -39,13 +39,10 @@
 
 #define ENTRY_SIZE 64
 
-// le o arquivo onde fica salva as conexoes '/proc/net/tcp',
-// recebe o local do arquivo, um buffer para armazenar
-// dados da conexão e o tamanho do buffer,
-// retorna a quantidade de registros encontrada
-// ou -1 em caso de erro
 static int
 get_info_conections ( conection_t **conection,
+                      size_t *cur_size,
+                      size_t *cur_count,
                       const int protocol,
                       const char *path_file )
 {
@@ -53,10 +50,10 @@ get_info_conections ( conection_t **conection,
   if ( !arq )
     {
       ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-      return -1;
+      return 0;
     }
 
-  size_t count;
+  int ret = 1;
 
   char *line = NULL;
   size_t len = 0;
@@ -64,34 +61,31 @@ get_info_conections ( conection_t **conection,
   if ( ( getline ( &line, &len, arq ) ) == -1 )
     {
       ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-      count = -1;
+      ret = 0;
       goto EXIT;
     }
 
-  count = 0;
-  size_t buff_size = 0;
   while ( ( getline ( &line, &len, arq ) ) != -1 )
     {
-      if ( count == buff_size )
+      if ( *cur_count == *cur_size )
         {
-          buff_size += ENTRY_SIZE;
+          *cur_size += ENTRY_SIZE;
 
           conection_t *temp;
-          temp = realloc ( *conection, buff_size * sizeof ( **conection ) );
+          temp = realloc ( *conection, *cur_size * sizeof ( **conection ) );
           if ( !temp )
             {
               ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-              free ( *conection );
-              count = -1;
+              ret = 0;
               goto EXIT;
             }
 
           *conection = temp;
 
           // initialize new space of memory (important)
-          memset ( &( *conection )[count],
+          memset ( &( *conection )[*cur_count],
                    0,
-                   ( buff_size - count ) * sizeof ( **conection ) );
+                   ( *cur_size - *cur_count ) * sizeof ( **conection ) );
         }
 
       // clang-format off
@@ -120,7 +114,7 @@ get_info_conections ( conection_t **conection,
         {
           ERROR_DEBUG ( "Error read file conections\"%s\"",
                         strerror ( errno ) );
-          count = -1;
+          ret = 0;
           goto EXIT;
         }
 
@@ -128,95 +122,68 @@ get_info_conections ( conection_t **conection,
       if ( state == TCP_TIME_WAIT || state == TCP_LISTEN )
         continue;
 
-      rs = sscanf ( local_addr, "%x", &( *conection )[count].local_address );
+      rs = sscanf (
+              local_addr, "%x", &( *conection )[*cur_count].local_address );
       if ( rs != 1 )
         {
           ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-          count = -1;
+          ret = 0;
           goto EXIT;
         }
 
-      rs = sscanf ( rem_addr, "%x", &( *conection )[count].remote_address );
+      rs = sscanf (
+              rem_addr, "%x", &( *conection )[*cur_count].remote_address );
       if ( rs != 1 )
         {
           ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-          count = -1;
+          ret = 0;
           goto EXIT;
         }
 
-      ( *conection )[count].local_port = local_port;
-      ( *conection )[count].remote_port = rem_port;
-      ( *conection )[count].state = state;
-      ( *conection )[count].inode = inode;
-      ( *conection )[count].protocol = protocol;
+      ( *conection )[*cur_count].local_port = local_port;
+      ( *conection )[*cur_count].remote_port = rem_port;
+      ( *conection )[*cur_count].state = state;
+      ( *conection )[*cur_count].inode = inode;
+      ( *conection )[*cur_count].protocol = protocol;
 
-      count++;
+      ( *cur_count )++;
     }
 
 EXIT:
   free ( line );
   fclose ( arq );
 
-  return count;
-}
-
-static void
-copy_conections ( conection_t *dst, conection_t *src, size_t n )
-{
-  memcpy ( dst, src, n * sizeof ( *src ) );
+  return ret;
 }
 
 // return total conections or -1 on failure
 int
 get_conections ( conection_t **buffer, const int proto )
 {
-  int tot_con_tcp = 0;
-  int tot_con_udp = 0;
-  int tot_con;
-
-  conection_t *temp_con_tcp = NULL, *temp_con_udp = NULL;
+  *buffer = NULL;
+  size_t cur_size = 0, cur_count = 0;
 
   if ( proto & TCP )
     {
-      if ( -1 == ( tot_con_tcp = get_info_conections (
-                           &temp_con_tcp, IPPROTO_TCP, PATH_TCP ) ) )
+      if ( !get_info_conections (
+                   buffer, &cur_size, &cur_count, IPPROTO_TCP, PATH_TCP ) )
         {
-          ERROR_DEBUG ( "%s", "backtrace" );
-          tot_con = -1;
-          goto EXIT;
+          goto ERROR_EXIT;
         }
     }
 
   if ( proto & UDP )
     {
-      if ( -1 == ( tot_con_udp = get_info_conections (
-                           &temp_con_udp, IPPROTO_UDP, PATH_UDP ) ) )
+      if ( !get_info_conections (
+                   buffer, &cur_size, &cur_count, IPPROTO_UDP, PATH_UDP ) )
         {
-          ERROR_DEBUG ( "%s", "backtrace" );
-          tot_con = -1;
-          goto EXIT;
+          goto ERROR_EXIT;
         }
     }
 
-  tot_con = tot_con_tcp + tot_con_udp;
-  *buffer = malloc ( tot_con * sizeof ( **buffer ) );
-  if ( !*buffer )
-    {
-      ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-      tot_con = -1;
-      goto EXIT;
-    }
+  return cur_count;
 
-  conection_t *p_buff = *buffer;
-
-  copy_conections ( p_buff, temp_con_tcp, tot_con_tcp );
-
-  p_buff += tot_con_tcp;
-  copy_conections ( p_buff, temp_con_udp, tot_con_udp );
-
-EXIT:
-  free ( temp_con_tcp );
-  free ( temp_con_udp );
-
-  return tot_con;
+ERROR_EXIT:
+  free ( *buffer );
+  return -1;
 }
