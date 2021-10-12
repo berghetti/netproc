@@ -21,8 +21,6 @@
 #include <arpa/inet.h>        // htons
 #include <linux/if_packet.h>  // struct sockaddr_ll
 #include <linux/ip.h>         // struct iphdr
-#include <stdbool.h>          // boolean type
-#include <sys/socket.h>       // setsockopt
 #include <time.h>             // time
 
 #include "packet.h"
@@ -109,7 +107,6 @@ store_fragment ( const struct iphdr *l3, const struct layer_4 *l4 )
           pkt_ip_frag[i].dest_port = l4->dest;
           pkt_ip_frag[i].ttl = time ( NULL );
 
-          // it's first fragment
           return i;
         }
     }
@@ -159,7 +156,7 @@ get_fragment ( const struct iphdr *l3, const struct layer_4 *l4 )
 
   int ret = -1;
   // bit MF ligado e offset igual a 0,
-  // indica que é o primeiro fragmento
+  // it's first fragment
   if ( ( frag_off & IP_MF ) && ( frag_off & IP_OFFMASK ) == 0 )
     {
       ret = store_fragment ( l3, l4 );
