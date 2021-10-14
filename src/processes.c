@@ -282,19 +282,13 @@ processes_get ( struct processes *procs, struct config_op *co )
 
           data_fd[len_link] = '\0';
 
-          if ( data_fd[0] != 's' ||
-               strncmp ( data_fd + 1, "ocket:[", strlen ( "ocket:[" ) ) )
+          unsigned long int inode;
+          if ( 1 != sscanf( data_fd, "socket:[%lu", &inode ) )
             continue;
 
           for ( int c = 0; c < total_conections; c++ )
             {
-              char socket[MAX_NAME_SOCKET];
-              snprintf ( socket,
-                         sizeof ( socket ),
-                         "socket:[%ld]",
-                         conections[c].inode );
-
-              if ( strncmp ( socket, data_fd, len_link ) )
+              if ( conections[c].inode != inode )
                 continue;
 
               if ( !proc )

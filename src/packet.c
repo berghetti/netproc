@@ -19,6 +19,7 @@
  */
 
 #include <arpa/inet.h>        // htons
+#include <linux/if_packet.h>  // struct tpacket3_hdr
 #include <linux/if_packet.h>  // struct sockaddr_ll
 #include <linux/ip.h>         // struct iphdr
 #include <time.h>             // time
