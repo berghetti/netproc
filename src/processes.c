@@ -249,7 +249,8 @@ processes_get ( struct processes *procs, struct config_op *co )
   for ( int index_pid = 0; index_pid < total_process; index_pid++ )
     {
       char path_fd[MAX_PATH_FD];
-      snprintf ( path_fd, sizeof ( path_fd ), "/proc/%d/fd/", pids[index_pid] );
+      int ret_sn = snprintf (
+              path_fd, sizeof ( path_fd ), "/proc/%d/fd/", pids[index_pid] );
 
       int total_fd_process = get_numeric_directory ( &fds, path_fd );
 
@@ -267,10 +268,10 @@ processes_get ( struct processes *procs, struct config_op *co )
 
       for ( int index_fd = 0; index_fd < total_fd_process; index_fd++ )
         {
-          snprintf ( path_fd,
-                     sizeof ( path_fd ),
-                     "/proc/%d/fd/%d",
-                     pids[index_pid],
+          // concat "/proc/<pid>/fd/%d"
+          snprintf ( path_fd + ret_sn,
+                     sizeof ( path_fd ) - ret_sn,
+                     "%d",
                      fds[index_fd] );
 
           char data_fd[MAX_NAME_SOCKET];
@@ -283,7 +284,7 @@ processes_get ( struct processes *procs, struct config_op *co )
           data_fd[len_link] = '\0';
 
           unsigned long int inode;
-          if ( 1 != sscanf( data_fd, "socket:[%lu", &inode ) )
+          if ( 1 != sscanf ( data_fd, "socket:[%lu", &inode ) )
             continue;
 
           for ( int c = 0; c < total_conections; c++ )
