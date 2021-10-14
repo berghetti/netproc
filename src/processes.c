@@ -64,6 +64,21 @@ add_conection_to_process ( process_t *proc, conection_t *con )
   return cons;
 }
 
+static void
+handle_cmdline( char *buff, size_t len )
+{
+  while ( --len )
+    {
+      if ( *buff == '\0' || *buff == '\n' )
+        *buff = ' ';
+
+      buff++;
+    }
+
+  // warranty, already null terminated
+  *buff = '\0';
+}
+
 // armazena o nome do processo no buffer e retorna
 // o tamanho do nome do processo,
 // função cuida da alocação de memoria para o nome do processo
@@ -71,7 +86,7 @@ static ssize_t
 get_name_process ( char **buffer, const pid_t pid )
 {
   char path_cmdline[MAX_CMDLINE];
-  snprintf ( path_cmdline, MAX_CMDLINE, "/proc/%d/cmdline", pid );
+  snprintf ( path_cmdline, sizeof ( path_cmdline ), "/proc/%d/cmdline", pid );
 
   int fd = open ( path_cmdline, O_RDONLY );
   if ( fd == -1 )
@@ -83,26 +98,13 @@ get_name_process ( char **buffer, const pid_t pid )
   ssize_t total_read = full_read ( fd, buffer );
   close ( fd );
 
-  if ( total_read == -1 )
+  if ( total_read <= 0 )
     {
       ERROR_DEBUG ( "%s", "error read process name" );
       return -1;
     }
 
-  char *p = *buffer;
-
-  // run (total_read -1) times
-  size_t i = total_read;
-  while ( --i )
-    {
-      if ( *p == '\0' || *p == '\n' )
-        *p = ' ';
-
-      p++;
-    }
-
-  // warranty, already null terminated
-  *p = 0;
+  handle_cmdline( *buffer, (size_t) total_read );
 
   // last bytes is null
   return total_read - 1;
@@ -260,7 +262,7 @@ processes_get ( struct processes *procs, struct config_op *co )
       process_t *proc =
               hashtable_get ( ht_process, TO_PTR ( pids[index_pid] ) );
 
-      if ( proc && ( proc->net_stat.tot_Bps_rx || proc->net_stat.tot_Bps_tx ) )
+      if ( proc )
         {
           proc->active = 1;
           proc->total_conections = 0;
