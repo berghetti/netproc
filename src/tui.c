@@ -459,17 +459,11 @@ tui_show ( const struct processes *processes, const struct config_op *co )
           chtype ch = process->name[j];
 
           if ( j < ( size_t ) start_name )
-            {
-              ch |= color_scheme[PATH_PROG];
-            }
+            ch |= color_scheme[PATH_PROG];
           else if ( j < len_path_name )
-            {
-              ch |= color_scheme[NAME_PROG];
-            }
+            ch |= color_scheme[NAME_PROG];
           else
-            {
-              ch |= color_scheme[PARAM_PROG];
-            }
+            ch |= color_scheme[PARAM_PROG];
 
           waddch ( pad, ch );
         }

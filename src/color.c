@@ -86,7 +86,8 @@ static const int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
                 [RESUME_VALUE] = A_NORMAL,
         } };
 
-void pairs_init( void )
+void
+pairs_init ( void )
 {
   init_pair ( CYAN_DEFAULT, COLOR_CYAN, -1 );  // color tree, name program
   init_pair ( BLACK_GREEN, COLOR_BLACK, COLOR_GREEN );  // color header
@@ -112,7 +113,7 @@ get_color_scheme ( void )
   if ( use_default_colors () == ERR )
     assume_default_colors ( COLOR_WHITE, COLOR_BLACK );
 
-  pairs_init();
+  pairs_init ();
 
-  return ( int * ) color_schemes[DEFAULT];
+  return ( int * ) color_schemes[ALTERNATIVE1];
 }
