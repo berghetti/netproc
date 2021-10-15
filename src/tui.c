@@ -385,8 +385,8 @@ tui_show ( const struct processes *processes, const struct config_op *co )
     {
       process_t *process = *procs;
 
-      if ( !co->verbose &&
-           !( process->net_stat.tot_Bps_rx || process->net_stat.tot_Bps_tx ) )
+      if ( !( process->net_stat.tot_Bps_rx || process->net_stat.tot_Bps_tx ) &&
+           !co->verbose )
         continue;
 
       tot_rows++;
@@ -456,15 +456,19 @@ tui_show ( const struct processes *processes, const struct config_op *co )
 
       for ( size_t j = 0; j < len_full_name; j++ )
         {
-          chtype ch;
-          // destaca somente o nome do programa
-          if ( j >= ( size_t ) start_name && j < len_path_name )
+          chtype ch = process->name[j];
+
+          if ( j < ( size_t ) start_name )
             {
-              ch = process->name[j] | color_scheme[NAME_PROG_BOLD];
+              ch |= color_scheme[PATH_PROG];
+            }
+          else if ( j < len_path_name )
+            {
+              ch |= color_scheme[NAME_PROG];
             }
           else
-            {  // pinta todo o caminho do programa e parametros
-              ch = process->name[j] | color_scheme[NAME_PROG];
+            {
+              ch |= color_scheme[PARAM_PROG];
             }
 
           waddch ( pad, ch );
@@ -482,7 +486,7 @@ tui_show ( const struct processes *processes, const struct config_op *co )
   wclrtobot ( pad );
 
   // paint item selected
-  if ( tot_rows > LINE_START )
+  if ( tot_rows > LINE_START + 1 )
     {
       if ( selected > tot_rows )
         selected = tot_rows;

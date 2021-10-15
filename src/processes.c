@@ -65,7 +65,7 @@ add_conection_to_process ( process_t *proc, conection_t *con )
 }
 
 static void
-handle_cmdline( char *buff, size_t len )
+handle_cmdline ( char *buff, size_t len )
 {
   while ( --len )
     {
@@ -104,7 +104,7 @@ get_name_process ( char **buffer, const pid_t pid )
       return -1;
     }
 
-  handle_cmdline( *buffer, (size_t) total_read );
+  handle_cmdline ( *buffer, ( size_t ) total_read );
 
   // last bytes is null
   return total_read - 1;
@@ -265,7 +265,7 @@ processes_get ( struct processes *procs, struct config_op *co )
       if ( proc )
         {
           proc->active = 1;
-          proc->total_conections = 0;
+          proc->total_conections = 0;  // fixme:
         }
 
       for ( int index_fd = 0; index_fd < total_fd_process; index_fd++ )
