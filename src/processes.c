@@ -191,7 +191,7 @@ cb_compare ( const void *key1, const void *key2 )
   return ( key1 == key2 );
 }
 
-// https://github.com/shemminger/iproute2/blob/main/misc/ss.c
+// https://github.com/shemminger/iproute2/blob/main/misc/ss.c#L524
 static hash_t
 cb_hash_func ( const void *key )
 {
@@ -231,7 +231,7 @@ processes_get ( struct processes *procs, struct config_op *co )
   uint32_t *pids = NULL;
   int total_process = get_numeric_directory ( &pids, "/proc/" );
 
-  if ( total_process == -1 )
+  if ( -1 == total_process )
     {
       ERROR_DEBUG ( "%s", "backtrace" );
       return 0;
@@ -256,7 +256,7 @@ processes_get ( struct processes *procs, struct config_op *co )
 
       int total_fd_process = get_numeric_directory ( &fds, path_fd );
 
-      if ( total_fd_process == -1 )
+      if ( -1 == total_fd_process )
         continue;
 
       process_t *proc =

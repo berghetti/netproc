@@ -485,7 +485,6 @@ tui_show ( const struct processes *processes, const struct config_op *co )
       if ( selected > tot_rows )
         selected = tot_rows;
 
-      // color line seleted
       paint_selected ();
     }
 
