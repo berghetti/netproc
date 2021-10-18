@@ -37,6 +37,7 @@ usage ( void )
          "Options:\n"
          " -B, --bytes             view in bytes, default in bits\n"
          " -c                      visualization each active connection of the process\n"
+         " --color 1|2|3           color scheme, 1 is default\n"
          " -f, --file \"filename\"   save statistics in file, filename is optional,\n"
          "                         default is '" PROG_NAME_LOG "'\n"
          " -h, --help              show this message\n"

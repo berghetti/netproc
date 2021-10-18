@@ -38,7 +38,6 @@ enum schemes
 {
   DEFAULT,
   ALTERNATIVE1,
-  ALTERNATIVE2,
   MONO,
   TOT_SCHEMES
 };
@@ -103,7 +102,7 @@ pairs_init ( void )
 }
 
 int *
-get_color_scheme ( void )
+get_color_scheme ( const struct config_op *co )
 {
   if ( !has_colors () )
     return ( int * ) color_schemes[MONO];
@@ -115,5 +114,5 @@ get_color_scheme ( void )
 
   pairs_init ();
 
-  return ( int * ) color_schemes[ALTERNATIVE1];
+  return ( int * ) color_schemes[co->color_scheme];
 }

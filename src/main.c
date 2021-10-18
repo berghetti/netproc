@@ -62,7 +62,11 @@ main ( int argc, char **argv )
   int sock = socket_init ( co );
   if ( sock == -1 )
     {
-      fatal_error ( "Error create socket, is root?" );
+      if ( getuid () )
+        fatal_error ( "Root is needed to running" );
+      else
+        fatal_error ( "Error create socket: %s", strerror ( errno ) );
+
       goto EXIT;
     }
 

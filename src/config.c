@@ -32,6 +32,7 @@ static struct config_op co = { .iface = NULL,  // all interfaces
                                .path_log = PROG_NAME_LOG,
                                .log = false,
                                .proto = TCP | UDP,
+                               .color_scheme = 0,
                                .view_si = false,
                                .view_bytes = false,
                                .view_conections = false,
@@ -60,6 +61,27 @@ parse_options ( int argc, char **argv )
       else if ( !strcmp ( arg, "-c" ) )
         {
           co.view_conections = true;
+        }
+      else if ( !strcmp ( arg, "--color" ) )
+        {
+          prev = arg;
+          arg = *argv;
+
+          int value;
+          if ( !arg || !( value = atoi ( arg ) ) )
+            {
+              fprintf ( stderr,
+                        "'%s' argument requires a valid color scheme number\n",
+                        prev );
+              goto FAIL;
+            }
+
+          // 0, 1 or 2
+          value &= 0x3;
+          co.color_scheme = value - ( value != 0 );
+
+          argc--;
+          argv++;
         }
       else if ( !strcmp ( arg, "-f" ) || !strcmp ( arg, "--file" ) )
         {

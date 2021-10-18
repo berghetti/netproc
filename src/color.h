@@ -21,6 +21,8 @@
 #ifndef COLOR_H
 #define COLOR_H
 
+#include "config.h"  // struct config_op
+
 enum elements_in_schemes
 {
   RESET,
@@ -38,6 +40,6 @@ enum elements_in_schemes
 };
 
 int *
-get_color_scheme ( void );
+get_color_scheme ( const struct config_op *co );
 
 #endif  // COLOR_H

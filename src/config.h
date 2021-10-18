@@ -36,10 +36,11 @@
 
 struct config_op
 {
-  char *iface;             // bind interface
-  char *path_log;          // path to log in file
-  uint64_t running;        // time the program is running
-  int proto;               // tcp or udp
+  char *iface;       // bind interface
+  char *path_log;    // path to log in file
+  uint64_t running;  // time the program is running
+  int proto;         // tcp or udp
+  int color_scheme;
   bool log;                // log in file
   bool view_si;            // SI or IEC prefix
   bool view_bytes;         // view in bytes or bits
