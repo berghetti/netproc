@@ -5,6 +5,7 @@ Legend:
 ! Known issue / missing feature
 
 ?? - ??
+  + add new color scheme
   * improved timer of packets fragments
   * internal timer now return in milliseconds instead of seconds
   * moved code filter bpf to section rodata
