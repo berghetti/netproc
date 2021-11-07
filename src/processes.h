@@ -29,7 +29,7 @@
 typedef struct process
 {
   struct net_stat net_stat;   // estatisticas de rede
-  conection_t *conection;     // array de conexoes do processo
+  conection_t *conections;    // array de conexoes do processo
   char *name;                 // nome processo
   pid_t pid;                  // pid do processo
   uint32_t total_conections;  // total de conexões apontada por conection_t *

@@ -28,6 +28,7 @@
 #include <fcntl.h>
 
 #include "hashtable.h"
+#include "vector.h"
 #include "full_read.h"
 #include "processes.h"  // process_t
 #include "config.h"
@@ -48,20 +49,13 @@
 
 static hashtable_t *ht_process;
 
-static conection_t *
+// static conection_t *
+void
 add_conection_to_process ( process_t *proc, conection_t *con )
 {
   proc->total_conections++;
-  conection_t *cons = realloc ( proc->conection,
-                                proc->total_conections * sizeof ( *cons ) );
 
-  if ( cons )
-    {
-      proc->conection = cons;
-      proc->conection[proc->total_conections - 1] = *con;
-    }
-
-  return cons;
+  vector_push ( proc->conections, con );
 }
 
 static void
@@ -80,7 +74,7 @@ handle_cmdline ( char *buff, size_t len )
 }
 
 // armazena o nome do processo no buffer e retorna
-// o tamanho do nome do processo,
+// o tamanho do nome do processo ou -1 em caso de erro,
 // função cuida da alocação de memoria para o nome do processo
 static ssize_t
 get_name_process ( char **buffer, const pid_t pid )
@@ -118,15 +112,24 @@ create_new_process ( pid_t pid )
   if ( proc )
     {
       proc->pid = pid;
-      proc->total_conections = 0;
       proc->active = 1;
-      proc->conection = NULL;
-      get_name_process ( &proc->name, pid );
+
+      proc->conections = vector_new ( 0, sizeof ( conection_t ) );
+      if ( !proc->conections )
+        goto ERROR;
+
+      proc->total_conections = 0;
+      if ( -1 == get_name_process ( &proc->name, pid ) )
+        goto ERROR;
 
       memset ( &proc->net_stat, 0, sizeof ( struct net_stat ) );
     }
 
   return proc;
+
+ERROR:
+  free ( proc );
+  return NULL;
 }
 
 static void
@@ -134,7 +137,7 @@ free_process ( void *arg )
 {
   process_t *process = arg;
   free ( process->name );
-  free ( process->conection );
+  vector_free ( process->conections );
   free ( process );
 }
 
@@ -265,7 +268,8 @@ processes_get ( struct processes *procs, struct config_op *co )
       if ( proc )
         {
           proc->active = 1;
-          proc->total_conections = 0;  // fixme:
+          proc->total_conections = 0;
+          vector_clear ( proc->conections );
         }
 
       for ( int index_fd = 0; index_fd < total_fd_process; index_fd++ )

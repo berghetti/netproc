@@ -10,6 +10,7 @@ void test_str ( void );
 void test_rate ( void );
 void test_human_readable ( void );
 void test_packet ( void );
+void test_vector ( void );
 
 // need to unity
 void setUp ( void ) { /* set stuff up here */ }
@@ -27,6 +28,7 @@ main ( void )
   RUN_TEST ( test_rate );
   RUN_TEST ( test_human_readable );
   RUN_TEST ( test_packet );
+  RUN_TEST ( test_vector );
 
   return UNITY_END ();
 }

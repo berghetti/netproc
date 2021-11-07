@@ -258,23 +258,23 @@ show_conections ( const process_t *process, const struct config_op *co )
       // se a proxima conexão estiver com estatisticas zeradas, essa é a ultima
       // conexão, as conexões são ordenadas de forma decrescente previamente
       if ( ( i < process->total_conections - 1 &&
-             process->conection[i + 1].net_stat.avg_Bps_rx == 0 &&
-             process->conection[i + 1].net_stat.avg_Bps_tx == 0 ) ||
+             process->conections[i + 1].net_stat.avg_Bps_rx == 0 &&
+             process->conections[i + 1].net_stat.avg_Bps_tx == 0 ) ||
            i == process->total_conections - 1 )
         last_con = true;
 
-      char *tuple = translate ( &process->conection[i], co );
+      char *tuple = translate ( &process->conections[i], co );
 
       char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
 
       human_readable ( tx_rate,
                        sizeof tx_rate,
-                       process->conection[i].net_stat.avg_Bps_tx,
+                       process->conections[i].net_stat.avg_Bps_tx,
                        RATE );
 
       human_readable ( rx_rate,
                        sizeof rx_rate,
-                       process->conection[i].net_stat.avg_Bps_rx,
+                       process->conections[i].net_stat.avg_Bps_rx,
                        RATE );
 
       wattrset ( pad, color_scheme[CONECTIONS] );
@@ -283,9 +283,9 @@ show_conections ( const process_t *process, const struct config_op *co )
                 max_digits_pid,
                 "",
                 PPS,
-                process->conection[i].net_stat.avg_pps_tx,
+                process->conections[i].net_stat.avg_pps_tx,
                 PPS,
-                process->conection[i].net_stat.avg_pps_rx,
+                process->conections[i].net_stat.avg_pps_rx,
                 J_RATE,
                 tx_rate,
                 J_RATE,
@@ -294,7 +294,7 @@ show_conections ( const process_t *process, const struct config_op *co )
       char iface_buff[IF_NAMESIZE];
       char *iface;
 
-      if ( if_indextoname ( process->conection[i].if_index, iface_buff ) )
+      if ( if_indextoname ( process->conections[i].if_index, iface_buff ) )
         iface = iface_buff;
       else
         iface = "";
@@ -304,8 +304,8 @@ show_conections ( const process_t *process, const struct config_op *co )
                 IF_NAMESIZE,
                 iface,
                 -11,
-                ( process->conection[i].protocol == IPPROTO_TCP ) ? "(tcp)"
-                                                                  : "(udp)" );
+                ( process->conections[i].protocol == IPPROTO_TCP ) ? "(tcp)"
+                                                                   : "(udp)" );
 
       // space tuple
       wprintw ( pad, "%*s", TUPLE, "" );

@@ -107,7 +107,7 @@ sort ( process_t **proc,
 
   if ( co->view_conections )
     for ( size_t i = 0; i < tot_process; i++ )
-      qsort_r ( proc[i]->conection,
+      qsort_r ( proc[i]->conections,
                 proc[i]->total_conections,
                 sizeof ( conection_t ),
                 compare_conection,

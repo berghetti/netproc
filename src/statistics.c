@@ -88,10 +88,10 @@ statistics_add ( struct processes *processes,
       for ( size_t c = 0; c < process->total_conections; c++ )
         {
           // check if packet math con conection from this process
-          if ( !conection_match_packet ( &process->conection[c], pkt ) )
+          if ( !conection_match_packet ( &process->conections[c], pkt ) )
             continue;
 
-          process->conection[c].if_index = pkt->if_index;
+          process->conections[c].if_index = pkt->if_index;
 
           if ( pkt->direction == PKT_DOWN )
             {
@@ -100,7 +100,7 @@ statistics_add ( struct processes *processes,
 
               // adicionado estatisticas exclusiva da conexão
               if ( co->view_conections )
-                rate_add_rx ( &process->conection[c].net_stat, pkt->lenght );
+                rate_add_rx ( &process->conections[c].net_stat, pkt->lenght );
             }
           else
             {
@@ -109,7 +109,7 @@ statistics_add ( struct processes *processes,
 
               // adicionado estatisticas exclusiva da conexão
               if ( co->view_conections )
-                rate_add_tx ( &process->conection[c].net_stat, pkt->lenght );
+                rate_add_tx ( &process->conections[c].net_stat, pkt->lenght );
             }
 
           return true;

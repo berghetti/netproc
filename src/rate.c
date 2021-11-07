@@ -69,7 +69,7 @@ rate_calc ( struct processes *processes, const struct config_op *co )
       if ( co->view_conections )
         {
           for ( size_t i = 0; i < process->total_conections; i++ )
-            rate_net_stat ( &process->conection[i].net_stat, co->view_bytes );
+            rate_net_stat ( &process->conections[i].net_stat, co->view_bytes );
         }
     }
 }
@@ -121,10 +121,10 @@ rate_update ( struct processes *processes, const struct config_op *co )
         {
           for ( size_t c = 0; c < process->total_conections; c++ )
             {
-              process->conection[c].net_stat.Bps_rx[idx_cir] = 0;
-              process->conection[c].net_stat.Bps_tx[idx_cir] = 0;
-              process->conection[c].net_stat.pps_rx[idx_cir] = 0;
-              process->conection[c].net_stat.pps_tx[idx_cir] = 0;
+              process->conections[c].net_stat.Bps_rx[idx_cir] = 0;
+              process->conections[c].net_stat.Bps_tx[idx_cir] = 0;
+              process->conections[c].net_stat.pps_rx[idx_cir] = 0;
+              process->conections[c].net_stat.pps_tx[idx_cir] = 0;
             }
         }
     }
