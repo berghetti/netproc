@@ -88,7 +88,8 @@ get_info_conections ( conection_t **conection,
 
           *conection = temp;
 
-          // initialize new space of memory (important)
+          // initialize new space of memory,
+          // important to clear net_stat struct in struct conection_t
           memset ( &( *conection )[count],
                    0,
                    ( buff_size - count ) * sizeof ( **conection ) );
