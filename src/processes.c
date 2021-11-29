@@ -309,6 +309,9 @@ processes_get ( struct processes *procs, struct config_op *co )
                 }
 
               add_conection_to_process ( proc, &conections[c] );
+
+              conections[c] = conections[total_conections - 1];
+              total_conections--;
             }
         }
     }
