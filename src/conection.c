@@ -65,6 +65,8 @@ get_info_conections ( conection_t **conection,
       goto EXIT;
     }
 
+  conection_t *con = ( *conection ) + ( *cur_count );
+
   while ( ( getline ( &line, &len, arq ) ) != -1 )
     {
       if ( *cur_count == *cur_size )
@@ -72,7 +74,7 @@ get_info_conections ( conection_t **conection,
           *cur_size += ENTRY_SIZE;
 
           conection_t *temp;
-          temp = realloc ( *conection, *cur_size * sizeof ( **conection ) );
+          temp = realloc ( *conection, *cur_size * sizeof ( conection_t ) );
           if ( !temp )
             {
               ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
@@ -81,11 +83,7 @@ get_info_conections ( conection_t **conection,
             }
 
           *conection = temp;
-
-          // initialize new space of memory (important)
-          memset ( &( *conection )[*cur_count],
-                   0,
-                   ( *cur_size - *cur_count ) * sizeof ( **conection ) );
+          con = *conection + *cur_count;
         }
 
       // clang-format off
@@ -122,8 +120,7 @@ get_info_conections ( conection_t **conection,
       if ( state == TCP_TIME_WAIT || state == TCP_LISTEN )
         continue;
 
-      rs = sscanf (
-              local_addr, "%x", &( *conection )[*cur_count].local_address );
+      rs = sscanf ( local_addr, "%x", &con->local_address );
       if ( rs != 1 )
         {
           ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
@@ -131,8 +128,7 @@ get_info_conections ( conection_t **conection,
           goto EXIT;
         }
 
-      rs = sscanf (
-              rem_addr, "%x", &( *conection )[*cur_count].remote_address );
+      rs = sscanf ( rem_addr, "%x", &con->remote_address );
       if ( rs != 1 )
         {
           ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
@@ -140,11 +136,13 @@ get_info_conections ( conection_t **conection,
           goto EXIT;
         }
 
-      ( *conection )[*cur_count].local_port = local_port;
-      ( *conection )[*cur_count].remote_port = rem_port;
-      ( *conection )[*cur_count].state = state;
-      ( *conection )[*cur_count].inode = inode;
-      ( *conection )[*cur_count].protocol = protocol;
+      con->local_port = local_port;
+      con->remote_port = rem_port;
+      con->state = state;
+      con->inode = inode;
+      con->protocol = protocol;
+      memset ( &con->net_stat, 0, sizeof ( struct net_stat ) );
+      con++;
 
       ( *cur_count )++;
     }
