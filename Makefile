@@ -39,7 +39,13 @@ else
 	CFLAGS+= -O2
 endif
 
-LDLIBS=$(shell ncursesw6-config --libs) -lpthread
+LDLIBS=$(shell ncurses6-config --libs 2> /dev/null)
+
+ifneq ( 0, $(LDLIBS) )
+	LDLIBS=$(shell  ncurses5-config --libs 2> /dev/null)  
+endif
+
+LDLIBS += -lpthread
 
 #.c files all subdirectories
 C_SOURCE= $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/*/*.c)
