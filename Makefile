@@ -41,7 +41,7 @@ endif
 
 LDLIBS=$(shell ncurses6-config --libs 2> /dev/null)
 
-ifneq ( 0, $(LDLIBS) )
+ifeq ( $(LDLIBS), )
 	LDLIBS=$(shell  ncurses5-config --libs 2> /dev/null)  
 endif
 
