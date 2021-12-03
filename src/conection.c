@@ -83,7 +83,7 @@ get_info_conections ( conection_t **conection,
             }
 
           *conection = temp;
-          con = *conection + *cur_count;
+          con = temp + *cur_count;
         }
 
       // clang-format off

@@ -194,7 +194,6 @@ cb_compare ( const void *key1, const void *key2 )
   return ( key1 == key2 );
 }
 
-// https://github.com/shemminger/iproute2/blob/main/misc/ss.c#L524
 static hash_t
 cb_hash_func ( const void *key )
 {
