@@ -50,7 +50,7 @@ sec2clock ( uint64_t milliseconds )
 {
   static char clock[LEN_BUFF_CLOCK];
 
-  uint32_t secs = milliseconds / 1000UL;
+  uint32_t secs = milliseconds / 1000U;
 
   uint32_t hours, seconds, minutes;
 
@@ -61,7 +61,7 @@ sec2clock ( uint64_t milliseconds )
 
   snprintf ( clock,
              sizeof clock,
-             "%02d:%02hd:%02hd",
+             "%02d:%02d:%02d",
              hours,      // hour
              minutes,    // minute
              seconds );  // second

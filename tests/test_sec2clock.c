@@ -15,6 +15,7 @@ static struct test_set test[] = {
         { 1000, "00:00:01" },
         { 53646154, "14:54:06" },
         { 172800000, "48:00:00" },
+        { 172810000, "48:00:10" },
 };
 
 
@@ -23,10 +24,10 @@ void test_performance ( void )
   counter_T cnt;
 
   cnt = BEGIN_TSC ();
-  sec2clock ( 6516516571 );
+  char *p = sec2clock ( 172810000 );
   cnt = END_TSC ( cnt );
 
-  printf ( "cycles = %lu\n", cnt );
+  printf ( "%s\ncycles = %lu\n", p, cnt );
 }
 
 #define ARRAY_SIZE( x ) ( sizeof ( x ) / sizeof ( x[0] ) )
