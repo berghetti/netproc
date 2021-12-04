@@ -11,6 +11,7 @@ void test_rate ( void );
 void test_human_readable ( void );
 void test_packet ( void );
 void test_vector ( void );
+void test_sec2clock ( void );
 
 // need to unity
 void setUp ( void ) { /* set stuff up here */ }
@@ -29,6 +30,7 @@ main ( void )
   RUN_TEST ( test_human_readable );
   RUN_TEST ( test_packet );
   RUN_TEST ( test_vector );
+  RUN_TEST ( test_sec2clock );
 
   return UNITY_END ();
 }

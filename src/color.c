@@ -85,7 +85,7 @@ static const int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
                 [RESUME_VALUE] = A_NORMAL,
         } };
 
-void
+static void
 pairs_init ( void )
 {
   init_pair ( CYAN_DEFAULT, COLOR_CYAN, -1 );  // color tree, name program

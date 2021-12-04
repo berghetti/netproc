@@ -20,9 +20,8 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <errno.h>
 #include <string.h>
-#include <time.h>
+#include <time.h>  // struct timespec
 
 int
 start_timer ( struct timespec *ts )
@@ -51,14 +50,21 @@ sec2clock ( uint64_t milliseconds )
 {
   static char clock[LEN_BUFF_CLOCK];
 
-  uint32_t secs = milliseconds / 1000;
+  uint32_t secs = milliseconds / 1000UL;
+
+  uint32_t hours, seconds, minutes;
+
+  seconds = secs % 60UL;
+  secs /= 60UL;
+  minutes = secs % 60UL;
+  hours = secs / 60UL;
 
   snprintf ( clock,
-             LEN_BUFF_CLOCK,
-             "%02d:%02d:%02d",
-             ( int ) secs / 3600,             // hour
-             ( int ) ( secs % 3600 ) / 60,    // minute
-             ( int ) ( secs % 3600 ) % 60 );  // second
+             sizeof clock,
+             "%02d:%02hd:%02hd",
+             hours,      // hour
+             minutes,    // minute
+             seconds );  // second
 
   return clock;
 }

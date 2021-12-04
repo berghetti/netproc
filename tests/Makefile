@@ -20,7 +20,8 @@ C_SOURCE += ../src/hashtable.c \
 						../src/rate.c \
 						../src/round.c \
 						../src/human_readable.c \
-						../src/vector.c
+						../src/vector.c \
+						../src/timer.c
 
 .PHONY: all clean run
 

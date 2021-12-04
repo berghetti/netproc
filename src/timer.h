@@ -21,6 +21,9 @@
 #ifndef M_TIME_H
 #define M_TIME_H
 
+#include <stdint.h>
+#include <time.h>  // struct timespec
+
 int
 start_timer ( struct timespec *ts );
 
