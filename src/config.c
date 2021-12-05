@@ -53,14 +53,11 @@ fatal_config ( const char *msg )
   exit ( EXIT_FAILURE );
 }
 
-static void
-view_bytes ( UNUSED ( char *arg ) )
+static void view_bytes ( UNUSED ( char *arg ) )
 {
   co.view_bytes = true;
 }
-
-static void
-view_conections ( UNUSED ( char *arg ) )
+static void view_conections ( UNUSED ( char *arg ) )
 {
   co.view_conections = true;
 }
@@ -70,7 +67,7 @@ color_scheme ( char *arg )
 {
   int value;
   if ( !arg || !( value = atoi ( arg ) ) )
-    fatal_config ( "'--color' argument requires a valid color scheme number" );
+    fatal_config ( "Argument '--color' requires a valid color scheme number" );
 
   // 0, 1 or 2
   value &= 0x3;
@@ -84,6 +81,67 @@ log_file ( char *arg )
 
   if ( arg )
     co.path_log = arg;
+}
+
+static void show_help ( UNUSED ( char *arg ) )
+{
+  usage ();
+  exit ( EXIT_SUCCESS );
+}
+
+static void
+iface ( char *arg )
+{
+  if ( !arg )
+    fatal_config ( "Argument '-i' requere interface name" );
+
+  co.iface = arg;
+}
+
+static void show_numeric_host ( UNUSED ( char *arg ) )
+{
+  co.view_conections = true;
+  co.translate_host = false;
+}
+static void show_numeric_port ( UNUSED ( char *arg ) )
+{
+  co.view_conections = true;
+  co.translate_service = false;
+}
+
+static void show_numeric ( UNUSED ( char *arg ) )
+{
+  show_numeric_host ( NULL );
+  show_numeric_port ( NULL );
+}
+
+static void
+set_proto ( char *arg )
+{
+  if ( !arg )
+    fatal_config ( "Argument '-p' requere udp or tcp argument" );
+  else if ( !strcasecmp ( arg, "tcp" ) )
+    co.proto &= TCP;
+  else if ( !strcasecmp ( arg, "udp" ) )
+    co.proto &= UDP;
+  else
+    fatal_config ( "Invalid protocol in argument '-p'" );
+}
+
+static void view_si ( UNUSED ( char *arg ) )
+{
+  co.view_si = true;
+}
+
+static void verbose ( UNUSED ( char *arg ) )
+{
+  co.verbose = true;
+}
+
+static void version ( UNUSED ( char *arg ) )
+{
+  show_version ();
+  exit ( EXIT_SUCCESS );
 }
 
 struct cmd
@@ -108,20 +166,24 @@ check_cmd ( char *arg, const struct cmd *cmd )
 struct config_op *
 parse_options ( int argc, char **argv )
 {
-  static const struct cmd cmd[] = {
-          { "-B", "--bytes", view_bytes, NO_ARG },
-          { "-c", "", view_conections, NO_ARG },
-          { "", "--color", color_scheme, REQ_ARG },
-          { "-f", "--file", log_file, OPT_ARG },
-  };
+  static const struct cmd cmd[] = { { "-B", "--bytes", view_bytes, NO_ARG },
+                                    { "-c", "", view_conections, NO_ARG },
+                                    { "", "--color", color_scheme, REQ_ARG },
+                                    { "-f", "--file", log_file, OPT_ARG },
+                                    { "-h", "--help", show_help, NO_ARG },
+                                    { "-i", "--interface", iface, REQ_ARG },
+                                    { "-n", "", show_numeric, NO_ARG },
+                                    { "-nh", "", show_numeric_host, NO_ARG },
+                                    { "-np", "", show_numeric_port, NO_ARG },
+                                    { "-p", "--protocol", set_proto, REQ_ARG },
+                                    { "", "--si", view_si, NO_ARG },
+                                    { "-v", "--verbose", verbose, NO_ARG },
+                                    { "-V", "--version", version, NO_ARG } };
 
-  // skip arg 0
-  argc--;
-  argv++;
-
-  while ( argc-- )
+  while ( --argc )
     {
       int check = 0;
+      argv++;
 
       for ( unsigned int i = 0; i < ARRAY_SIZE ( cmd ); i++ )
         {
@@ -133,10 +195,10 @@ parse_options ( int argc, char **argv )
               switch ( cmd[i].req_arg )
                 {
                   case REQ_ARG:
-                      argv++;
-                      argc--;
-                      arg = *argv;
-                      break;
+                    argv++;
+                    argc--;
+                    arg = *argv;
+                    break;
                   case OPT_ARG:
                     argv++;
                     if ( *argv == NULL || **argv == '-' )
@@ -162,138 +224,6 @@ parse_options ( int argc, char **argv )
                     *argv );
           exit ( EXIT_FAILURE );
         }
-
-      argv++;
-
-      //   if ( !strcmp ( arg, "-B" ) || !strcmp ( arg, "--bytes" ) )
-      //     {
-      //       co.view_bytes = true;
-      //     }
-      //   else if ( !strcmp ( arg, "-c" ) )
-      //     {
-      //       co.view_conections = true;
-      //     }
-      //   else if ( !strcmp ( arg, "--color" ) )
-      //     {
-      //       prev = arg;
-      //       arg = *argv;
-      //
-      //       int value;
-      //       if ( !arg || !( value = atoi ( arg ) ) )
-      //         {
-      //           fprintf ( stderr,
-      //                     "'%s' argument requires a valid color scheme
-      //                     number\n", prev );
-      //           goto FAIL;
-      //         }
-      //
-      //       // 0, 1 or 2
-      //       value &= 0x3;
-      //       co.color_scheme = value - ( value != 0 );
-      //
-      //       argc--;
-      //       argv++;
-      //     }
-      //   else if ( !strcmp ( arg, "-f" ) || !strcmp ( arg, "--file" ) )
-      //     {
-      //       co.log = true;
-      //       arg = *argv;
-      //       if ( arg && *arg != '-' && !!strcmp ( arg, "--" ) )
-      //         {
-      //           co.path_log = arg;
-      //           argv++;
-      //           argc--;
-      //         }
-      //     }
-      //   else if ( !strcmp ( arg, "-h" ) || !strcmp ( arg, "--help" ) )
-      //     {
-      //       usage ();
-      //       exit ( EXIT_SUCCESS );
-      //     }
-      //   else if ( !strcmp ( arg, "-i" ) || !strcmp ( arg, "--interface" ) )
-      //     {
-      //       prev = arg;
-      //       arg = *argv;
-      //       if ( !arg || ( *arg == '-' || !strncmp ( arg, "--", 2 ) ) )
-      //         {
-      //           fprintf (
-      //                   stderr, "Argument '%s' requere interface name\n",
-      //                   prev );
-      //           goto FAIL;
-      //         }
-      //
-      //       co.iface = arg;
-      //       argc--;
-      //       argv++;
-      //     }
-      //   else if ( !strcmp ( arg, "-n" ) )
-      //     {
-      //       // implict
-      //       co.view_conections = true;
-      //
-      //       co.translate_host = false;
-      //       co.translate_service = false;
-      //     }
-      //   else if ( !strcmp ( arg, "-nh" ) )
-      //     {
-      //       // implict
-      //       co.view_conections = true;
-      //
-      //       // no translate only host
-      //       co.translate_host = false;
-      //     }
-      //   else if ( !strcmp ( arg, "-np" ) )
-      //     {
-      //       // implict
-      //       co.view_conections = true;
-      //
-      //       // no translate only service (port)
-      //       co.translate_service = false;
-      //     }
-      //   else if ( !strcmp ( arg, "-p" ) || !strcmp ( arg, "--protocol" ) )
-      //     {
-      //       prev = arg;
-      //       arg = *argv;
-      //
-      //       if ( !arg || ( *arg == '-' || !strncmp ( arg, "--", 2 ) ) )
-      //         {
-      //           fprintf ( stderr, "Argument '%s' requere udp or tcp\n", prev
-      //           ); goto FAIL;
-      //         }
-      //       else if ( !strcasecmp ( arg, "tcp" ) )
-      //         co.proto &= TCP;
-      //       else if ( !strcasecmp ( arg, "udp" ) )
-      //         co.proto &= UDP;
-      //       else
-      //         {
-      //           fprintf ( stderr, "invalid protocol in argument '%s'\n", prev
-      //           ); goto FAIL;
-      //         }
-      //
-      //       argc--;
-      //       argv++;
-      //     }
-      //   else if ( !strcmp ( arg, "--si" ) )
-      //     {
-      //       co.view_si = true;
-      //     }
-      //   else if ( !strcmp ( arg, "-v" ) || !strcmp ( arg, "--verbose" ) )
-      //     {
-      //       co.verbose = true;
-      //     }
-      //   else if ( !strcmp ( arg, "-V" ) || !strcmp ( arg, "--version" ) )
-      //     {
-      //       show_version ();
-      //       exit ( EXIT_SUCCESS );
-      //     }
-      //
-      //   else
-      //     {
-      //       fprintf ( stderr, "Invalid argument '%s'\n", arg );
-      //       goto FAIL;
-      //     }
-      //
-      // arg = *argv++;
     }
 
   return &co;
