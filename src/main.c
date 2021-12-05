@@ -229,14 +229,14 @@ main ( int argc, char **argv )
 
               rate_calc ( processes, co );
 
-              rate_update ( processes, co );
-
               tui_show ( processes, co );
 
               if ( co->log && !log_file ( processes->proc, processes->total ) )
                 {
                   goto EXIT;
                 }
+
+              rate_update ( processes, co );
 
               if ( need_update_processes )
                 {

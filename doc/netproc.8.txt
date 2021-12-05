@@ -43,6 +43,7 @@ EXAMPLES
   Useful to monitor the file generated in the above command:
 
     $ watch -t -d 'cat log.txt'
+    $ watch -t 'cut -c -$COLUMNS log.txt'
 
   Running whitout root:
 
