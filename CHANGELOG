@@ -11,6 +11,7 @@ Legend:
   * moved code filter bpf to section rodata
   * using dinamyc vector to manage conections of processes
   - resolved possible buffoverflow in call readlink
+  - fix ncurses linkage in old systems
 
 0.6.2 - 2021-08-13
   - fixed link ncurses on certain systems, LDLIBS in makefile, PR #2

@@ -18,8 +18,8 @@ static struct test_set test[] = {
         { 172810000, "48:00:10" },
 };
 
-
-void test_performance ( void )
+void
+test_performance ( void )
 {
   counter_T cnt;
 
@@ -35,10 +35,9 @@ void test_performance ( void )
 void
 test_sec2clock ( void )
 {
-
-  for (uint32_t i = 0; i < ARRAY_SIZE( test); i++ )
+  for ( uint32_t i = 0; i < ARRAY_SIZE ( test ); i++ )
     {
-      TEST_ASSERT_EQUAL_STRING( test[i].expected, sec2clock( test[i].ml) );
+      TEST_ASSERT_EQUAL_STRING ( test[i].expected, sec2clock ( test[i].ml ) );
     }
 
   // test_performance();
