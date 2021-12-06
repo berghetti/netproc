@@ -4,7 +4,7 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
-?? - ??
+0.6.3 - 2021-12-06
   + add new color scheme
   * improved timer of packets fragments
   * internal timer now return in milliseconds instead of seconds
