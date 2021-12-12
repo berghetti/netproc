@@ -1,0 +1,20 @@
+Source: netproc
+Section: net
+Rules-Requires-Root: no
+Priority: optional
+Maintainer: Mayco Souza Berghetti <mayco.s.berghetti@gmail.com>
+Build-Depends:
+ debhelper-compat (= 13),
+ libncurses-dev (>= 6.1),
+Standards-Version: 4.6.0
+Homepage: https://github.com/berghetti/netproc
+
+Package: netproc
+Architecture: any
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: tool to monitor network usage by processes
+ netproc monitors network traffic and tries to find out which process
+ this traffic belongs to, this is useful to identify the processes that
+ are consuming network resources and troubleshooting.

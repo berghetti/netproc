@@ -1,11 +1,17 @@
-netproc (0.6.0-1) unstable; urgency=low
+netproc (0.6.3-1) unstable; urgency=medium
 
   * New upstream release.
-  * debian rules
+  * debian rules:
     - Add override_dh_auto_install.
   * debian/patches removed.
+  * debian/control:
+    - Changed Standards Version to 4.6.0.
+    - Add Rules-Requires-Root: no.
+  * debian/coptright:
+    - add Upstream-Contact.
+  * Add file debian/upstream/metadata.
 
- -- Mayco Souza Berghetti <mayco.s.berghetti@gmail.com>  Thu, 05 Aug 2021 13:35:53 +0000
+ -- Mayco Souza Berghetti <mayco.s.berghetti@gmail.com>  Sun, 12 Dec 2021 21:19:44 +0000
 
 netproc (0.5.5-1) unstable; urgency=low
 
