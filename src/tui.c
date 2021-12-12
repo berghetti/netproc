@@ -137,7 +137,7 @@ show_resume ( const struct config_op *co )
   wattrset ( pad, color_scheme[RESUME] );
   mvwprintw ( pad, 3, 25, "pps rx: " );
   wattrset ( pad, color_scheme[RESUME_VALUE] );
-  wprintw ( pad, "%d", cur_pps_rx );
+  wprintw ( pad, "%ld", cur_pps_rx );
   wattrset ( pad, color_scheme[RESUME] );
   mvwprintw ( pad, 3, 40, "rate rx: " );
   wattrset ( pad, color_scheme[RESUME_VALUE] );
