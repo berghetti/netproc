@@ -20,32 +20,26 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-struct queue_node
-{
-  void *data;
-  struct queue_node *next;
-};
+// Forward declaration
+struct queue;
 
 typedef void ( *fclear ) ( void * );
-
-struct queue
-{
-  fclear clear;  // callback user init
-  struct queue_node *head;
-  struct queue_node *tail;
-  unsigned int size;
-};
 
 struct queue *
 queue_new ( fclear clear );
 
-struct queue_node *
+// returns 0 on failure and queue length on success
+int
 enqueue ( struct queue *queue, void *data );
 
+// return NULL on failure
 void *
 dequeue ( struct queue *queue );
 
 void
 queue_destroy ( struct queue *queue );
+
+unsigned int
+get_queue_size ( struct queue *queue );
 
 #endif  // QUEUE_H

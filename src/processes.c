@@ -26,51 +26,61 @@
 #include <sys/types.h>  // open
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <netinet/tcp.h>  // TCP_ESTABLISHED, TCP_TIME_WAIT...
 
 #include "hashtable.h"
+#include "vector.h"
 #include "full_read.h"
 #include "processes.h"  // process_t
 #include "config.h"
 #include "m_error.h"  // ERROR_DEBUG
 #include "macro_util.h"
 
+// 4294967295
+#define LEN_MAX_INT 10
+
 // /proc/%d/cmdline
-#define MAX_CMDLINE 25
+#define MAX_CMDLINE 14 + LEN_MAX_INT
 
-//   6  +  7  + 4 + 7
-// /proc/<pid>/fd/<id-fd>
-#define MAX_PATH_FD 24
+// /proc/<pid>/fd/<id-fd> + 2 align
+#define MAX_PATH_FD 10 + LEN_MAX_INT + LEN_MAX_INT + 2
 
-// strlen ("socket:[99999999]") + 3 safe
-#define MAX_NAME_SOCKET 9 + 8 + 3
+// strlen ("socket:[4294967295]") + 5 align
+#define MAX_NAME_SOCKET 9 + LEN_MAX_INT + 5
 
 static hashtable_t *ht_process;
 
-static conection_t *
+// static conection_t *
+void
 add_conection_to_process ( process_t *proc, conection_t *con )
 {
   proc->total_conections++;
-  conection_t *cons = realloc ( proc->conection,
-                                proc->total_conections * sizeof ( *cons ) );
 
-  if ( cons )
+  vector_push ( proc->conections, con );
+}
+
+static void
+handle_cmdline ( char *buff, size_t len )
+{
+  while ( --len )
     {
-      proc->conection = cons;
-      proc->conection[proc->total_conections - 1] = *con;
+      if ( *buff == '\0' || *buff == '\n' )
+        *buff = ' ';
+
+      buff++;
     }
 
-  return cons;
+  // warranty, already null terminated
+  *buff = '\0';
 }
 
 // armazena o nome do processo no buffer e retorna
-// o tamanho do nome do processo,
+// o tamanho do nome do processo ou -1 em caso de erro,
 // função cuida da alocação de memoria para o nome do processo
 static ssize_t
 get_name_process ( char **buffer, const pid_t pid )
 {
   char path_cmdline[MAX_CMDLINE];
-  snprintf ( path_cmdline, MAX_CMDLINE, "/proc/%d/cmdline", pid );
+  snprintf ( path_cmdline, sizeof ( path_cmdline ), "/proc/%d/cmdline", pid );
 
   int fd = open ( path_cmdline, O_RDONLY );
   if ( fd == -1 )
@@ -82,23 +92,13 @@ get_name_process ( char **buffer, const pid_t pid )
   ssize_t total_read = full_read ( fd, buffer );
   close ( fd );
 
-  if ( total_read == -1 )
-    return -1;
-
-  char *p = *buffer;
-
-  // run (total_read -1) times
-  size_t i = total_read;
-  while ( --i )
+  if ( total_read <= 0 )
     {
-      if ( *p == '\0' || *p == '\n' )
-        *p = ' ';
-
-      p++;
+      ERROR_DEBUG ( "%s", "error read process name" );
+      return -1;
     }
 
-  // warranty, already null terminated
-  *p = 0;
+  handle_cmdline ( *buffer, ( size_t ) total_read );
 
   // last bytes is null
   return total_read - 1;
@@ -112,15 +112,24 @@ create_new_process ( pid_t pid )
   if ( proc )
     {
       proc->pid = pid;
-      proc->total_conections = 0;
       proc->active = 1;
-      proc->conection = NULL;
-      get_name_process ( &proc->name, pid );
+
+      proc->conections = vector_new ( 0, sizeof ( conection_t ) );
+      if ( !proc->conections )
+        goto ERROR;
+
+      proc->total_conections = 0;
+      if ( -1 == get_name_process ( &proc->name, pid ) )
+        goto ERROR;
 
       memset ( &proc->net_stat, 0, sizeof ( struct net_stat ) );
     }
 
   return proc;
+
+ERROR:
+  free ( proc );
+  return NULL;
 }
 
 static void
@@ -128,7 +137,7 @@ free_process ( void *arg )
 {
   process_t *process = arg;
   free ( process->name );
-  free ( process->conection );
+  vector_free ( process->conections );
   free ( process );
 }
 
@@ -185,7 +194,6 @@ cb_compare ( const void *key1, const void *key2 )
   return ( key1 == key2 );
 }
 
-// https://github.com/shemminger/iproute2/blob/main/misc/ss.c
 static hash_t
 cb_hash_func ( const void *key )
 {
@@ -225,7 +233,7 @@ processes_get ( struct processes *procs, struct config_op *co )
   uint32_t *pids = NULL;
   int total_process = get_numeric_directory ( &pids, "/proc/" );
 
-  if ( total_process == -1 )
+  if ( -1 == total_process )
     {
       ERROR_DEBUG ( "%s", "backtrace" );
       return 0;
@@ -245,55 +253,48 @@ processes_get ( struct processes *procs, struct config_op *co )
   for ( int index_pid = 0; index_pid < total_process; index_pid++ )
     {
       char path_fd[MAX_PATH_FD];
-      snprintf ( path_fd, MAX_PATH_FD, "/proc/%d/fd/", pids[index_pid] );
+      int ret_sn = snprintf (
+              path_fd, sizeof ( path_fd ), "/proc/%d/fd/", pids[index_pid] );
 
       int total_fd_process = get_numeric_directory ( &fds, path_fd );
 
-      if ( total_fd_process == -1 )
+      if ( -1 == total_fd_process )
         continue;
 
       process_t *proc =
               hashtable_get ( ht_process, TO_PTR ( pids[index_pid] ) );
 
-      if ( proc && ( proc->net_stat.tot_Bps_rx || proc->net_stat.tot_Bps_tx ) )
+      if ( proc )
         {
           proc->active = 1;
           proc->total_conections = 0;
+          vector_clear ( proc->conections );
         }
 
       for ( int index_fd = 0; index_fd < total_fd_process; index_fd++ )
         {
-          snprintf ( path_fd,
-                     MAX_PATH_FD,
-                     "/proc/%d/fd/%d",
-                     pids[index_pid],
+          // concat "/proc/<pid>/fd/%d"
+          snprintf ( path_fd + ret_sn,
+                     sizeof ( path_fd ) - ret_sn,
+                     "%d",
                      fds[index_fd] );
 
           char data_fd[MAX_NAME_SOCKET];
-          ssize_t len_link = readlink ( path_fd, data_fd, MAX_NAME_SOCKET );
+          ssize_t len_link =
+                  readlink ( path_fd, data_fd, sizeof ( data_fd ) - 1 );
 
           if ( len_link == -1 )
             continue;
 
           data_fd[len_link] = '\0';
 
-          if ( data_fd[0] != 's' &&
-               strncmp ( data_fd + 1, "ocket:[", strlen ( "ocket:[" ) ) )
+          unsigned long int inode;
+          if ( 1 != sscanf ( data_fd, "socket:[%lu", &inode ) )
             continue;
 
           for ( int c = 0; c < total_conections; c++ )
             {
-              if ( conections[c].state == TCP_TIME_WAIT ||
-                   conections[c].state == TCP_LISTEN )
-                continue;
-
-              char socket[MAX_NAME_SOCKET];
-              snprintf ( socket,
-                         MAX_NAME_SOCKET,
-                         "socket:[%d]",
-                         conections[c].inode );
-
-              if ( strncmp ( socket, data_fd, len_link ) )
+              if ( conections[c].inode != inode )
                 continue;
 
               if ( !proc )
@@ -307,6 +308,9 @@ processes_get ( struct processes *procs, struct config_op *co )
                 }
 
               add_conection_to_process ( proc, &conections[c] );
+
+              conections[c] = conections[total_conections - 1];
+              total_conections--;
             }
         }
     }

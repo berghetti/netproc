@@ -29,22 +29,18 @@
 uint32_t
 get_max_digits_pid ( void )
 {
-  char max_pid[MAX_DIGITS_UINT32 + 1];
-  char *p = max_pid;
-
-  FILE *file;
-  int match;
-
-  file = fopen ( PATH_MAX_PID, "r" );
+  FILE *file = fopen ( PATH_MAX_PID, "r" );
   if ( !file )
     return MAX_DIGITS_UINT32;
 
-  match = fscanf ( file, "%10s", max_pid );
+  char max_pid[MAX_DIGITS_UINT32 + 1];
+  int match = fscanf ( file, "%10s", max_pid );
   fclose ( file );
 
   if ( 1 != match )
     return MAX_DIGITS_UINT32;
 
+  char *p = max_pid;
   while ( *p )
     p++;
 

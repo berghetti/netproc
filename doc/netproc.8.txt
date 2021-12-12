@@ -11,24 +11,21 @@ DESCRIPTION
   netproc currently supports the TCP and UDP protocols over the IPv4 protocol.
 
 OPTIONS
-  -B, --bytes             view in bytes, default in bits.
-  -c                      visualization each active connection of the process.
-  -f, --file "filename"       save statistics in filename, filename is optional,
-                          default is 'netproc.log', the data stored here are not erased,
-                          even if the monitored program is closed, if there are two or more instances
-                          of the same program and with the same arguments, the network statistics of
-                          both are added and inserted in a single line and not a line for each process.
-  -h, --help              show this message.
+  -B, --bytes             view in bytes, default in bits
+  -c                      visualization each active connection of the process
+  --color 1|2|3           color scheme, 1 is default
+  -f, --file "filename"   save statistics in file, filename is optional,
+                        default is 'netproc.log'
+  -h, --help              show this message
   -i, --interface iface   specifies an interface, default is all
-                          except interface with network 127.0.0.0/8.
+                        (except interface with network 127.0.0.0/8)
   -n                      numeric host and service, implicit '-c', try '-nh' to no
-                          translate only host or '-np' to not translate only service.
-  -p, --protocol tcp | udp  specifies a protocol, the default is tcp and udp.
-  -v, --verbose           verbose mode, displays processes that have a connection listed in
-                          /proc/net/[tcp | udp] but has no traffic.
-  --si                    show SI format, with powers of 1000 (Kb, Mb,...), default is IEC,
-                        with powers of 1024 (Kib, Mib,...).
-  -V, --version           show version.
+                        translate only host or '-np' to not translate only service
+  -p, --protocol tcp|udp  specifies a protocol, the default is tcp and udp
+  --si                    show SI format, with powers of 1000, default is IEC,
+                        with powers of 1024
+  -v, --verbose           verbose mode, also show process without traffic
+  -V, --version           show version
 
 RUNNING CONTROL
 
@@ -46,6 +43,7 @@ EXAMPLES
   Useful to monitor the file generated in the above command:
 
     $ watch -t -d 'cat log.txt'
+    $ watch -t 'cut -c -$COLUMNS log.txt'
 
   Running whitout root:
 

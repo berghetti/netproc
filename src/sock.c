@@ -57,23 +57,22 @@ socket_setnonblocking ( int sock )
 static int
 bind_interface ( int sock, const char *iface )
 {
-  struct sockaddr_ll my_sock;
-  my_sock.sll_family = AF_PACKET;
-  my_sock.sll_protocol = htons ( ETH_P_ALL );
+  struct sockaddr_ll sock_ll = {
+          .sll_family = AF_PACKET,
+          .sll_protocol = htons ( ETH_P_ALL ),
+          .sll_ifindex = 0  // explicit 0 match all interfaces
+  };
 
-  // 0 match all interfaces
-  if ( !iface )
-    my_sock.sll_ifindex = 0;
-  else
+  if ( iface )
     {
-      if ( !( my_sock.sll_ifindex = if_nametoindex ( iface ) ) )
+      if ( !( sock_ll.sll_ifindex = if_nametoindex ( iface ) ) )
         {
           ERROR_DEBUG ( "%s", strerror ( errno ) );
           return 0;
         }
     }
 
-  if ( bind ( sock, ( struct sockaddr * ) &my_sock, sizeof ( my_sock ) ) == -1 )
+  if ( bind ( sock, ( struct sockaddr * ) &sock_ll, sizeof ( sock_ll ) ) == -1 )
     {
       ERROR_DEBUG ( "Error bind interface %s", strerror ( errno ) );
       return 0;

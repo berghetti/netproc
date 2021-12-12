@@ -18,19 +18,42 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// based in source code of program wget
-// https://github.com/mirror/wget/blob/master/src/utils.c
-
 #include <stdio.h>  // snprintf()
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "human_readable.h"
 #include "config.h"
-#include "integer.h"  // is_integer()
-#include "sufix.h"
 
-static int base;
+#define BASE_IEC 1024  // default
+#define BASE_SI 1000
+
+enum sufix_types
+{
+  IEC_BYTE = 0,
+  IEC_BIT,
+  SI_BYTE,
+  SI_BIT,
+  IEC_BYTE_TOT,
+  IEC_BIT_TOT,
+  SI_BYTE_TOT,
+  SI_BIT_TOT,
+  TOT_SUFIX_SCHEME
+};
+
+#define TOT_ELEMENTS_SUFIX 6
+
+static const char *const sufix_schemes[TOT_SUFIX_SCHEME][TOT_ELEMENTS_SUFIX] = {
+        [IEC_BYTE] = { "B/s", "KiB/s", "MiB/s", "GiB/s", "TiB/s", "PiB/s" },
+        [IEC_BIT] = { "b/s", "Kib/s", "Mib/s", "Gib/s", "Tib/s", "Pib/s" },
+        [SI_BYTE] = { "B/s", "KB/s", "MB/s", "GB/s", "TB/s", "PB/s" },
+        [SI_BIT] = { "b/s", "Kb/s", "Mb/s", "Gb/s", "Tb/s", "Pb/s" },
+        [IEC_BYTE_TOT] = { "B", "KiB", "MiB", "GiB", "TiB", "PiB" },
+        [IEC_BIT_TOT] = { "b", "Kib", "Mib", "Gib", "Tib", "Pib" },
+        [SI_BYTE_TOT] = { "B", "KB", "MB", "GB", "TB", "PB" },
+        [SI_BIT_TOT] = { "b", "Kb", "Mb", "Gb", "Tb", "Pb" } };
+
+static unsigned int base;
 static const char *const *sufix_rate;
 static const char *const *sufix_total;
 
@@ -63,23 +86,11 @@ define_sufix ( const struct config_op *co )
     }
 }
 
-// caso valor final obtido seja maior ou igual que accuracy
-// não será impresso casas decimais
-// 1024 é o melhor valor pois só não ira exibir casas decimais quando o fluxo
-// for maior ou igual 1024 ? (? == ultimo elemento do array sufix),
-// atualmento Tib/s, caso o valor fosse 1000, poderiamos ter resultados como
-// 1023 Kb/s, quando seria mais apropriado 1023.50 Kb/s
-#define ACCURACY 1024
-
-// numero de casas decimais que serão inseridas caso
-// o valor seja menor que ACCURACY (maioria dos casos, creio que sempre)
-#define DECIMAL_PLACES 2
+// based in source code of program wget
+// https://github.com/mirror/wget/blob/master/src/utils.c#L1675
 
 bool
-human_readable ( char *buffer,
-                 const size_t len_buff,
-                 const uint64_t bytes,
-                 int mode )
+human_readable ( char *buffer, size_t len_buff, uint64_t bytes, int mode )
 {
   const char *const *sufix = ( mode == RATE ) ? sufix_rate : sufix_total;
 
@@ -88,50 +99,32 @@ human_readable ( char *buffer,
   if ( !bytes )
     {
       sn = snprintf ( buffer, len_buff, "%c", '0' );
-      return ( sn > 0 && ( size_t ) sn < len_buff );
+      return ( sn == 1 );
     }
 
   // quantidade de bytes ou bits menor que 1024 ou 1000
-  if ( bytes < ( uint64_t ) base )
+  if ( bytes < base )
     {
-      sn = snprintf ( buffer, len_buff, "%d %s", ( int ) bytes, sufix[0] );
+      sn = snprintf ( buffer, len_buff, "%ld %s", bytes, sufix[0] );
       return ( sn > 0 && ( size_t ) sn < len_buff );
     }
 
-  // a cada loop os bytes/bits recebidos são divididos por sua base (1000 ou
-  // 1024) quando o valor for menor que sua base, ou ja estejamos no ultimo
-  // elemento do array de sufixos, temos a melhor aproximação com o sufixo
-  // apropriado.
-
-  // pega elemento inverso da base escolhida
-  const double ibase = INVERSE_BASE ( base );
-  int decimals;
-  double val;
-
-  double bytest = bytes;
+  /* a cada loop os bytes/bits recebidos são divididos por sua base (1000 ou
+   1024) quando o valor for menor que sua base, ou ja estejamos no ultimo
+   elemento do array de sufixos, temos a melhor aproximação com o sufixo
+   apropriado. */
+  // double val = bytes;
   for ( size_t i = 1; i < TOT_ELEMENTS_SUFIX; i++ )
     {
-      /* At each iteration N is greater than the *subsequent* power.
-         That way N/1024.0 produces a decimal number in the units of
-         *this* power.  */
-      if ( ( val = bytest * ibase ) < base || i == ( TOT_ELEMENTS_SUFIX - 1 ) )
+      if ( ( bytes / base ) < base || i == ( TOT_ELEMENTS_SUFIX - 1 ) )
         {
-          // coloca casas decimais se o valor for menor que ACCURACY
-          // e se não for um valor inteiro
-          decimals = ( ( uint32_t ) val < ACCURACY )
-                             ? !is_integer ( val, DECIMAL_PLACES, 1 )
-                                       ? DECIMAL_PLACES
-                                       : 0
-                             : 0;
+          double val = ( double ) bytes / base;
 
-          /* Print values smaller than the accuracy level (acc) with (decimal)
-           * decimal digits, and others without any decimals.  */
-          sn = snprintf (
-                  buffer, len_buff, "%.*f %s", decimals, val, sufix[i] );
+          sn = snprintf ( buffer, len_buff, "%.2f %s", val, sufix[i] );
           return ( sn > 0 && ( size_t ) sn < len_buff );
         }
 
-      bytest = val;
+      bytes /= base;
     }
 
   return false; /* unreached */

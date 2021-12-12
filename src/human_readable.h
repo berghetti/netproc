@@ -27,15 +27,7 @@
 
 #include "config.h"
 
-// mode human readable define sufix utilized
-// RATE sufix/s
-// TOTAL sufix
-enum mode
-{
-  RATE = 1,
-  TOTAL
-};
-
+// prerequisite call this before usage human_readable
 void
 define_sufix ( const struct config_op *co );
 
@@ -44,5 +36,12 @@ human_readable ( char *buffer,
                  const size_t len_buff,
                  const uint64_t bytes,
                  int mode );
+
+// modes human_readable
+enum mode
+{
+  RATE = 1,  // sufix/s
+  TOTAL      // sufix
+};
 
 #endif  // HUMAN_READABLE_H

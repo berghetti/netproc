@@ -18,7 +18,7 @@
 
 PROG_NAME=netproc
 
-prefix= /usr/local
+prefix ?= /usr/local
 
 PATH_DOC_INSTALL=$(DESTDIR)$(prefix)/share/man/man8
 PATH_INSTALL=$(DESTDIR)$(prefix)/sbin
@@ -28,18 +28,24 @@ OBJDIR=./obj
 BINDIR=./bin
 DOCDIR=./doc
 
-CC=gcc
+CC ?= gcc
 CFLAGS+= -Wall -Wextra -pedantic
 
 # environment var
 ifdef DEBUG
-	CFLAGS+= -O0 -ggdb
+	CFLAGS+= -O0 -ggdb -Wformat=2
 else
 	CPPFLAGS+=-D NDEBUG
 	CFLAGS+= -O2
 endif
 
-LDLIBS=-lncursesw -lpthread
+LDLIBS=$(shell ncurses6-config --libs 2> /dev/null)
+
+ifeq ( $(LDLIBS), )
+	LDLIBS=$(shell  ncurses5-config --libs 2> /dev/null)  
+endif
+
+LDLIBS += -lpthread
 
 #.c files all subdirectories
 C_SOURCE= $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/*/*.c)
@@ -57,7 +63,7 @@ VPATH= src src/resolver
 OBJECTS=$(addprefix $(OBJDIR)/, $(notdir $(C_SOURCE:.c=.o) ) )
 
 # alvos fake, não são arquivos
-.PHONY: all clean distclean run install uninstall format man
+.PHONY: all clean distclean run install uninstall format man release
 
 all: $(BINDIR)/$(PROG_NAME)
 
@@ -86,7 +92,6 @@ distclean: clean
 run:
 	sudo $(BINDIR)/$(PROG_NAME)
 
-
 install:
 	@ install -d -m 755 $(PATH_INSTALL)
 	@ install --strip $(BINDIR)/$(PROG_NAME) $(PATH_INSTALL); \
@@ -109,3 +114,7 @@ format:
 man:
 	txt2man -t $(PROG_NAME) -v "$(PROG_NAME) man" -s 8 \
 		$(DOCDIR)/$(PROG_NAME).8.txt > $(DOCDIR)/$(PROG_NAME).8
+
+VERSION = $(shell ./get_version.sh)
+tarball:
+	git archive -o "netproc-$(VERSION).tar.gz" $(VERSION)

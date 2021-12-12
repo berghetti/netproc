@@ -44,8 +44,8 @@ get_numeric_directory ( uint32_t **buffer, const char *path_dir )
     }
 
   errno = 0;
-  size_t count = 0;
-  size_t len_buffer = 0;
+  int count = 0;
+  int len_buffer = 0;
   struct dirent *directory;
   while ( ( directory = readdir ( dir ) ) )
     {

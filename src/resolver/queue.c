@@ -20,6 +20,20 @@
 #include <stdlib.h>  // malloc
 #include "queue.h"
 
+struct queue_node
+{
+  struct queue_node *next;
+  void *data;
+};
+
+struct queue
+{
+  fclear clear;  // callback user init
+  struct queue_node *head;
+  struct queue_node *tail;
+  unsigned int size;
+};
+
 static struct queue_node *
 create_element ( void *data )
 {
@@ -43,33 +57,28 @@ queue_new ( fclear clear )
     {
       q->clear = clear;
       q->size = 0;
-      q->head = q->tail = NULL;
     }
 
   return q;
 }
 
-struct queue_node *
+int
 enqueue ( struct queue *restrict queue, void *restrict data )
 {
   struct queue_node *element = create_element ( data );
 
   if ( !element )
-    return NULL;
+    return 0;
+
+  if ( !queue->size )
+    queue->head = element;
+  else
+    queue->tail->next = element;
+
+  queue->tail = element;
 
   queue->size++;
-
-  if ( !queue->head )
-    {
-      queue->head = queue->tail = element;
-    }
-  else
-    {
-      queue->tail->next = element;
-      queue->tail = element;
-    }
-
-  return data;
+  return queue->size;
 }
 
 void *
@@ -101,4 +110,10 @@ queue_destroy ( struct queue *queue )
     }
 
   free ( queue );
+}
+
+unsigned int
+get_queue_size ( struct queue *queue )
+{
+  return queue->size;
 }

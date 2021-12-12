@@ -33,7 +33,7 @@
 struct packet
 {
   size_t lenght;
-  uint32_t if_index;
+  int if_index;
   uint32_t local_address;
   uint32_t remote_address;
   uint16_t local_port;

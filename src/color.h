@@ -21,12 +21,7 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-enum schemes
-{
-  DEFAULT,
-  MONO,
-  TOT_SCHEMES
-};
+#include "config.h"  // struct config_op
 
 enum elements_in_schemes
 {
@@ -34,8 +29,9 @@ enum elements_in_schemes
   HEADER,
   SELECTED_H,
   SELECTED_L,
+  PATH_PROG,
   NAME_PROG,
-  NAME_PROG_BOLD,
+  PARAM_PROG,
   CONECTIONS,
   TREE,
   RESUME,
@@ -44,6 +40,6 @@ enum elements_in_schemes
 };
 
 int *
-get_color_scheme ( void );
+get_color_scheme ( const struct config_op *co );
 
 #endif  // COLOR_H

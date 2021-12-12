@@ -4,6 +4,19 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
+0.6.3 - 2021-12-06
+  + add new color scheme
+  * improved timer of packets fragments
+  * internal timer now return in milliseconds instead of seconds
+  * moved code filter bpf to section rodata
+  * using dinamyc vector to manage conections of processes
+  - resolved possible buffoverflow in call readlink
+  - fix ncurses linkage in old systems
+
+0.6.2 - 2021-08-13
+  - fixed link ncurses on certain systems, LDLIBS in makefile, PR #2
+  - fixed when displaying process with long name, issue #5
+
 0.6.0 - 2021-08-03
   - invalid interface argument handling
   - cleanup on error cases

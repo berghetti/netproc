@@ -19,14 +19,13 @@
  */
 
 #include <stdbool.h>
-#include <linux/filter.h>
-#include <sys/socket.h>  // setsockopt
+#include <linux/filter.h>  // struct sock_filter, sock_fprog
+#include <sys/socket.h>    // setsockopt
 
 #include "config.h"
 #include "conection.h"
 #include "m_error.h"
-
-#define ELEMENTS_ARRAY( x ) ( sizeof ( x ) / sizeof ( x[0] ) )
+#include "macro_util.h"
 
 bool
 filter_set ( int sock, const struct config_op *co )
@@ -34,7 +33,7 @@ filter_set ( int sock, const struct config_op *co )
   // pass only tcp or udp, block net address 127.*
   // suport interface ethernet and tun
   // bpfc -i bpf/program.bpf -f C -p
-  struct sock_filter ip_tcp_udp[] = {
+  static const struct sock_filter ip_tcp_udp[] = {
           { 0x30, 0, 0, 0x00000000 },  { 0x54, 0, 0, 0x000000f0 },
           { 0x15, 0, 9, 0x00000040 },  { 0x20, 0, 0, 0x0000000c },
           { 0x54, 0, 0, 0xff000000 },  { 0x15, 18, 0, 0x7f000000 },
@@ -53,7 +52,7 @@ filter_set ( int sock, const struct config_op *co )
   // pass only tcp, block net address 127.*
   // suport interface ethernet and tun
   // bpfc -i bpf/program.bpf -f C -p -D TCP
-  struct sock_filter ip_tcp[] = {
+  static const struct sock_filter ip_tcp[] = {
           { 0x30, 0, 0, 0x00000000 },  { 0x54, 0, 0, 0x000000f0 },
           { 0x15, 0, 8, 0x00000040 },  { 0x20, 0, 0, 0x0000000c },
           { 0x54, 0, 0, 0xff000000 },  { 0x15, 16, 0, 0x7f000000 },
@@ -71,7 +70,7 @@ filter_set ( int sock, const struct config_op *co )
   // pass only udp, block net address 127.*
   // suport interface ethernet and tun
   // bpfc -i bpf/program.bpf -f C -p -D UDP
-  struct sock_filter ip_udp[] = {
+  static const struct sock_filter ip_udp[] = {
           { 0x30, 0, 0, 0x00000000 },  { 0x54, 0, 0, 0x000000f0 },
           { 0x15, 0, 8, 0x00000040 },  { 0x20, 0, 0, 0x0000000c },
           { 0x54, 0, 0, 0xff000000 },  { 0x15, 16, 0, 0x7f000000 },
@@ -86,21 +85,21 @@ filter_set ( int sock, const struct config_op *co )
           { 0x6, 0, 0, 0x00000000 },
   };
 
-  struct sock_fprog bpf;
+  struct sock_fprog fprog;
 
   switch ( co->proto )
     {
       case ( TCP | UDP ):
-        bpf.len = ELEMENTS_ARRAY ( ip_tcp_udp );
-        bpf.filter = ip_tcp_udp;
+        fprog.len = ARRAY_SIZE ( ip_tcp_udp );
+        fprog.filter = ( struct sock_filter * ) ip_tcp_udp;
         break;
       case TCP:
-        bpf.len = ELEMENTS_ARRAY ( ip_tcp );
-        bpf.filter = ip_tcp;
+        fprog.len = ARRAY_SIZE ( ip_tcp );
+        fprog.filter = ( struct sock_filter * ) ip_tcp;
         break;
       case UDP:
-        bpf.len = ELEMENTS_ARRAY ( ip_udp );
-        bpf.filter = ip_udp;
+        fprog.len = ARRAY_SIZE ( ip_udp );
+        fprog.filter = ( struct sock_filter * ) ip_udp;
         break;
       default:
         ERROR_DEBUG ( "%s", "Protocol filter bpf invalid" );
@@ -108,7 +107,7 @@ filter_set ( int sock, const struct config_op *co )
     }
 
   if ( setsockopt (
-               sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof ( bpf ) ) ==
+               sock, SOL_SOCKET, SO_ATTACH_FILTER, &fprog, sizeof ( fprog ) ) ==
        -1 )
     {
       ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );

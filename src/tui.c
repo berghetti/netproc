@@ -64,16 +64,14 @@
 static WINDOW *pad = NULL;
 static int *color_scheme;
 
-// FIXME: const lenght value no ok
 // armazina a linha selecionada com seus atributos antes de estar "selecionada"
-static chtype line_original[1000] = { 0 };
+static chtype *line_original = NULL;  // size is equal cur_cols
 
 static int sort_by = RATE_RX;  // ordenação padrão
 static int scroll_x = 0;
 static int scroll_y = LINE_START + 1;
 static int selected = LINE_START + 1;  // posição de linha do item selecionado
 
-static int tot_cols;
 static int tot_rows;  // total linhas exibidas
 
 static int tot_proc_act = 0;  // total de processos com conexão ativa
@@ -91,6 +89,12 @@ static int max_digits_pid;
 static void
 paint_selected ( void )
 {
+  // save current line selected without colors to line_original
+  // after this is restored
+  mvwinchnstr ( pad, selected, 0, line_original, cur_cols - 1 );
+  line_original[cur_cols - 1] = ' ';  // remove '\n' end of line
+
+  // print current line selected with colors
   for ( int i = 0; i < cur_cols; i++ )
     waddch ( pad,
              ( line_original[i] & ( A_CHARTEXT | A_ALTCHARSET ) ) |
@@ -112,7 +116,7 @@ show_resume ( const struct config_op *co )
   wclrtoeol ( pad );  // erase the current line
   wprintw ( pad, "Running: " );
   wattrset ( pad, color_scheme[RESUME_VALUE] );
-  wprintw ( pad, "%s", sec2clock ( ( uint64_t ) co->running ) );
+  wprintw ( pad, "%s", sec2clock ( co->running ) );
 
   wattrset ( pad, color_scheme[RESUME] );
   mvwprintw ( pad, 2, 25, "pps tx: " );
@@ -222,51 +226,55 @@ create_pad ( const int l, const int c )
 static void
 resize_pad ( const int l, const int c )
 {
+  if ( l < cur_lines && c < cur_cols )
+    return;
+
   cur_lines = MAX ( l, cur_lines );
   cur_cols = MAX ( c, cur_cols );
 
   wresize ( pad, cur_lines, cur_cols );
-}
 
-static inline bool
-need_resize_pad ( int lines, int cols )
-{
-  return ( lines > cur_lines || cols > cur_cols );
+  size_t new_size = cur_cols * sizeof ( *line_original ) + 1;  // +1 null byte
+  void *tmp = realloc ( line_original, new_size );
+  if ( !tmp )
+    {
+      ERROR_DEBUG ( "%s", strerror ( errno ) );
+      return;
+    }
+
+  line_original = tmp;
 }
 
 static void
 show_conections ( const process_t *process, const struct config_op *co )
 {
-  if ( need_resize_pad ( process->total_conections + tot_rows, 0 ) )
-    resize_pad ( process->total_conections + tot_rows, 0 );
+  resize_pad ( process->total_conections + tot_rows, 0 );
 
-  bool last_con = false;
   for ( size_t i = 0; i < process->total_conections; i++ )
     {
+      bool last_con = false;
       tot_rows++;
 
       // se a proxima conexão estiver com estatisticas zeradas, essa é a ultima
       // conexão, as conexões são ordenadas de forma decrescente previamente
       if ( ( i < process->total_conections - 1 &&
-             process->conection[i + 1].net_stat.avg_Bps_rx == 0 &&
-             process->conection[i + 1].net_stat.avg_Bps_tx == 0 &&
-             process->conection[i + 1].net_stat.tot_Bps_rx == 0 &&
-             process->conection[i + 1].net_stat.tot_Bps_rx == 0 ) ||
+             process->conections[i + 1].net_stat.avg_Bps_rx == 0 &&
+             process->conections[i + 1].net_stat.avg_Bps_tx == 0 ) ||
            i == process->total_conections - 1 )
         last_con = true;
 
-      char *tuple = translate ( &process->conection[i], co );
+      char *tuple = translate ( &process->conections[i], co );
 
       char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
 
       human_readable ( tx_rate,
                        sizeof tx_rate,
-                       process->conection[i].net_stat.avg_Bps_tx,
+                       process->conections[i].net_stat.avg_Bps_tx,
                        RATE );
 
       human_readable ( rx_rate,
                        sizeof rx_rate,
-                       process->conection[i].net_stat.avg_Bps_rx,
+                       process->conections[i].net_stat.avg_Bps_rx,
                        RATE );
 
       wattrset ( pad, color_scheme[CONECTIONS] );
@@ -275,9 +283,9 @@ show_conections ( const process_t *process, const struct config_op *co )
                 max_digits_pid,
                 "",
                 PPS,
-                process->conection[i].net_stat.avg_pps_tx,
+                process->conections[i].net_stat.avg_pps_tx,
                 PPS,
-                process->conection[i].net_stat.avg_pps_rx,
+                process->conections[i].net_stat.avg_pps_rx,
                 J_RATE,
                 tx_rate,
                 J_RATE,
@@ -286,7 +294,7 @@ show_conections ( const process_t *process, const struct config_op *co )
       char iface_buff[IF_NAMESIZE];
       char *iface;
 
-      if ( if_indextoname ( process->conection[i].if_index, iface_buff ) )
+      if ( if_indextoname ( process->conections[i].if_index, iface_buff ) )
         iface = iface_buff;
       else
         iface = "";
@@ -296,8 +304,8 @@ show_conections ( const process_t *process, const struct config_op *co )
                 IF_NAMESIZE,
                 iface,
                 -11,
-                ( process->conection[i].protocol == IPPROTO_TCP ) ? "(tcp)"
-                                                                  : "(udp)" );
+                ( process->conections[i].protocol == IPPROTO_TCP ) ? "(tcp)"
+                                                                   : "(udp)" );
 
       // space tuple
       wprintw ( pad, "%*s", TUPLE, "" );
@@ -318,13 +326,11 @@ show_conections ( const process_t *process, const struct config_op *co )
       wprintw ( pad, " %s\n", tuple );
 
       if ( last_con )
-        break;
-    }
-  // se teve conexões exibidas, pula uma linha
-  if ( last_con )
-    {
-      tot_rows++;
-      waddch ( pad, '\n' );
+        {
+          tot_rows++;
+          waddch ( pad, '\n' );
+          break;
+        }
     }
 
   wattrset ( pad, color_scheme[RESET] );
@@ -345,12 +351,16 @@ tui_init ( const struct config_op *co )
   noecho ();
 
   set_lines_cols ();
+  size_t size = cur_cols * sizeof ( *line_original ) + 1;  // + 1 null byte
+  line_original = malloc ( size );
+  if ( !line_original )
+    return 0;
 
   pad = create_pad ( cur_lines, cur_cols );
   if ( !pad )
     return 0;
 
-  color_scheme = get_color_scheme ();
+  color_scheme = get_color_scheme ( co );
   max_digits_pid = get_max_digits_pid ();
 
   show_header ( co );
@@ -366,6 +376,8 @@ tui_show ( const struct processes *processes, const struct config_op *co )
   tot_proc_act = 0;
   cur_rate_tx = cur_rate_rx = cur_pps_tx = cur_pps_rx = 0;
 
+  static int tot_cols = 0;
+
   sort ( processes->proc, processes->total, sort_by, co );
 
   wmove ( pad, LINE_START + 1, 0 );  // move second line after header
@@ -373,8 +385,8 @@ tui_show ( const struct processes *processes, const struct config_op *co )
     {
       process_t *process = *procs;
 
-      if ( !co->verbose &&
-           !( process->net_stat.tot_Bps_rx || process->net_stat.tot_Bps_tx ) )
+      if ( !( process->net_stat.tot_Bps_rx || process->net_stat.tot_Bps_tx ) &&
+           !co->verbose )
         continue;
 
       tot_rows++;
@@ -387,15 +399,14 @@ tui_show ( const struct processes *processes, const struct config_op *co )
       cur_pps_tx += process->net_stat.avg_pps_tx;
       cur_pps_rx += process->net_stat.avg_pps_rx;
 
-      // "/usr/bin/programa-nome --any_parameters"
+      // "/usr/bin/program-name --any_parameters"
       size_t len_full_name = strlen ( process->name );
 
       // +1 because'\n'
       tot_cols = MAX ( ( size_t ) tot_cols,
                        len_full_name + PROGRAM + max_digits_pid + 1 );
 
-      if ( need_resize_pad ( 0, tot_cols ) )
-        resize_pad ( 0, tot_cols );
+      resize_pad ( 0, tot_cols );
 
       char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
       char tx_tot[LEN_STR_TOTAL], rx_tot[LEN_STR_TOTAL];
@@ -428,20 +439,33 @@ tui_show ( const struct processes *processes, const struct config_op *co )
                 J_RATE,
                 rx_tot );
 
-      // "/usr/bin/programa-nome"
+      // "/usr/bin/program-name"
       size_t len_path_name = strlen_space ( process->name );
 
-      // "programa-nome"
-      size_t len_name = find_last_char ( process->name, len_path_name, '/' );
+      // simulate end of string to index_last_char
+      char tmp = process->name[len_path_name];
+      process->name[len_path_name] = '\0';
+
+      // "program-name"
+      ssize_t start_name = index_last_char ( process->name, '/' );
+
+      process->name[len_path_name] = tmp;
+
+      // if start_name == -1, name program starting in 0 position, else skip '/'
+      start_name++;
 
       for ( size_t j = 0; j < len_full_name; j++ )
         {
-          if ( j > len_name && j < len_path_name )
-            // destaca somente o nome do programa
-            waddch ( pad, process->name[j] | color_scheme[NAME_PROG_BOLD] );
+          chtype ch = process->name[j];
+
+          if ( j < ( size_t ) start_name )
+            ch |= color_scheme[PATH_PROG];
+          else if ( j < len_path_name )
+            ch |= color_scheme[NAME_PROG];
           else
-            // pinta todo o caminho do programa e parametros
-            waddch ( pad, process->name[j] | color_scheme[NAME_PROG] );
+            ch |= color_scheme[PARAM_PROG];
+
+          waddch ( pad, ch );
         }
 
       waddch ( pad, '\n' );
@@ -456,15 +480,11 @@ tui_show ( const struct processes *processes, const struct config_op *co )
   wclrtobot ( pad );
 
   // paint item selected
-  if ( tot_rows > LINE_START )
+  if ( tot_rows > LINE_START + 1 )
     {
       if ( selected > tot_rows )
         selected = tot_rows;
 
-      // salva conteudo da linha antes de pintar
-      mvwinchnstr ( pad, selected, 0, line_original, cur_cols );
-
-      // (re)pinta item selecionado
       paint_selected ();
     }
 
@@ -475,6 +495,12 @@ tui_show ( const struct processes *processes, const struct config_op *co )
 
   // full refresh
   doupdate ();
+}
+
+static void
+restore_line ( int line )
+{
+  mvwaddchnstr ( pad, line, 0, line_original, cur_cols );
 }
 
 // handle input of user while program is running
@@ -562,14 +588,9 @@ tui_handle_input ( const struct config_op *co )
                 if ( selected >= LINES - 1 )
                   scroll_y++;
 
-                // restaura linha atual
-                mvwaddchstr ( pad, selected - 1, 0, line_original );
+                // restore current line
+                restore_line ( selected - 1 );
 
-                // salva linha que sera marcada/selecionada (antes de estar
-                // pintada)
-                mvwinchnstr ( pad, selected, 0, line_original, cur_cols );
-
-                // pinta a linha selecionada
                 paint_selected ();
 
                 prefresh ( pad,
@@ -593,12 +614,8 @@ tui_handle_input ( const struct config_op *co )
                 if ( scroll_y > LINE_START + 1 )
                   scroll_y--;
 
-                // restaura linha atual
-                mvwaddchstr ( pad, selected + 1, 0, line_original );
-
-                // salva linha que sera marcada/selecionada (antes de estar
-                // pintada)
-                mvwinchnstr ( pad, selected, 0, line_original, cur_cols );
+                // restore current line
+                restore_line ( selected + 1 );
 
                 paint_selected ();
 
@@ -640,4 +657,5 @@ tui_free ( void )
 
   curs_set ( 1 );  // restore cursor
   endwin ();
+  free ( line_original );
 }

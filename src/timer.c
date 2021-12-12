@@ -20,62 +20,51 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <stdbool.h>
-#include <errno.h>
 #include <string.h>
-#include <time.h>
+#include <time.h>  // struct timespec
 
-#include "m_error.h"
+int
+start_timer ( struct timespec *ts )
+{
+  return ( clock_gettime ( CLOCK_MONOTONIC, ts ) != -1 );
+}
 
-// multiply nanoseconds for this const convert nanoseconds TO seconds
-#define NSTOS 1E-9
+uint64_t
+diff_timer ( struct timespec *old_time )
+{
+  struct timespec new_time;
+  clock_gettime ( CLOCK_MONOTONIC, &new_time );
+
+  new_time.tv_sec -= old_time->tv_sec;
+  new_time.tv_nsec -= old_time->tv_nsec;
+
+  // convert to milliseconds
+  return new_time.tv_sec * 1000 + new_time.tv_nsec / 1E6;
+}
 
 // hh:mm:ss
 #define LEN_BUFF_CLOCK 14
 
-static inline bool
-get_time ( struct timespec *buff_time )
-{
-  if ( clock_gettime ( CLOCK_MONOTONIC, buff_time ) == -1 )
-    {
-      ERROR_DEBUG ( "%s", strerror ( errno ) );
-      return false;
-    }
-
-  return true;
-}
-
-double
-start_timer ( void )
-{
-  struct timespec time;
-  if ( !get_time ( &time ) )
-    return -1;
-
-  return ( double ) time.tv_sec + ( time.tv_nsec * NSTOS );
-}
-
-double
-timer ( const float old_time )
-{
-  struct timespec new_time;
-  if ( !get_time ( &new_time ) )
-    return -1;
-
-  return ( new_time.tv_sec + ( new_time.tv_nsec * NSTOS ) ) - old_time;
-}
-
 char *
-sec2clock ( uint64_t secs )
+sec2clock ( uint64_t milliseconds )
 {
   static char clock[LEN_BUFF_CLOCK];
 
+  uint32_t secs = milliseconds / 1000U;
+
+  uint32_t hours, seconds, minutes;
+
+  seconds = secs % 60UL;
+  secs /= 60UL;
+  minutes = secs % 60UL;
+  hours = secs / 60UL;
+
   snprintf ( clock,
-             LEN_BUFF_CLOCK,
+             sizeof clock,
              "%02d:%02d:%02d",
-             ( int ) secs / 3600,             // hour
-             ( int ) ( secs % 3600 ) / 60,    // minute
-             ( int ) ( secs % 3600 ) % 60 );  // second
+             hours,      // hour
+             minutes,    // minute
+             seconds );  // second
 
   return clock;
 }

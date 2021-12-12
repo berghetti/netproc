@@ -38,22 +38,15 @@
 #include "usage.h"
 #include "m_error.h"
 #include "resolver/resolver.h"
+#include "macro_util.h"
 
-// a cada vez que o tempo de T_REFRESH segundo(s) é atingido
-// esse valor é alterado (entre 0 e 1), para que outras partes, statistics_proc,
-// do programa possam ter uma referencia de tempo
-#define TIC_TAC( t ) ( ( t ) ? ( t = 0 ) : ( t = 1 ) )
-
-// intervalo de atualização do programa, não alterar
-#define T_REFRESH 1
-
-#define TIMEOUT_POLL 1000
+// time to refresh in milliseconds
+#define T_REFRESH 1000
 
 static void
 config_sig_handler ( void );
 
 // handled by function sig_handler
-// if != 0 program exit
 static volatile sig_atomic_t prog_exit = 0;
 
 int
@@ -69,7 +62,11 @@ main ( int argc, char **argv )
   int sock = socket_init ( co );
   if ( sock == -1 )
     {
-      fatal_error ( "Error create socket, is root?" );
+      if ( getuid () )
+        fatal_error ( "Root is needed to running" );
+      else
+        fatal_error ( "Error create socket: %s", strerror ( errno ) );
+
       goto EXIT;
     }
 
@@ -115,8 +112,9 @@ main ( int argc, char **argv )
 
   config_sig_handler ();
 
-  double m_timer;
-  if ( -1 == ( m_timer = start_timer () ) )
+  // long m_timer;
+  struct timespec m_timer;
+  if ( !start_timer ( &m_timer ) )
     {
       fatal_error ( "Error start timer" );
       goto EXIT;
@@ -128,7 +126,6 @@ main ( int argc, char **argv )
       goto EXIT;
     }
 
-  const nfds_t nfds = 2;
   struct pollfd poll_set[2] = {
           { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 },
           { .fd = sock, .events = POLLIN | POLLPRI, .revents = 0 } };
@@ -137,16 +134,19 @@ main ( int argc, char **argv )
   struct tpacket_block_desc *pbd;
   pbd = ( struct tpacket_block_desc * ) ring->rd[block_num].iov_base;
 
+  bool need_update_processes = false;
+
   // main loop
   while ( !prog_exit )
     {
-      struct packet packet;
       bool packtes_reads = false;
-      bool need_update_processes = false;
 
+      // read all blocks availables
       while ( pbd->hdr.bh1.block_status & TP_STATUS_USER )
         {
+          struct packet packet;
           struct tpacket3_hdr *ppd;
+
           ppd = ( struct tpacket3_hdr * ) ( ( uint8_t * ) pbd +
                                             pbd->hdr.bh1.offset_to_first_pkt );
 
@@ -166,7 +166,7 @@ main ( int argc, char **argv )
               // de um processo existente, que ainda não foi mapeado, então
               // anotamos que sera necessario atualizar a lista de processos
               // com conexões ativas.
-              if ( !add_statistics_in_processes ( processes, &packet, co ) )
+              if ( !statistics_add ( processes, &packet, co ) )
                 {
                   need_update_processes = true;
                   continue;
@@ -183,49 +183,31 @@ main ( int argc, char **argv )
           pbd = ( struct tpacket_block_desc * ) ring->rd[block_num].iov_base;
         }
 
-      // necessario para zerar contadores quando não ha trafego
-      packet.lenght = 0;
-      add_statistics_in_processes ( processes, &packet, co );
+      if ( packtes_reads )
+        continue;
 
-      double temp;
-      if ( ( temp = timer ( m_timer ) ) >= ( double ) T_REFRESH )
+      long temp_diff = 0;
+      int stop = 0;
+      while ( !stop )
         {
-          co->running += temp;
-          calc_avg_rate ( processes, co );
-
-          tui_show ( processes, co );
-
-          if ( co->log && !log_file ( processes->proc, processes->total ) )
+          int rp;
+          do
             {
-              goto EXIT;
+              errno = 0;
+              rp = poll ( poll_set,
+                          ARRAY_SIZE ( poll_set ),
+                          T_REFRESH - temp_diff );
             }
+          while ( errno == EINTR );
 
-          if ( -1 == ( m_timer = restart_timer () ) )
-            goto EXIT;
-
-          TIC_TAC ( co->tic_tac );
-
-          if ( need_update_processes && !processes_get ( processes, co ) )
-            goto EXIT;
-        }
-
-      if ( !packtes_reads )
-        {
-          int rp = poll ( poll_set, nfds, TIMEOUT_POLL );
           if ( rp == -1 )
             {
-              // signal event
-              if ( errno == EINTR )
-                continue;
-              else
-                {
-                  ERROR_DEBUG ( "poll: \"%s\"", strerror ( errno ) );
-                  goto EXIT;
-                }
+              ERROR_DEBUG ( "poll: \"%s\"", strerror ( errno ) );
+              goto EXIT;
             }
           else if ( rp > 0 )
             {
-              for ( size_t i = 0; i < nfds; i++ )
+              for ( size_t i = 0; i < ARRAY_SIZE ( poll_set ); i++ )
                 {
                   if ( !poll_set[i].revents )
                     continue;
@@ -233,6 +215,35 @@ main ( int argc, char **argv )
                   if ( poll_set[i].fd == STDIN_FILENO &&
                        tui_handle_input ( co ) == P_EXIT )
                     goto EXIT;
+
+                  if ( poll_set[i].fd == sock )
+                    stop = 1;
+                }
+            }
+
+          if ( ( temp_diff = diff_timer ( &m_timer ) ) >= T_REFRESH )
+            {
+              co->running += temp_diff;
+              temp_diff = 0;
+              start_timer ( &m_timer );
+
+              rate_calc ( processes, co );
+
+              tui_show ( processes, co );
+
+              if ( co->log && !log_file ( processes->proc, processes->total ) )
+                {
+                  goto EXIT;
+                }
+
+              rate_update ( processes, co );
+
+              if ( need_update_processes )
+                {
+                  if ( !processes_get ( processes, co ) )
+                    goto EXIT;
+
+                  need_update_processes = false;
                 }
             }
         }
