@@ -24,15 +24,12 @@
 #include <stdint.h>
 #include <time.h>  // struct timespec
 
-int
-start_timer ( struct timespec *ts );
-
-// return diff in milliseconds od old time and current time in milliseconds
+// return current time in milliseconds
 uint64_t
-diff_timer ( struct timespec *old_time );
+get_time ( void );
 
 // transform milliseconds in format hh:mm:ss
 char *
-sec2clock ( uint64_t milliseconds );
+msec2clock ( uint64_t milliseconds );
 
 #endif  // MTIME_H
