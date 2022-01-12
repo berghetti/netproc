@@ -61,7 +61,7 @@ msec2clock ( uint64_t milliseconds )
 
   snprintf ( clock,
              sizeof clock,
-             "%0d:%02d:%02d",
+             "%02d:%02d:%02d",
              hours,      // hour
              minutes,    // minute
              seconds );  // second
