@@ -267,8 +267,8 @@ processes_get ( struct processes *procs, struct config_op *co )
       if ( proc )
         {
           proc->active = 1;
-          proc->total_conections = 0;
-          vector_clear ( proc->conections );
+          // proc->total_conections = 0;
+          // vector_clear ( proc->conections );
         }
 
       for ( int index_fd = 0; index_fd < total_fd_process; index_fd++ )

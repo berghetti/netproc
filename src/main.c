@@ -97,7 +97,7 @@ main ( int argc, char **argv )
       goto EXIT;
     }
 
-  if ( co->translate_host && !resolver_init ( 0, 0 ) )
+  if ( co->view_conections && co->translate_host && !resolver_init ( 0, 0 ) )
     {
       fatal_error ( "Error resolver_init" );
       goto EXIT;
