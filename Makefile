@@ -64,7 +64,7 @@ VPATH= src src/resolver
 OBJECTS=$(addprefix $(OBJDIR)/, $(notdir $(C_SOURCE:.c=.o) ) )
 
 # alvos fake, não são arquivos
-.PHONY: all clean distclean run install uninstall format man release
+.PHONY: all clean distclean run install uninstall format man tarball
 
 all: $(BINDIR)/$(PROG_NAME)
 
