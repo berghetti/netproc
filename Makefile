@@ -35,13 +35,14 @@ CFLAGS+= -Wall -Wextra -pedantic -Wformat=2
 ifdef DEBUG
 	CFLAGS+= -O0 -ggdb
 else
-	CPPFLAGS+=-D NDEBUG
+	CPPFLAGS+= -D NDEBUG
 	CFLAGS+= -O2
 endif
 
 LDLIBS=$(shell ncurses6-config --libs 2> /dev/null)
 
-ifeq ( $(LDLIBS), )
+# if LDLIBS is empty
+ifeq ($(LDLIBS),)
 	LDLIBS=$(shell  ncurses5-config --libs 2> /dev/null)
 endif
 
