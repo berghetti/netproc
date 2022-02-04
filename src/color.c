@@ -102,7 +102,7 @@ pairs_init ( void )
 }
 
 int *
-get_color_scheme ( const struct config_op *co )
+get_color_scheme ( const int color )
 {
   if ( !has_colors () )
     return ( int * ) color_schemes[MONO];
@@ -114,5 +114,5 @@ get_color_scheme ( const struct config_op *co )
 
   pairs_init ();
 
-  return ( int * ) color_schemes[co->color_scheme];
+  return ( int * ) color_schemes[color];
 }
