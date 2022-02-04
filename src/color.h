@@ -40,6 +40,6 @@ enum elements_in_schemes
 };
 
 int *
-get_color_scheme ( const int color );
+get_color_scheme ( const int color_scheme );
 
 #endif  // COLOR_H
