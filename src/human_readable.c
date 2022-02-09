@@ -60,29 +60,35 @@ static const char *const *sufix_total;
 void
 define_sufix ( const struct config_op *co )
 {
-  if ( co->view_si && co->view_bytes )
-    {
-      base = BASE_SI;
-      sufix_rate = sufix_schemes[SI_BYTE];
-      sufix_total = sufix_schemes[SI_BYTE_TOT];
-    }
-  else if ( co->view_si )
-    {
-      base = BASE_SI;
-      sufix_rate = sufix_schemes[SI_BIT];
-      sufix_total = sufix_schemes[SI_BIT_TOT];
-    }
-  else if ( co->view_bytes )
+  if ( !co->view_si )  // default
     {
       base = BASE_IEC;
-      sufix_rate = sufix_schemes[IEC_BYTE];
-      sufix_total = sufix_schemes[IEC_BYTE_TOT];
+
+      if ( !co->view_bytes )  // default
+        {
+          sufix_rate = sufix_schemes[IEC_BIT];
+          sufix_total = sufix_schemes[IEC_BIT_TOT];
+        }
+      else
+        {
+          sufix_rate = sufix_schemes[IEC_BYTE];
+          sufix_total = sufix_schemes[IEC_BYTE_TOT];
+        }
     }
   else
-    {  // default
-      base = BASE_IEC;
-      sufix_rate = sufix_schemes[IEC_BIT];
-      sufix_total = sufix_schemes[IEC_BIT_TOT];
+    {
+      base = BASE_SI;
+
+      if ( !co->view_bytes )  // default
+        {
+          sufix_rate = sufix_schemes[SI_BIT];
+          sufix_total = sufix_schemes[SI_BIT_TOT];
+        }
+      else
+        {
+          sufix_rate = sufix_schemes[SI_BYTE];
+          sufix_total = sufix_schemes[SI_BYTE_TOT];
+        }
     }
 }
 

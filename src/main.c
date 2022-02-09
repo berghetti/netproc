@@ -97,7 +97,7 @@ main ( int argc, char **argv )
       goto EXIT;
     }
 
-  if ( co->translate_host && !resolver_init ( 0, 0 ) )
+  if ( co->view_conections && co->translate_host && !resolver_init ( 0, 0 ) )
     {
       fatal_error ( "Error resolver_init" );
       goto EXIT;
@@ -112,17 +112,17 @@ main ( int argc, char **argv )
 
   config_sig_handler ();
 
-  // long m_timer;
-  struct timespec m_timer;
-  if ( !start_timer ( &m_timer ) )
-    {
-      fatal_error ( "Error start timer" );
-      goto EXIT;
-    }
-
   if ( !processes_get ( processes, co ) )
     {
       fatal_error ( "Error get processes" );
+      goto EXIT;
+    }
+
+  uint32_t diff_time = 0;
+  uint64_t cur_time = get_time ();
+  if ( !cur_time )
+    {
+      fatal_error ( "Error start timer" );
       goto EXIT;
     }
 
@@ -186,7 +186,6 @@ main ( int argc, char **argv )
       if ( packtes_reads )
         continue;
 
-      long temp_diff = 0;
       int stop = 0;
       while ( !stop )
         {
@@ -196,7 +195,7 @@ main ( int argc, char **argv )
               errno = 0;
               rp = poll ( poll_set,
                           ARRAY_SIZE ( poll_set ),
-                          T_REFRESH - temp_diff );
+                          T_REFRESH - diff_time );
             }
           while ( errno == EINTR );
 
@@ -221,11 +220,18 @@ main ( int argc, char **argv )
                 }
             }
 
-          if ( ( temp_diff = diff_timer ( &m_timer ) ) >= T_REFRESH )
+          uint64_t new_time = get_time ();
+
+          if ( new_time < cur_time )
+            continue;
+
+          diff_time = new_time - cur_time;
+
+          if ( diff_time >= T_REFRESH )
             {
-              co->running += temp_diff;
-              temp_diff = 0;
-              start_timer ( &m_timer );
+              co->running += diff_time;
+              diff_time -= T_REFRESH;
+              cur_time = new_time + diff_time;
 
               rate_calc ( processes, co );
 
@@ -275,7 +281,6 @@ static void
 config_sig_handler ( void )
 {
   struct sigaction sigact = { .sa_handler = sig_handler };
-  sigemptyset ( &sigact.sa_mask );
 
   sigaction ( SIGINT, &sigact, NULL );
   sigaction ( SIGTERM, &sigact, NULL );

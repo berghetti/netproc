@@ -29,20 +29,21 @@ BINDIR=./bin
 DOCDIR=./doc
 
 CC ?= gcc
-CFLAGS+= -Wall -Wextra -pedantic
+CFLAGS+= -Wall -Wextra -pedantic -Wformat=2
 
 # environment var
 ifdef DEBUG
-	CFLAGS+= -O0 -ggdb -Wformat=2
+	CFLAGS+= -O0 -ggdb
 else
-	CPPFLAGS+=-D NDEBUG
+	CPPFLAGS+= -D NDEBUG
 	CFLAGS+= -O2
 endif
 
 LDLIBS=$(shell ncurses6-config --libs 2> /dev/null)
 
-ifeq ( $(LDLIBS), )
-	LDLIBS=$(shell  ncurses5-config --libs 2> /dev/null)  
+# if LDLIBS is empty
+ifeq ($(LDLIBS),)
+	LDLIBS=$(shell  ncurses5-config --libs 2> /dev/null)
 endif
 
 LDLIBS += -lpthread
@@ -63,7 +64,7 @@ VPATH= src src/resolver
 OBJECTS=$(addprefix $(OBJDIR)/, $(notdir $(C_SOURCE:.c=.o) ) )
 
 # alvos fake, não são arquivos
-.PHONY: all clean distclean run install uninstall format man release
+.PHONY: all clean distclean run install uninstall format man tarball
 
 all: $(BINDIR)/$(PROG_NAME)
 

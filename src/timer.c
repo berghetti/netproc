@@ -23,30 +23,30 @@
 #include <string.h>
 #include <time.h>  // struct timespec
 
-int
-start_timer ( struct timespec *ts )
-{
-  return ( clock_gettime ( CLOCK_MONOTONIC, ts ) != -1 );
-}
-
+// return current time in milliseconds
 uint64_t
-diff_timer ( struct timespec *old_time )
+get_time ( void )
 {
-  struct timespec new_time;
-  clock_gettime ( CLOCK_MONOTONIC, &new_time );
+  clockid_t ci;
 
-  new_time.tv_sec -= old_time->tv_sec;
-  new_time.tv_nsec -= old_time->tv_nsec;
+#ifdef CLOCK_MONOTONIC_COARSE
+  ci = CLOCK_MONOTONIC_COARSE;
+#else
+  ci = CLOCK_MONOTONIC;
+#endif
 
-  // convert to milliseconds
-  return new_time.tv_sec * 1000 + new_time.tv_nsec / 1E6;
+  struct timespec ts;
+  if ( -1 == clock_gettime ( ci, &ts ) )
+    return 0;
+
+  return ts.tv_sec * 1000U + ts.tv_nsec / 1E6;
 }
 
 // hh:mm:ss
 #define LEN_BUFF_CLOCK 14
 
 char *
-sec2clock ( uint64_t milliseconds )
+msec2clock ( uint64_t milliseconds )
 {
   static char clock[LEN_BUFF_CLOCK];
 

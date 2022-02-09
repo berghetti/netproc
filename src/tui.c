@@ -116,7 +116,7 @@ show_resume ( const struct config_op *co )
   wclrtoeol ( pad );  // erase the current line
   wprintw ( pad, "Running: " );
   wattrset ( pad, color_scheme[RESUME_VALUE] );
-  wprintw ( pad, "%s", sec2clock ( co->running ) );
+  wprintw ( pad, "%s", msec2clock ( co->running ) );
 
   wattrset ( pad, color_scheme[RESUME] );
   mvwprintw ( pad, 2, 25, "pps tx: " );
@@ -360,7 +360,7 @@ tui_init ( const struct config_op *co )
   if ( !pad )
     return 0;
 
-  color_scheme = get_color_scheme ( co );
+  color_scheme = get_color_scheme ( co->color_scheme );
   max_digits_pid = get_max_digits_pid ();
 
   show_header ( co );
