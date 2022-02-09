@@ -5,7 +5,7 @@ Legend:
 ! Known issue / missing feature
 
 ??.??
-  * improved count of time
+  - bug count of time
   - fixed call to resolver_init being done unnecessarily in some cases
 
 0.6.3 - 2021-12-06

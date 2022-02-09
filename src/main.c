@@ -118,7 +118,7 @@ main ( int argc, char **argv )
       goto EXIT;
     }
 
-  uint64_t diff_time = 0;
+  uint32_t diff_time = 0;
   uint64_t cur_time = get_time ();
   if ( !cur_time )
     {
@@ -221,6 +221,10 @@ main ( int argc, char **argv )
             }
 
           uint64_t new_time = get_time ();
+
+          if ( new_time < cur_time )
+            continue;
+
           diff_time = new_time - cur_time;
 
           if ( diff_time >= T_REFRESH )
