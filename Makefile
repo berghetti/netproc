@@ -36,7 +36,7 @@ ifdef DEBUG
 	CFLAGS += -O0 -ggdb
 else
 	CPPFLAGS += -D NDEBUG
-	CFLAGS += -O2
+	CFLAGS += -O2 -flto
 	LDFLAGS += -s -O2 -flto
 endif
 
