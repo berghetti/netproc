@@ -1,4 +1,4 @@
-// gcc -o tick_tack tick_tack.c ../obj/timer.o -Wall -Wextra && ./tick_tack
+// gcc -o tick_tack tick_tack.c ../src/timer.c -Wall -Wextra && ./tick_tack
 
 // this is a stupid test done to check for a bug,
 // run this will stress the cpu
