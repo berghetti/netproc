@@ -146,9 +146,8 @@ log_init ( const char *path_log )
 
   if ( !file )
     {
-      ERROR_DEBUG ( "Error open/create file '%s': %s",
-                    path_log,
-                    strerror ( errno ) );
+      ERROR_DEBUG (
+              "Error open/create file '%s': %s", path_log, strerror ( errno ) );
       return 0;
     }
 

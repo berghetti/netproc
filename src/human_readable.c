@@ -59,34 +59,34 @@ static const char *const *sufix_total;
 void
 define_sufix ( const bool view_si, const bool view_bytes )
 {
-  if ( view_si )  // default
+  if ( view_si )
+    {
+      base = BASE_SI;
+
+      if ( view_bytes )
+        {
+          sufix_rate = sufix_schemes[SI_BYTE];
+          sufix_total = sufix_schemes[SI_BYTE_TOT];
+        }
+      else  // default
+        {
+          sufix_rate = sufix_schemes[SI_BIT];
+          sufix_total = sufix_schemes[SI_BIT_TOT];
+        }
+    }
+  else  // default
     {
       base = BASE_IEC;
 
       if ( view_bytes )  // default
         {
-          sufix_rate = sufix_schemes[IEC_BIT];
-          sufix_total = sufix_schemes[IEC_BIT_TOT];
-        }
-      else
-        {
           sufix_rate = sufix_schemes[IEC_BYTE];
           sufix_total = sufix_schemes[IEC_BYTE_TOT];
         }
-    }
-  else
-    {
-      base = BASE_SI;
-
-      if ( view_bytes )  // default
+      else  // default
         {
-          sufix_rate = sufix_schemes[SI_BIT];
-          sufix_total = sufix_schemes[SI_BIT_TOT];
-        }
-      else
-        {
-          sufix_rate = sufix_schemes[SI_BYTE];
-          sufix_total = sufix_schemes[SI_BYTE_TOT];
+          sufix_rate = sufix_schemes[IEC_BIT];
+          sufix_total = sufix_schemes[IEC_BIT_TOT];
         }
     }
 }
@@ -118,7 +118,6 @@ human_readable ( char *buffer, size_t len_buff, uint64_t bytes, int mode )
    1024) quando o valor for menor que sua base, ou ja estejamos no ultimo
    elemento do array de sufixos, temos a melhor aproximação com o sufixo
    apropriado. */
-  // double val = bytes;
   for ( size_t i = 1; i < TOT_ELEMENTS_SUFIX; i++ )
     {
       if ( ( bytes / base ) < base || i == ( TOT_ELEMENTS_SUFIX - 1 ) )

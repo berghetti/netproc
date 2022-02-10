@@ -74,7 +74,6 @@ rate_calc ( struct processes *processes, const struct config_op *co )
     }
 }
 
-// incremento circular de 0 até SAMPLE_SPACE_SIZE - 1
 #define UPDATE_ID_BUFF( id ) ( ( id ) = ( ( id ) + 1 ) % SAMPLE_SPACE_SIZE )
 
 static uint8_t idx_cir = 0;

@@ -13,30 +13,30 @@
 #define ONE_SEC 1000
 
 void
-tick_tack( uint64_t running )
+tick_tack ( uint64_t running )
 {
   static int tick_tack = 0;
 
-  printf( "%s - %s\n",
-          (tick_tack) ? "tack" : "tick",
-          msec2clock( running) );
+  printf ( "%s - %s\n",
+           ( tick_tack ) ? "tack" : "tick",
+           msec2clock ( running ) );
 
   tick_tack = !tick_tack;
 }
 
 int
-main( void )
+main ( void )
 {
-  uint64_t cur_time = get_time();
+  uint64_t cur_time = get_time ();
   uint64_t running = 0;
 
-  tick_tack( running );
-  while( 1 )
+  tick_tack ( running );
+  while ( 1 )
     {
-      uint64_t new_time = get_time();
+      uint64_t new_time = get_time ();
 
       if ( new_time < cur_time )
-         continue;
+        continue;
 
       uint32_t diff_time = new_time - cur_time;
 
@@ -46,7 +46,7 @@ main( void )
           diff_time -= ONE_SEC;
           cur_time = new_time + diff_time;
 
-          tick_tack( running );
+          tick_tack ( running );
         }
     }
 

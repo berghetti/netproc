@@ -22,7 +22,7 @@
 static char buff[14];
 
 void
-test_Byte_per_second_si ( struct config_op *co )
+test_Byte_per_second_si ( void )
 {
   int values[] = { 0, 500, 1024, 2048, 5000, 9999, 10485760 };
   char *expected[] = { "0",
@@ -33,10 +33,7 @@ test_Byte_per_second_si ( struct config_op *co )
                        "9.76 KiB/s",
                        "10.00 MiB/s" };
 
-  // prerequisite set sufix
-  co->view_si = false;
-  co->view_bytes = true;
-  define_sufix ( co );
+  define_sufix ( false, true );
 
   for ( size_t i = 0; i < ARRAY_SIZE ( values ); i++ )
     {
@@ -48,7 +45,7 @@ test_Byte_per_second_si ( struct config_op *co )
 }
 
 void
-test_bit_per_second_si ( struct config_op *co )
+test_bit_per_second_si ( void )
 {
   int values[] = { 0, 1015, 1024, 2048, 6000, 9999, 10485760 };
   char *expected[] = { "0",
@@ -59,10 +56,7 @@ test_bit_per_second_si ( struct config_op *co )
                        "9.76 Kib/s",
                        "10.00 Mib/s" };
 
-  // prerequisite set sufix
-  co->view_si = false;
-  co->view_bytes = false;
-  define_sufix ( co );
+  define_sufix ( false, false );
 
   for ( size_t i = 0; i < ARRAY_SIZE ( values ); i++ )
     {
@@ -74,7 +68,7 @@ test_bit_per_second_si ( struct config_op *co )
 }
 
 void
-test_bit_per_second_iec ( struct config_op *co )
+test_bit_per_second_iec ( void )
 {
   int values[] = { 0, 999, 1015, 1024, 6000, 9999, 10485760 };
   char *expected[] = { "0",
@@ -85,10 +79,7 @@ test_bit_per_second_iec ( struct config_op *co )
                        "10.00 Kb/s",
                        "10.48 Mb/s" };
 
-  // prerequisite set sufix
-  co->view_si = true;
-  co->view_bytes = false;
-  define_sufix ( co );
+  define_sufix ( true, false );
 
   for ( size_t i = 0; i < ARRAY_SIZE ( values ); i++ )
     {
@@ -102,10 +93,9 @@ test_bit_per_second_iec ( struct config_op *co )
 void
 test_human_readable ( void )
 {
-  struct config_op co;
-  test_Byte_per_second_si ( &co );
+  test_Byte_per_second_si ();
 
-  test_bit_per_second_si ( &co );
+  test_bit_per_second_si ();
 
-  test_bit_per_second_iec ( &co );
+  test_bit_per_second_iec ();
 }

@@ -27,7 +27,7 @@
 #include "macro_util.h"
 
 static bool
-filter_get( struct sock_fprog *fprog, const int flags_proto )
+filter_get ( struct sock_fprog *fprog, const int flags_proto )
 {
   // pass only tcp or udp, block net address 127.*
   // suport interface ethernet and tun
@@ -109,10 +109,9 @@ filter_get( struct sock_fprog *fprog, const int flags_proto )
 bool
 filter_set ( int sock, const int flags_proto )
 {
-
   struct sock_fprog fprog;
 
-  if ( !filter_get( &fprog, flags_proto ) )
+  if ( !filter_get ( &fprog, flags_proto ) )
     return false;
 
   if ( setsockopt (
