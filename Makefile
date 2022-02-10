@@ -29,14 +29,15 @@ BINDIR=./bin
 DOCDIR=./doc
 
 CC ?= gcc
-CFLAGS+= -Wall -Wextra -pedantic -Wformat=2
+CFLAGS += -Wall -Wextra -pedantic -Wformat=2
 
 # environment var
 ifdef DEBUG
-	CFLAGS+= -O0 -ggdb
+	CFLAGS += -O0 -ggdb
 else
-	CPPFLAGS+= -D NDEBUG
-	CFLAGS+= -O2
+	CPPFLAGS += -D NDEBUG
+	CFLAGS += -O2 -flto
+	LDFLAGS += -s -O2 -flto
 endif
 
 LDLIBS=$(shell ncurses6-config --libs 2> /dev/null)
