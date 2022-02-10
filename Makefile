@@ -40,11 +40,11 @@ else
 	LDFLAGS += -s -O2 -flto
 endif
 
-LDLIBS=$(shell ncurses6-config --libs 2> /dev/null)
+LDLIBS=$(shell ncursesw6-config --libs 2> /dev/null)
 
 # if LDLIBS is empty
 ifeq ($(LDLIBS),)
-	LDLIBS=$(shell  ncurses5-config --libs 2> /dev/null)
+	LDLIBS=$(shell  ncursesw5-config --libs 2> /dev/null)
 endif
 
 LDLIBS += -lpthread
