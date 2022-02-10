@@ -59,7 +59,7 @@ main ( int argc, char **argv )
 
   struct config_op *co = parse_options ( argc, argv );
 
-  int sock = socket_init ( co );
+  int sock = socket_init ( co->iface );
   if ( sock == -1 )
     {
       if ( getuid () )

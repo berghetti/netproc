@@ -82,7 +82,7 @@ bind_interface ( int sock, const char *iface )
 }
 
 int
-socket_init ( const struct config_op *co )
+socket_init ( const char *iface )
 {
   int sock;
 
@@ -95,7 +95,7 @@ socket_init ( const struct config_op *co )
   if ( !socket_setnonblocking ( sock ) )
     goto ERROR_EXIT;
 
-  if ( !bind_interface ( sock, co->iface ) )
+  if ( !bind_interface ( sock, iface ) )
     goto ERROR_EXIT;
 
   return sock;

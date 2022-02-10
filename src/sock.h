@@ -25,7 +25,7 @@
 
 // inicializa o socket para escutar conexões
 int
-socket_init ( const struct config_op *co );
+socket_init ( const char *iface );
 
 void
 socket_free ( int sock );
