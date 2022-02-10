@@ -25,11 +25,9 @@
 #include <stdint.h>   // uint*_t type
 #include <stdlib.h>   // size_t type
 
-#include "config.h"
-
 // prerequisite call this before usage human_readable
 void
-define_sufix ( const struct config_op *co );
+define_sufix ( const bool view_si, const bool view_bytes );
 
 bool
 human_readable ( char *buffer,

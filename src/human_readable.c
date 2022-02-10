@@ -23,7 +23,6 @@
 #include <stdint.h>
 
 #include "human_readable.h"
-#include "config.h"
 
 #define BASE_IEC 1024  // default
 #define BASE_SI 1000
@@ -58,13 +57,13 @@ static const char *const *sufix_rate;
 static const char *const *sufix_total;
 
 void
-define_sufix ( const struct config_op *co )
+define_sufix ( const bool view_si, const bool view_bytes )
 {
-  if ( !co->view_si )  // default
+  if ( view_si )  // default
     {
       base = BASE_IEC;
 
-      if ( !co->view_bytes )  // default
+      if ( view_bytes )  // default
         {
           sufix_rate = sufix_schemes[IEC_BIT];
           sufix_total = sufix_schemes[IEC_BIT_TOT];
@@ -79,7 +78,7 @@ define_sufix ( const struct config_op *co )
     {
       base = BASE_SI;
 
-      if ( !co->view_bytes )  // default
+      if ( view_bytes )  // default
         {
           sufix_rate = sufix_schemes[SI_BIT];
           sufix_total = sufix_schemes[SI_BIT_TOT];

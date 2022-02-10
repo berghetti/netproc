@@ -140,14 +140,14 @@ update_log_process ( process_t **new_proc,
 }
 
 int
-log_init ( const struct config_op *co )
+log_init ( const char *path_log )
 {
-  file = fopen ( co->path_log, "w+" );
+  file = fopen ( path_log, "w+" );
 
   if ( !file )
     {
       ERROR_DEBUG ( "Error open/create file '%s': %s",
-                    co->path_log,
+                    path_log,
                     strerror ( errno ) );
       return 0;
     }

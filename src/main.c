@@ -78,13 +78,13 @@ main ( int argc, char **argv )
     }
 
   // filter BPF
-  if ( !filter_set ( sock, co ) )
+  if ( !filter_set ( sock, co->proto ) )
     {
       fatal_error ( "Error set filter network" );
       goto EXIT;
     }
 
-  if ( co->log && !log_init ( co ) )
+  if ( co->log && !log_init ( co->path_log ) )
     {
       fatal_error ( "Error log_init" );
       goto EXIT;
@@ -103,7 +103,7 @@ main ( int argc, char **argv )
       goto EXIT;
     }
 
-  define_sufix ( co );
+  define_sufix ( co->view_si, co->view_bytes );
   if ( !tui_init ( co ) )
     {
       fatal_error ( "Error setup terminal user interface" );
