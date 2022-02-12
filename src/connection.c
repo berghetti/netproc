@@ -28,23 +28,32 @@
 #include <linux/in.h>     // IPPROTO_UDP | IPPROTO_TCP
 #include <netinet/tcp.h>  // TCP_ESTABLISHED, TCP_TIME_WAIT...
 
-#include "conection.h"
+#include "connection.h"
+#include "hashtable.h"
 #include "config.h"  // define TCP | UDP
 #include "m_error.h"
 
-// caminho do arquivo onde o kernel
-// fornece as conexoes TCP e UDP
-#define PATH_TCP "/proc/net/tcp"
-#define PATH_UDP "/proc/net/udp"
+static hashtable_t *ht_connections = NULL;
 
-#define ENTRY_SIZE 64
+// TODO:create new hash functions later.
+// see
+// https://elixir.bootlin.com/linux/v5.10.19/source/include/linux/jhash.h#L117
+static hash_t
+cb_hash ( const void *key )
+{
+  unsigned long int k = ( unsigned long int ) FROM_PTR ( key );
+
+  return ( k >> 24 ) ^ ( k >> 16 ) ^ ( k >> 8 ) ^ ( k >> 4 ) ^ k;
+}
 
 static int
-get_info_conections ( conection_t **conection,
-                      size_t *cur_size,
-                      size_t *cur_count,
-                      const int protocol,
-                      const char *path_file )
+cb_compare ( const void *key1, const void *key2 )
+{
+  return ( key1 == key2 );
+}
+
+static int
+connection_update_ ( const char *path_file, const int protocol )
 {
   FILE *arq = fopen ( path_file, "r" );
   if ( !arq )
@@ -54,7 +63,6 @@ get_info_conections ( conection_t **conection,
     }
 
   int ret = 1;
-
   char *line = NULL;
   size_t len = 0;
   // ignore header in first line
@@ -65,27 +73,8 @@ get_info_conections ( conection_t **conection,
       goto EXIT;
     }
 
-  conection_t *con = ( *conection ) + ( *cur_count );
-
   while ( ( getline ( &line, &len, arq ) ) != -1 )
     {
-      if ( *cur_count == *cur_size )
-        {
-          *cur_size += ENTRY_SIZE;
-
-          conection_t *temp;
-          temp = realloc ( *conection, *cur_size * sizeof ( conection_t ) );
-          if ( !temp )
-            {
-              ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-              ret = 0;
-              goto EXIT;
-            }
-
-          *conection = temp;
-          con = temp + *cur_count;
-        }
-
       // clang-format off
       // sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
       // 0: 3500007F:0035 00000000:0000 0A 00000000:00000000 00:00000000 00000000   101        0 20911 1 0000000000000000 100 0 0 10 0
@@ -97,7 +86,6 @@ get_info_conections ( conection_t **conection,
       unsigned long int inode;
       uint16_t local_port, rem_port;
       uint8_t state;
-
       int rs = sscanf ( line,
                         "%*d: %9[0-9A-Fa-f]:%hX %9[0-9A-Fa-f]:%hX %hhX"
                         " %*X:%*X %*X:%*X %*X %*d %*d %lu %*512s\n",
@@ -120,7 +108,24 @@ get_info_conections ( conection_t **conection,
       if ( state == TCP_TIME_WAIT || state == TCP_LISTEN )
         continue;
 
-      rs = sscanf ( local_addr, "%x", &con->local_address );
+      // connection_t *conn = hashtable_get ( ht_connections, TO_PTR ( inode )
+      // );
+      connection_t *conn;
+      // if ( !conn )
+      {
+        conn = malloc ( sizeof ( connection_t ) );
+
+        if ( !conn )
+          {
+            ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
+            ret = 0;
+            goto EXIT;
+          }
+
+        hashtable_set ( ht_connections, TO_PTR ( inode ), conn );
+      }
+
+      rs = sscanf ( local_addr, "%x", &conn->local_address );
       if ( rs != 1 )
         {
           ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
@@ -128,7 +133,7 @@ get_info_conections ( conection_t **conection,
           goto EXIT;
         }
 
-      rs = sscanf ( rem_addr, "%x", &con->remote_address );
+      rs = sscanf ( rem_addr, "%x", &conn->remote_address );
       if ( rs != 1 )
         {
           ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
@@ -136,15 +141,12 @@ get_info_conections ( conection_t **conection,
           goto EXIT;
         }
 
-      con->local_port = local_port;
-      con->remote_port = rem_port;
-      con->state = state;
-      con->inode = inode;
-      con->protocol = protocol;
-      memset ( &con->net_stat, 0, sizeof ( struct net_stat ) );
-      con++;
-
-      ( *cur_count )++;
+      conn->local_port = local_port;
+      conn->remote_port = rem_port;
+      conn->state = state;
+      conn->inode = inode;
+      conn->protocol = protocol;
+      memset ( &conn->net_stat, 0, sizeof ( struct net_stat ) );
     }
 
 EXIT:
@@ -154,34 +156,44 @@ EXIT:
   return ret;
 }
 
-// return total conections or -1 on failure
 int
-get_conections ( conection_t **buffer, const int proto )
+connection_init ( void )
 {
-  *buffer = NULL;
-  size_t cur_size = 0, cur_count = 0;
+  ht_connections = hashtable_new ( cb_hash, cb_compare, free );
 
+  return ( NULL != ht_connections );
+}
+
+#define PATH_TCP "/proc/net/tcp"
+#define PATH_UDP "/proc/net/udp"
+
+int
+connection_update ( const int proto )
+{
   if ( proto & TCP )
     {
-      if ( !get_info_conections (
-                   buffer, &cur_size, &cur_count, IPPROTO_TCP, PATH_TCP ) )
-        {
-          goto ERROR_EXIT;
-        }
+      if ( !connection_update_ ( PATH_TCP, IPPROTO_TCP ) )
+        return 0;
     }
 
   if ( proto & UDP )
     {
-      if ( !get_info_conections (
-                   buffer, &cur_size, &cur_count, IPPROTO_UDP, PATH_UDP ) )
-        {
-          goto ERROR_EXIT;
-        }
+      if ( !connection_update_ ( PATH_UDP, IPPROTO_UDP ) )
+        return 0;
     }
 
-  return cur_count;
+  return 1;
+}
 
-ERROR_EXIT:
-  free ( *buffer );
-  return -1;
+connection_t *
+connection_get ( const unsigned long int inode )
+{
+  return hashtable_get ( ht_connections, TO_PTR ( inode ) );
+}
+
+void
+connection_free ( void )
+{
+  if ( ht_connections )
+    hashtable_destroy ( ht_connections );
 }

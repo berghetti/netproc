@@ -39,9 +39,18 @@ typedef struct conection
   uint16_t remote_port;
   uint8_t protocol;
   uint8_t state;
-} conection_t;
+} connection_t;
 
 int
-get_conections ( conection_t **buffer, const int proto );
+connection_init ( void );
+
+int
+connection_update ( const int proto );
+
+connection_t *
+connection_get ( const unsigned long int inode );
+
+void
+connection_free ( void );
 
 #endif  // CONECTION_H
