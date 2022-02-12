@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 #include "processes.h"
-#include "conection.h"
+#include "connection.h"
 #include "sort.h"
 
 static int
@@ -65,12 +65,12 @@ compare_process ( const void *restrict p1,
 }
 
 static int
-compare_conection ( const void *restrict p1,
+compare_connection ( const void *restrict p1,
                     const void *restrict p2,
                     void *restrict mode )
 {
-  conection_t *con1 = ( conection_t * ) p1;
-  conection_t *con2 = ( conection_t * ) p2;
+  connection_t *con1 = *( connection_t ** ) p1;
+  connection_t *con2 = *( connection_t ** ) p2;
 
   int64_t r;
   switch ( *( int * ) mode )
@@ -109,7 +109,7 @@ sort ( process_t **proc,
     for ( size_t i = 0; i < tot_process; i++ )
       qsort_r ( proc[i]->conections,
                 proc[i]->total_conections,
-                sizeof ( conection_t ),
-                compare_conection,
+                sizeof ( connection_t *),
+                compare_connection,
                 ( void * ) &mode );
 }
