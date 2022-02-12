@@ -2,7 +2,7 @@
 bin/netproc
 
 #gdb
-.gdb_history
+*.gdb_history
 
 #txt
 *.txt
