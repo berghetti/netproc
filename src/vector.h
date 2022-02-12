@@ -31,7 +31,7 @@
  @return memory to user or null
 */
 void *
-vector_new ( size_t nmeb, size_t size_member );
+vector_new ( size_t size_member );
 
 /*
  copy user data into vector
@@ -49,9 +49,9 @@ vector_push_ ( void **mem, void *data );
   remove last element from vector
   @oaram mem, pointer returned from vector_new
 
-  @return number of elements in vector
+  @return element removed from vector
 */
-int
+void *
 vector_pop ( void *mem );
 
 /*

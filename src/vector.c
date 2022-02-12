@@ -20,7 +20,6 @@
 
 #include <stdlib.h>  // realloc, free
 #include <string.h>  // memcpy
-#include <stddef.h>  // offsetof
 
 struct vector
 {
@@ -49,19 +48,16 @@ vector_copy ( struct vector *restrict v, void *restrict data )
   memcpy ( ptr, data, v->element_size );
 }
 
-#define DFL_START_LEN 16
+#define LEN_INIT_VECTOR 16
 
 void *
-vector_new ( size_t nmemb, size_t size_member )
+vector_new ( size_t size_member )
 {
-  if ( nmemb == 0 )
-    nmemb = DFL_START_LEN;
-
-  struct vector *vt = vector_alloc ( NULL, nmemb * size_member );
+  struct vector *vt = vector_alloc ( NULL, LEN_INIT_VECTOR * size_member );
 
   if ( vt )
     {
-      vt->elements_allocated = nmemb;
+      vt->elements_allocated = LEN_INIT_VECTOR;
       vt->elements_used = 0;
       vt->element_size = size_member;
 
@@ -102,12 +98,14 @@ vector_push_ ( void **restrict mem, void *restrict data )
   return 1;
 }
 
-int
+void *
 vector_pop ( void *mem )
 {
   struct vector *vt = MEM_TO_CHUNK ( mem );
 
-  return ( vt->elements_used-- );
+  vt->elements_used--;
+
+  return ( void * ) ( ( char * ) mem + vt->elements_used * vt->element_size );
 }
 
 void
@@ -129,7 +127,5 @@ vector_size ( void *mem )
 void
 vector_free ( void *mem )
 {
-  struct vector *vt = MEM_TO_CHUNK ( mem );
-
-  free ( vt );
+  free ( MEM_TO_CHUNK ( mem ) );
 }
