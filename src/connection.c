@@ -108,22 +108,22 @@ connection_update_ ( const char *path_file, const int protocol )
       if ( state == TCP_TIME_WAIT || state == TCP_LISTEN )
         continue;
 
-      // connection_t *conn = hashtable_get ( ht_connections, TO_PTR ( inode )
-      // );
-      connection_t *conn;
-      // if ( !conn )
-      {
-        conn = malloc ( sizeof ( connection_t ) );
+      connection_t *conn = hashtable_get ( ht_connections, TO_PTR ( inode ) );
 
-        if ( !conn )
-          {
-            ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-            ret = 0;
-            goto EXIT;
-          }
+      // conn already in hashtable
+      if ( conn )
+        continue;
 
-        hashtable_set ( ht_connections, TO_PTR ( inode ), conn );
-      }
+      conn = malloc ( sizeof ( connection_t ) );
+      if ( !conn )
+        {
+          ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
+          ret = 0;
+          goto EXIT;
+        }
+
+      memset ( &conn->net_stat, 0, sizeof ( struct net_stat ) );
+      hashtable_set ( ht_connections, TO_PTR ( inode ), conn );
 
       rs = sscanf ( local_addr, "%x", &conn->local_address );
       if ( rs != 1 )
@@ -146,7 +146,6 @@ connection_update_ ( const char *path_file, const int protocol )
       conn->state = state;
       conn->inode = inode;
       conn->protocol = protocol;
-      memset ( &conn->net_stat, 0, sizeof ( struct net_stat ) );
     }
 
 EXIT:

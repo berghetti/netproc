@@ -97,6 +97,12 @@ main ( int argc, char **argv )
       goto EXIT;
     }
 
+  if ( !connection_init () )
+    {
+      fatal_error ( "Error connection_init" );
+      goto EXIT;
+    }
+
   if ( co->view_conections && co->translate_host && !resolver_init ( 0, 0 ) )
     {
       fatal_error ( "Error resolver_init" );
@@ -262,6 +268,7 @@ EXIT:
   ring_free ( ring );
   log_free ();
   processes_free ( processes );
+  connection_free ();
   resolver_free ();
   tui_free ();
 

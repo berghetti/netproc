@@ -22,7 +22,7 @@
 #include <linux/filter.h>  // struct sock_filter, sock_fprog
 #include <sys/socket.h>    // setsockopt
 
-#include "conection.h"
+#include "connection.h"
 #include "m_error.h"
 #include "macro_util.h"
 

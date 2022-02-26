@@ -66,8 +66,8 @@ compare_process ( const void *restrict p1,
 
 static int
 compare_connection ( const void *restrict p1,
-                    const void *restrict p2,
-                    void *restrict mode )
+                     const void *restrict p2,
+                     void *restrict mode )
 {
   connection_t *con1 = *( connection_t ** ) p1;
   connection_t *con2 = *( connection_t ** ) p2;
@@ -109,7 +109,7 @@ sort ( process_t **proc,
     for ( size_t i = 0; i < tot_process; i++ )
       qsort_r ( proc[i]->conections,
                 proc[i]->total_conections,
-                sizeof ( connection_t *),
+                sizeof ( connection_t * ),
                 compare_connection,
                 ( void * ) &mode );
 }

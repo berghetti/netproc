@@ -21,6 +21,8 @@
 #ifndef HASHTABLE_H
 #define HASHTABLE_H
 
+#include <stddef.h>  // size_t
+
 typedef struct slist_item
 {
   struct slist_item *next;

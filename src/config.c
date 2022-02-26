@@ -25,7 +25,7 @@
 #include <unistd.h>  // EXIT_*
 
 #include "config.h"
-#include "conection.h"
+#include "connection.h"
 #include "usage.h"
 #include "macro_util.h"
 

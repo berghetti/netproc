@@ -22,17 +22,17 @@
 #define PROCESS_H
 
 #include "config.h"
-#include "conection.h"
+#include "connection.h"
 #include "directory.h"
 #include "rate.h"
 
 typedef struct process
 {
   struct net_stat net_stat;   // estatisticas de rede
-  conection_t *conections;    // array de conexoes do processo
+  connection_t **conections;  // array de conexoes do processo
   char *name;                 // nome processo
   pid_t pid;                  // pid do processo
-  uint32_t total_conections;  // total de conexões apontada por conection_t *
+  uint32_t total_conections;  // total de conexões apontada por connection_t *
 
   int active;
 } process_t;

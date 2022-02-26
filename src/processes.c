@@ -49,14 +49,12 @@
 
 static hashtable_t *ht_process;
 
-// static conection_t *
-void
-add_conection_to_process ( process_t *proc, conection_t *con )
-{
-  proc->total_conections++;
-
-  vector_push ( proc->conections, con );
-}
+// void
+// add_connection_to_process ( process_t *proc, connection_t *con )
+// {
+//   proc->total_conections++;
+//   vector_push ( proc->conections, con );
+// }
 
 static void
 handle_cmdline ( char *buff, size_t len )
@@ -114,7 +112,8 @@ create_new_process ( pid_t pid )
       proc->pid = pid;
       proc->active = 1;
 
-      proc->conections = vector_new ( 0, sizeof ( conection_t ) );
+      proc->conections = vector_new ( sizeof ( connection_t * ) );
+      // proc->conections = malloc( 50 * sizeof ( connection_t *) );
       if ( !proc->conections )
         goto ERROR;
 
@@ -239,10 +238,10 @@ processes_get ( struct processes *procs, struct config_op *co )
       return 0;
     }
 
-  conection_t *conections;
-  int total_conections = get_conections ( &conections, co->proto );
+  // connection_t *conections;
+  // int total_conections = get_conections ( &conections, co->proto );
 
-  if ( -1 == total_conections )
+  if ( !connection_update ( co->proto ) )
     {
       ERROR_DEBUG ( "%s", "backtrace" );
       free ( pids );
@@ -267,8 +266,8 @@ processes_get ( struct processes *procs, struct config_op *co )
       if ( proc )
         {
           proc->active = 1;
-          // proc->total_conections = 0;
-          // vector_clear ( proc->conections );
+          // proc->total_conections = 0;  // remove this
+          vector_clear ( proc->conections );
         }
 
       for ( int index_fd = 0; index_fd < total_fd_process; index_fd++ )
@@ -292,32 +291,57 @@ processes_get ( struct processes *procs, struct config_op *co )
           if ( 1 != sscanf ( data_fd, "socket:[%lu", &inode ) )
             continue;
 
-          for ( int c = 0; c < total_conections; c++ )
+          connection_t *conn = connection_get ( inode );
+
+          if ( !conn )
+            continue;
+
+          if ( !proc )
             {
-              if ( conections[c].inode != inode )
-                continue;
-
+              proc = create_new_process ( pids[index_pid] );
               if ( !proc )
-                {
-                  proc = create_new_process ( pids[index_pid] );
-                  if ( !proc )
-                    break;  // no return error, check others processes
+                break;  // no return error, check others processes
 
-                  hashtable_set (
-                          ht_process, TO_PTR ( pids[index_pid] ), proc );
-                }
-
-              add_conection_to_process ( proc, &conections[c] );
-
-              conections[c] = conections[total_conections - 1];
-              total_conections--;
+              hashtable_set ( ht_process, TO_PTR ( pids[index_pid] ), proc );
             }
+
+          // proc->conections[ proc->total_conections++ ] = conn;
+          // add_connection_to_process ( proc, conn );
+          // proc->total_conections++;
+          vector_push ( proc->conections, &conn );
+
+          // ERROR_DEBUG( "proc->name %s\nvector size - %ld\n ",
+          // proc->name, vector_size( proc->conections) );
+
+          // for ( int c = 0; c < total_conections; c++ )
+          //   {
+          //     if ( conections[c].inode != inode )
+          //       continue;
+          //
+          //     if ( !proc )
+          //       {
+          //         proc = create_new_process ( pids[index_pid] );
+          //         if ( !proc )
+          //           break;  // no return error, check others processes
+          //
+          //         hashtable_set (
+          //                 ht_process, TO_PTR ( pids[index_pid] ), proc );
+          //       }
+          //
+          //     add_connection_to_process ( proc, &conections[c] );
+          //
+          //     conections[c] = conections[total_conections - 1];
+          //     total_conections--;
+          //   }
         }
+
+      if ( proc )
+        proc->total_conections = vector_size ( proc->conections );
     }
 
   free ( fds );
   free ( pids );
-  free ( conections );
+  // free ( conections );
 
   hashtable_foreach ( ht_process, free_dead_process, NULL );
 

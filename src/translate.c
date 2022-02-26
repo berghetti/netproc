@@ -32,7 +32,7 @@
 #define LEN_TUPLE ( ( NI_MAXHOST + NI_MAXSERV ) * 2 ) + 7 + 10
 
 char *
-translate ( const conection_t *con, const struct config_op *co )
+translate ( const connection_t *con, const struct config_op *co )
 {
   // local_socket
   struct sockaddr_in l_sock = { .sin_family = AF_INET,
