@@ -28,13 +28,13 @@
 
 typedef struct process
 {
-  struct net_stat net_stat;   // estatisticas de rede
-  connection_t **conections;  // array de conexoes do processo
-  char *name;                 // nome processo
-  pid_t pid;                  // pid do processo
-  uint32_t total_conections;  // total de conexões apontada por connection_t *
+  struct net_stat net_stat;   // network statistics
+  connection_t **conections;  // connections of process
+  char *name;                 // process name
+  pid_t pid;                  // process pid
+  uint32_t total_conections;  // total process connections
 
-  int active;
+  int active; // check if processes is active in update of processes
 } process_t;
 
 struct processes

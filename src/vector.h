@@ -55,7 +55,7 @@ void *
 vector_pop ( void *mem );
 
 /*
-  remove all elements in vector
+  remove all vector elements
   @oaram mem, pointer returned from vector_new
 */
 void
@@ -69,7 +69,7 @@ size_t
 vector_size ( void *mem );
 
 /*
-  free dinamyc memory allocated to vector
+  free vector
   @oaram mem, pointer returned from vector_new
 */
 void
