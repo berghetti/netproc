@@ -30,9 +30,10 @@
 // stores the information exported by the kernel in /proc/net/tcp | udp
 typedef struct conection
 {
-  struct net_stat net_stat;  // this assign in src/statistics.c
+  struct net_stat net_stat;  // assign in statistics.c
   unsigned long int inode;
-  uint32_t if_index;  // this assign in src/statistics.c
+  bool active;
+  int if_index;  // assign in statistics.c
   uint32_t local_address;
   uint32_t remote_address;
   uint16_t local_port;
@@ -41,10 +42,10 @@ typedef struct conection
   uint8_t state;
 } connection_t;
 
-int
+bool
 connection_init ( void );
 
-int
+bool
 connection_update ( const int proto );
 
 connection_t *

@@ -77,12 +77,17 @@ typedef int ( *hashtable_foreach_func ) ( hashtable_t *ht,
                                           void *user_data );
 
 /* to each entries in hashtable, the function 'func' is called
-    and passes as argument the entrie and 'user_data' */
+    and passes as argument the entrie and 'user_data',
+    if 'func' return different of zero hashtable_foreach stop
+    and return the value returned from 'func' */
 int
 hashtable_foreach ( hashtable_t *ht,
                     hashtable_foreach_func func,
                     void *user_data );
 
+/* remove entry from hashtable and return a pointer to entry,
+  the entry needs to be handled by the user's skin yet (e.g free if necessary )
+*/
 void *
 hashtable_remove ( hashtable_t *ht, const void *key );
 

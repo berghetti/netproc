@@ -232,11 +232,11 @@ parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd )
   l4 = ( struct layer_4 * ) ( ( uint8_t * ) ppd + ppd->tp_net +
                               ( l3->ihl * 4 ) );
 
-  // fprintf(stderr, "ll->sll_pkttype - %d\n", ll->sll_pkttype);
-  // fprintf(stderr, "ll->sll_hatype - %d\n", ll->sll_hatype);
-  // fprintf(stderr, "l2->h_proto - %x\n", ntohs(l2->h_proto));
-  // fprintf(stderr, "l3->proto - %d\n", l3->protocol );
-  // fprintf(stderr, "l4->dest - %x\n", ntohs(l4->dest));
+  // debug_error( "ll->sll_pkttype - %d\n", ll->sll_pkttype );
+  // debug_error( "ll->sll_hatype - %d\n", ll->sll_hatype );
+  // debug_error( "l2->h_proto - %x\n", ntohs(l2->h_proto) );
+  // debug_error( "l3->proto - %d\n", l3->protocol  );
+  // debug_error( "l4->dest - %x\n", ntohs(l4->dest) );
 
   int ret = 1;
   int id_frag = get_fragment ( l3, l4 );

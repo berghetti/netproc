@@ -32,6 +32,7 @@
 #include "hashtable.h"
 #include "config.h"  // define TCP | UDP
 #include "m_error.h"
+#include "macro_util.h"
 
 static hashtable_t *ht_connections = NULL;
 
@@ -110,9 +111,11 @@ connection_update_ ( const char *path_file, const int protocol )
 
       connection_t *conn = hashtable_get ( ht_connections, TO_PTR ( inode ) );
 
-      // conn already in hashtable
       if ( conn )
-        continue;
+        {
+          conn->active = true;
+          continue;
+        }
 
       conn = malloc ( sizeof ( connection_t ) );
       if ( !conn )
@@ -123,7 +126,6 @@ connection_update_ ( const char *path_file, const int protocol )
         }
 
       memset ( &conn->net_stat, 0, sizeof ( struct net_stat ) );
-      hashtable_set ( ht_connections, TO_PTR ( inode ), conn );
 
       rs = sscanf ( local_addr, "%x", &conn->local_address );
       if ( rs != 1 )
@@ -146,6 +148,9 @@ connection_update_ ( const char *path_file, const int protocol )
       conn->state = state;
       conn->inode = inode;
       conn->protocol = protocol;
+      conn->active = true;
+
+      hashtable_set ( ht_connections, TO_PTR ( inode ), conn );
     }
 
 EXIT:
@@ -155,7 +160,7 @@ EXIT:
   return ret;
 }
 
-int
+bool
 connection_init ( void )
 {
   ht_connections = hashtable_new ( cb_hash, cb_compare, free );
@@ -163,10 +168,25 @@ connection_init ( void )
   return ( NULL != ht_connections );
 }
 
+static int
+remove_inactive_conn ( hashtable_t *ht,
+                       void *value,
+                       UNUSED ( void *user_data ) )
+{
+  connection_t *conn = value;
+
+  if ( !conn->active )
+    free ( hashtable_remove ( ht, TO_PTR ( conn->inode ) ) );
+  else
+    conn->active = false;
+
+  return 0;
+}
+
 #define PATH_TCP "/proc/net/tcp"
 #define PATH_UDP "/proc/net/udp"
 
-int
+bool
 connection_update ( const int proto )
 {
   if ( proto & TCP )
@@ -181,6 +201,7 @@ connection_update ( const int proto )
         return 0;
     }
 
+  hashtable_foreach ( ht_connections, remove_inactive_conn, NULL );
   return 1;
 }
 

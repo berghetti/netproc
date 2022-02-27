@@ -38,8 +38,8 @@ struct packet
   uint32_t remote_address;
   uint16_t local_port;
   uint16_t remote_port;
-  uint8_t direction;
   uint8_t protocol;
+  uint8_t direction;
 };
 
 // preenche a struct packet com os dados do pacote recebido

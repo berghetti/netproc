@@ -34,7 +34,7 @@ typedef struct process
   pid_t pid;                  // process pid
   uint32_t total_conections;  // total process connections
 
-  int active; // check if processes is active in update of processes
+  int active;  // check if processes is active in update of processes
 } process_t;
 
 struct processes

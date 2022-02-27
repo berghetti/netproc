@@ -48,9 +48,9 @@ typedef uint64_t nstats_t;
 
 struct net_stat
 {
-  nstats_t pps_rx[SAMPLE_SPACE_SIZE];  // pacotes por segundo, amostras
+  nstats_t pps_rx[SAMPLE_SPACE_SIZE];  // amostras
   nstats_t pps_tx[SAMPLE_SPACE_SIZE];
-  nstats_t Bps_rx[SAMPLE_SPACE_SIZE];  // bytes/bits por segundos, amostras
+  nstats_t Bps_rx[SAMPLE_SPACE_SIZE];  // amostras
   nstats_t Bps_tx[SAMPLE_SPACE_SIZE];
   nstats_t avg_Bps_rx;  // média de bytes/bits por segundos
   nstats_t avg_Bps_tx;
