@@ -28,7 +28,7 @@
  @param nmeb, number of member initial in vector, if 0 default is 16
  @param size, size of one member in array
 
- @return memory to user or null
+ @return memory to user or null on error
 */
 void *
 vector_new ( size_t size_member );
@@ -38,7 +38,7 @@ vector_new ( size_t size_member );
  @oaram mem, pointer returned from vector_new
  @param data, pointer to user data to push in vector
 
- @return 1 if success or 0 in error
+ @return 1 if success or 0 on error
 */
 int
 vector_push_ ( void **mem, void *data );

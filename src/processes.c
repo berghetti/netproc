@@ -103,7 +103,7 @@ create_new_process ( pid_t pid )
   if ( proc )
     {
       proc->pid = pid;
-      proc->active = 1;
+      proc->active = true;
 
       proc->conections = vector_new ( sizeof ( connection_t * ) );
       if ( !proc->conections )

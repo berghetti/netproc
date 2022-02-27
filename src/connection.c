@@ -169,9 +169,7 @@ connection_init ( void )
 }
 
 static int
-remove_dead_conn ( hashtable_t *ht,
-                       void *value,
-                       UNUSED ( void *user_data ) )
+remove_dead_conn ( hashtable_t *ht, void *value, UNUSED ( void *user_data ) )
 {
   connection_t *conn = value;
 

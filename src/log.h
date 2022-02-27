@@ -28,7 +28,7 @@ int
 log_init ( const char *path_log );
 
 int
-log_file ( process_t **processes, const size_t tot_process );
+log_file ( process_t **processes );
 
 void
 log_free ( void );

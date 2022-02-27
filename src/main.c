@@ -243,7 +243,7 @@ main ( int argc, char **argv )
 
               tui_show ( processes, co );
 
-              if ( co->log && !log_file ( processes->proc, processes->total ) )
+              if ( co->log && !log_file ( processes->proc ) )
                 {
                   goto EXIT;
                 }
