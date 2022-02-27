@@ -39,8 +39,6 @@ static struct log_processes *log_processes = NULL;
 static size_t len_log_processes = 0;
 static FILE *file = NULL;
 
-#define ENTRY_SIZE 12
-
 // space justify column
 #define TAXA 14
 
