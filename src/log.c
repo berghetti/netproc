@@ -20,6 +20,7 @@
 
 #include <stdio.h>   // FILE
 #include <stdlib.h>  // free
+#include <stdbool.h>
 #include <string.h>
 
 #include "log.h"
@@ -74,13 +75,27 @@ write_process_to_file ( struct log_processes *processes,
     }
 }
 
+static char *
+copy_name ( const char *name, size_t size )
+{
+  char *p = malloc ( size + 1 );
+
+  if ( p )
+    {
+      memcpy ( p, name, size );
+      p[size] = '\0';
+    }
+
+  return p;
+}
+
 // percorre todos os processos e busca se um processo ( ou outro com mesmo nome,
 // assim podemos ter no arquivo de log, os dados total sobre um programa,
 // não apenas sobre uma execução do programa),
 // ja esta presente no buffer espelho do arquivo de log
 // se estiver present incrementa as estaticias de rede desse processo, caso não
 // adiciona ao buffer ( e consequentement sera exibido no arquivo de log)
-static void
+static bool
 update_log_process ( process_t **new_procs )
 {
   while ( *new_procs )
@@ -106,14 +121,20 @@ update_log_process ( process_t **new_procs )
       // not found, add new process in buffer
       if ( j == len_log_processes )
         {
-          log->name = strndup ( proc->name, len_name );
+          log->name = copy_name ( proc->name, len_name );
+          if ( !log->name )
+            return false;
+
           log->tot_Bps_rx = proc->net_stat.tot_Bps_rx;
           log->tot_Bps_tx = proc->net_stat.tot_Bps_tx;
           len_log_processes++;
 
-          vector_push ( log_processes, log );
+          if ( !vector_push ( log_processes, log ) )
+            return false;
         }
     }
+
+  return true;
 }
 
 int
@@ -147,7 +168,8 @@ log_init ( const char *path_log )
 int
 log_file ( process_t **processes )
 {
-  update_log_process ( processes );
+  if ( !update_log_process ( processes ) )
+    return 0;
 
   // set file one line below header
   fseek ( file, LEN_HEADER, SEEK_SET );
