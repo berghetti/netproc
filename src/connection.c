@@ -169,7 +169,7 @@ connection_init ( void )
 }
 
 static int
-remove_inactive_conn ( hashtable_t *ht,
+remove_dead_conn ( hashtable_t *ht,
                        void *value,
                        UNUSED ( void *user_data ) )
 {
@@ -201,7 +201,7 @@ connection_update ( const int proto )
         return 0;
     }
 
-  hashtable_foreach ( ht_connections, remove_inactive_conn, NULL );
+  hashtable_foreach ( ht_connections, remove_dead_conn, NULL );
   return 1;
 }
 

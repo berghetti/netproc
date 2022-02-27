@@ -21,6 +21,8 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
+#include <stdbool.h>
+
 #include "config.h"
 #include "connection.h"
 #include "directory.h"
@@ -34,7 +36,7 @@ typedef struct process
   pid_t pid;                  // process pid
   uint32_t total_conections;  // total process connections
 
-  int active;  // check if processes is active in update of processes
+  bool active;  // check if processes is active in update of processes
 } process_t;
 
 struct processes

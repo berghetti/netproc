@@ -132,32 +132,28 @@ free_process ( void *arg )
   free ( process );
 }
 
-static int
-free_dead_process ( hashtable_t *ht, void *value, UNUSED ( void *user_data ) )
-{
-  process_t *proc = value;
-
-  if ( !proc->active )
-    free_process ( hashtable_remove ( ht, TO_PTR ( proc->pid ) ) );
-
-  return 0;
-}
-
 struct my_array
 {
   process_t **data;
   size_t pos;
 };
 
+/* copy hashtable to array removing processes inactives */
 static int
-to_array ( UNUSED ( hashtable_t *ht ), void *value, void *user_data )
+to_array ( hashtable_t *ht, void *value, void *user_data )
 {
   struct my_array *ar = user_data;
   process_t *proc = value;
-  proc->active = 0;  // reset status process
 
-  ar->data[ar->pos] = proc;
-  ar->pos++;
+  if ( !proc->active )
+    free_process ( hashtable_remove ( ht, TO_PTR ( proc->pid ) ) );
+  else
+    {
+      proc->active = false;  // reset status to next update checking
+
+      ar->data[ar->pos] = proc;
+      ar->pos++;
+    }
 
   return 0;
 }
@@ -165,7 +161,8 @@ to_array ( UNUSED ( hashtable_t *ht ), void *value, void *user_data )
 static process_t **
 copy_ht_to_array ( hashtable_t *ht, process_t **proc )
 {
-  process_t **pp = realloc ( proc, ( ht->nentries + 1 ) * sizeof ( *pp ) );
+  process_t **pp =
+          realloc ( proc, ( ht->nentries + 1 ) * sizeof ( process_t * ) );
 
   if ( pp )
     {
@@ -303,11 +300,8 @@ processes_get ( struct processes *procs, struct config_op *co )
   free ( fds );
   free ( pids );
 
-  hashtable_foreach ( ht_process, free_dead_process, NULL );
-
-  procs->total = ht_process->nentries;
-
   procs->proc = copy_ht_to_array ( ht_process, procs->proc );
+  procs->total = ht_process->nentries;
 
   return 1;
 }
