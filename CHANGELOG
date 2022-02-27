@@ -6,7 +6,9 @@ Legend:
 
 ??.??
   - bug count of time
-  - fixed call to resolver_init being done unnecessarily in some cases
+  - call to resolver_init being done unnecessarily in some cases
+  - lost connection stats on updates
+  * using hashtable in search of connections
 
 0.6.3 - 2021-12-06
   + add new color scheme
