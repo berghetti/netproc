@@ -98,16 +98,22 @@ hashtable_rehash ( hashtable_t *ht )
   return 1;
 }
 
+static inline
+size_t get_index( hash_t hash, size_t size )
+{
+  return ( hash & ( size - 1 ) );
+}
+
 static hashtable_entry_t *
 hashtable_get_entry ( hashtable_t *restrict ht, const void *restrict key )
 {
   hash_t hash = ht->fhash ( key );
-  size_t index = hash & ( ht->nbuckets - 1 );
+  size_t index = get_index( hash, ht->nbuckets );
 
   hashtable_entry_t *entry = TABLE_HEAD ( ht, index );
   while ( entry )
     {
-      if ( ht->fcompare ( entry->key, key ) )
+      if ( entry->key_hash == hash && ht->fcompare ( entry->key, key ) )
         break;
 
       entry = ENTRY_NEXT ( entry );
@@ -163,7 +169,7 @@ hashtable_set ( hashtable_t *restrict ht, const void *key, void *value )
         }
     }
 
-  size_t index = entry->key_hash & ( ht->nbuckets - 1 );
+  size_t index = get_index( entry->key_hash, ht->nbuckets );
   hashtable_preprend ( &ht->buckets[index], ( slist_item_t * ) entry );
 
   return value;
@@ -210,10 +216,10 @@ void *
 hashtable_remove ( hashtable_t *ht, const void *key )
 {
   hash_t hash = ht->fhash ( key );
-  size_t index = hash & ( ht->nbuckets - 1 );
+  size_t index = get_index( hash, ht->nbuckets );
 
   hashtable_entry_t **entry = PP_TABLE_HEAD ( ht, index );
-  while ( *entry && !ht->fcompare ( ( *entry )->key, key ) )
+  while ( *entry && (*entry)->key_hash != hash && !ht->fcompare ( ( *entry )->key, key ) )
     entry = PP_ENTRY_NEXT ( *entry );
 
   if ( *entry == NULL )
