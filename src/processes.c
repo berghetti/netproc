@@ -183,7 +183,6 @@ ht_cb_compare ( const void *key1, const void *key2 )
   return ( *( pid_t * ) key1 == *( pid_t * ) key2 );
 }
 
-// TODO: use jhash here
 static hash_t
 ht_cb_hash ( const void *key )
 {
