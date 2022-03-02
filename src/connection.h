@@ -31,7 +31,9 @@
 typedef struct conection
 {
   struct net_stat net_stat;  // assign in statistics.c
-  unsigned long int inode;
+  /* kernel linux usage this type to inode
+  https://elixir.bootlin.com/linux/v5.10.19/source/net/core/sock.c#L2161 */
+  unsigned long inode;
   bool active;
   int if_index;  // assign in statistics.c
   uint32_t local_address;
@@ -49,7 +51,7 @@ bool
 connection_update ( const int proto );
 
 connection_t *
-connection_get ( const unsigned long int inode );
+connection_get ( const unsigned long inode );
 
 void
 connection_free ( void );

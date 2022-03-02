@@ -42,7 +42,7 @@ static hashtable_t *ht_connections = NULL;
 static hash_t
 cb_hash ( const void *key )
 {
-  unsigned long int k = ( unsigned long int ) FROM_PTR ( key );
+  unsigned long k = *(unsigned long *) key;
 
   return ( k >> 24 ) ^ ( k >> 16 ) ^ ( k >> 8 ) ^ ( k >> 4 ) ^ k;
 }
@@ -50,7 +50,7 @@ cb_hash ( const void *key )
 static int
 cb_compare ( const void *key1, const void *key2 )
 {
-  return ( key1 == key2 );
+  return ( *(unsigned long *)key1 == *(unsigned long *)key2 );
 }
 
 static int
@@ -84,7 +84,7 @@ connection_update_ ( const char *path_file, const int protocol )
       // clang-format on
 
       char local_addr[10], rem_addr[10];  // enough for ipv4
-      unsigned long int inode;
+      unsigned long inode;
       uint16_t local_port, rem_port;
       uint8_t state;
       int rs = sscanf ( line,
@@ -109,7 +109,7 @@ connection_update_ ( const char *path_file, const int protocol )
       if ( state == TCP_TIME_WAIT || state == TCP_LISTEN )
         continue;
 
-      connection_t *conn = hashtable_get ( ht_connections, TO_PTR ( inode ) );
+      connection_t *conn = hashtable_get ( ht_connections, &inode );
 
       if ( conn )
         {
@@ -150,7 +150,7 @@ connection_update_ ( const char *path_file, const int protocol )
       conn->protocol = protocol;
       conn->active = true;
 
-      hashtable_set ( ht_connections, TO_PTR ( inode ), conn );
+      hashtable_set ( ht_connections, &conn->inode, conn );
     }
 
 EXIT:
@@ -174,7 +174,7 @@ remove_dead_conn ( hashtable_t *ht, void *value, UNUSED ( void *user_data ) )
   connection_t *conn = value;
 
   if ( !conn->active )
-    free ( hashtable_remove ( ht, TO_PTR ( conn->inode ) ) );
+    free ( hashtable_remove ( ht, &conn->inode ) );
   else
     conn->active = false;
 
@@ -204,9 +204,9 @@ connection_update ( const int proto )
 }
 
 connection_t *
-connection_get ( const unsigned long int inode )
+connection_get ( const unsigned long inode )
 {
-  return hashtable_get ( ht_connections, TO_PTR ( inode ) );
+  return hashtable_get ( ht_connections, &inode );
 }
 
 void
