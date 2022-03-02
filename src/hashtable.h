@@ -94,7 +94,7 @@ hashtable_remove ( hashtable_t *ht, const void *key );
 void
 hashtable_destroy ( hashtable_t *ht );
 
-/* util to usage pointer as value,
+/* useful to usage pointer as value,
    in argument 'key' the functions set, get and remove */
 #define TO_PTR( v ) ( ( void * ) ( uintptr_t ) v )
 #define FROM_PTR( p ) ( ( uintptr_t ) p )

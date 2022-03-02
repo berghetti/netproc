@@ -146,7 +146,7 @@ to_array ( hashtable_t *ht, void *value, void *user_data )
   process_t *proc = value;
 
   if ( !proc->active )
-    free_process ( hashtable_remove ( ht, TO_PTR ( proc->pid ) ) );
+    free_process ( hashtable_remove ( ht, &proc->pid ) );
   else
     {
       proc->active = false;  // reset status to next update checking
@@ -179,13 +179,14 @@ copy_ht_to_array ( hashtable_t *ht, process_t **proc )
 static int
 cb_compare ( const void *key1, const void *key2 )
 {
-  return ( key1 == key2 );
+  return ( *( pid_t * ) key1 == *( pid_t * ) key2 );
 }
 
+// TODO: use jhash here
 static hash_t
-cb_hash_func ( const void *key )
+cb_hash ( const void *key )
 {
-  size_t k = ( size_t ) FROM_PTR ( key );
+  pid_t k = *(pid_t *)key;
 
   return ( k >> 24 ) ^ ( k >> 16 ) ^ ( k >> 8 ) ^ k;
 }
@@ -197,7 +198,7 @@ processes_init ( void )
   if ( !procs )
     return NULL;
 
-  ht_process = hashtable_new ( cb_hash_func, cb_compare, free_process );
+  ht_process = hashtable_new ( cb_hash, cb_compare, free_process );
   if ( !ht_process )
     {
       free ( procs );
@@ -218,6 +219,7 @@ processes_init ( void )
 int
 processes_get ( struct processes *procs, struct config_op *co )
 {
+  // TODO: check if type uint32_t is correct/safe
   uint32_t *pids = NULL;
   int total_process = get_numeric_directory ( &pids, "/proc/" );
 
@@ -237,6 +239,7 @@ processes_get ( struct processes *procs, struct config_op *co )
   uint32_t *fds = NULL;
   for ( int index_pid = 0; index_pid < total_process; index_pid++ )
     {
+      // TODO: create variable pid_t
       char path_fd[MAX_PATH_FD];
       int ret_sn = snprintf (
               path_fd, sizeof ( path_fd ), "/proc/%d/fd/", pids[index_pid] );
@@ -246,8 +249,7 @@ processes_get ( struct processes *procs, struct config_op *co )
       if ( -1 == total_fd_process )
         continue;
 
-      process_t *proc =
-              hashtable_get ( ht_process, TO_PTR ( pids[index_pid] ) );
+      process_t *proc = hashtable_get ( ht_process, &pids[index_pid] );
 
       if ( proc )
         {
@@ -287,7 +289,7 @@ processes_get ( struct processes *procs, struct config_op *co )
               if ( !proc )
                 break;  // no return error, check others processes
 
-              hashtable_set ( ht_process, TO_PTR ( pids[index_pid] ), proc );
+              hashtable_set ( ht_process, &proc->pid, proc );
             }
 
           vector_push ( proc->conections, &conn );
