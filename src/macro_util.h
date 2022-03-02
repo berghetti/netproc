@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2021 Mayco S. Berghetti
+ *  Copyright (C) 2021-2022 Mayco S. Berghetti
  *
  *  This file is part of Netproc.
  *
@@ -27,8 +27,10 @@
 
 #ifdef __GNUC__
 #define UNUSED( x ) __attribute__ ( ( __unused__ ) ) x
+#define fallthrough __attribute__ ( ( __fallthrough__ ) )
 #else
 #define UNUSED( x )
+#define fallthrough
 #endif
 
 #endif  // MACRO_UTIL_H

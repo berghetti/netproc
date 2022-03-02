@@ -30,27 +30,23 @@
 
 #include "connection.h"
 #include "hashtable.h"
+#include "jhash.h"
 #include "config.h"  // define TCP | UDP
 #include "m_error.h"
 #include "macro_util.h"
 
 static hashtable_t *ht_connections = NULL;
 
-// TODO:create new hash functions later.
-// see
-// https://elixir.bootlin.com/linux/v5.10.19/source/include/linux/jhash.h#L117
 static hash_t
-cb_hash ( const void *key )
+ht_cb_hash ( const void *key )
 {
-  unsigned long k = *(unsigned long *) key;
-
-  return ( k >> 24 ) ^ ( k >> 16 ) ^ ( k >> 8 ) ^ ( k >> 4 ) ^ k;
+  return jhash8(key, sizeof(long), 0);
 }
 
 static int
-cb_compare ( const void *key1, const void *key2 )
+ht_cb_compare ( const void *key1, const void *key2 )
 {
-  return ( *(unsigned long *)key1 == *(unsigned long *)key2 );
+  return ( *( unsigned long * ) key1 == *( unsigned long * ) key2 );
 }
 
 static int
@@ -163,7 +159,7 @@ EXIT:
 bool
 connection_init ( void )
 {
-  ht_connections = hashtable_new ( cb_hash, cb_compare, free );
+  ht_connections = hashtable_new ( ht_cb_hash, ht_cb_compare, free );
 
   return ( NULL != ht_connections );
 }

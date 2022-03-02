@@ -47,6 +47,7 @@ cb_ht_compare ( const void *key1, const void *key2 )
   return check_addr_equal ( ( void * ) key1, ( void * ) key2 );
 }
 
+// TODO: use jhash
 static inline uint32_t
 hash_uint32 ( uint32_t v )
 {

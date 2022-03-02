@@ -27,10 +27,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "processes.h"  // process_t
+#include "jhash.h"
 #include "hashtable.h"
 #include "vector.h"
 #include "full_read.h"
-#include "processes.h"  // process_t
 #include "config.h"
 #include "m_error.h"  // ERROR_DEBUG
 #include "macro_util.h"
@@ -177,18 +178,16 @@ copy_ht_to_array ( hashtable_t *ht, process_t **proc )
 }
 
 static int
-cb_compare ( const void *key1, const void *key2 )
+ht_cb_compare ( const void *key1, const void *key2 )
 {
   return ( *( pid_t * ) key1 == *( pid_t * ) key2 );
 }
 
 // TODO: use jhash here
 static hash_t
-cb_hash ( const void *key )
+ht_cb_hash ( const void *key )
 {
-  pid_t k = *(pid_t *)key;
-
-  return ( k >> 24 ) ^ ( k >> 16 ) ^ ( k >> 8 ) ^ k;
+  return jhash8 ( key, sizeof ( pid_t ), 0 );
 }
 
 struct processes *
@@ -198,7 +197,7 @@ processes_init ( void )
   if ( !procs )
     return NULL;
 
-  ht_process = hashtable_new ( cb_hash, cb_compare, free_process );
+  ht_process = hashtable_new ( ht_cb_hash, ht_cb_compare, free_process );
   if ( !ht_process )
     {
       free ( procs );
