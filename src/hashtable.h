@@ -67,12 +67,12 @@ hashtable_new ( func_hash fhash, func_compare fcompare, func_clear fclear );
 
 /* return pointer value for convenience on sucess */
 void *
-hashtable_set ( hashtable_t *ht, const void *key, void *value );
+hashtable_set ( hashtable_t *restrict ht, const void *key, void *value );
 
 void *
-hashtable_get ( hashtable_t *ht, const void *key );
+hashtable_get ( hashtable_t *restrict ht, const void *key );
 
-typedef int ( *hashtable_foreach_func ) ( hashtable_t *ht,
+typedef int ( *hashtable_foreach_func ) ( hashtable_t * restrict ht,
                                           void *value,
                                           void *user_data );
 
@@ -81,7 +81,7 @@ typedef int ( *hashtable_foreach_func ) ( hashtable_t *ht,
     if 'func' return different of zero hashtable_foreach stop
     and return the value returned from 'func' */
 int
-hashtable_foreach ( hashtable_t *ht,
+hashtable_foreach ( hashtable_t * restrict ht,
                     hashtable_foreach_func func,
                     void *user_data );
 
@@ -89,7 +89,7 @@ hashtable_foreach ( hashtable_t *ht,
   the entry needs to be handled by the user's skin yet (e.g free if necessary )
 */
 void *
-hashtable_remove ( hashtable_t *ht, const void *key );
+hashtable_remove ( hashtable_t * restrict ht, const void *key );
 
 void
 hashtable_destroy ( hashtable_t *ht );

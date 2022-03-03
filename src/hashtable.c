@@ -44,17 +44,27 @@
   ( ( hashtable_entry_t ** ) &( ( slist_item_t * ) ( entry ) )->next )
 
 // makes sure the real size of the buckets array is a power of 2
-static size_t
-round_size ( size_t s )
+// https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+static inline size_t
+next_power2 ( size_t s )
 {
   if ( s < HASHTABLE_MIN_SIZE )
     return HASHTABLE_MIN_SIZE;
 
-  size_t i = HASHTABLE_MIN_SIZE;
-  while ( i < s )
-    i <<= 1;
+  s--;
+  s |= s >> 1;
+  s |= s >> 2;
+  s |= s >> 4;
+  s |= s >> 8;
+  s |= s >> 16;
 
-  return i;
+#if defined (__amd64__) || defined (__x86_64__)
+  s |= s >> 32;
+#endif
+
+  s++;
+
+  return s;
 }
 
 static inline void
@@ -68,7 +78,7 @@ static int
 hashtable_rehash ( hashtable_t *ht )
 {
   size_t num_buckets =
-          round_size ( ( size_t ) ( ht->nentries * HASHTABLE_REHASH_FACTOR ) );
+          next_power2 ( ( size_t ) ( ht->nentries * HASHTABLE_REHASH_FACTOR ) );
 
   if ( num_buckets == ht->nbuckets )
     return 1;
@@ -213,7 +223,7 @@ hashtable_foreach ( hashtable_t *restrict ht,
 
 // https://github.com/mkirchner/linked-list-good-taste/
 void *
-hashtable_remove ( hashtable_t *ht, const void *key )
+hashtable_remove ( hashtable_t * restrict ht, const void *key )
 {
   hash_t hash = ht->fhash ( key );
   size_t index = get_index( hash, ht->nbuckets );

@@ -1,4 +1,5 @@
 
+* use macro %pri% in functions like printf
 * Add support IPv6
 * Usage tcp_diag to get conections
 * add filter of port
