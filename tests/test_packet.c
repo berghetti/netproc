@@ -45,11 +45,12 @@ test_more_fragment ( void )
   TEST_ASSERT_EQUAL_INT ( pkt_1.l3.id, pkt_ip_frag[ret].id );
 
   struct pkt pkt_2 = {
-          .l3 = { .frag_off = htons ( IP_MF ),
-                  .id = 1,  // same id pkt_1, but address differents
-                  .saddr = 0x05050505,
-                  .daddr = 0x06060606 },
-          .l4 = { .source = 1030, .dest = 443 } };
+    .l3 = { .frag_off = htons ( IP_MF ),
+            .id = 1,  // same id pkt_1, but address differents
+            .saddr = 0x05050505,
+            .daddr = 0x06060606 },
+    .l4 = { .source = 1030, .dest = 443 }
+  };
 
   ret = get_fragment ( &pkt_2.l3, &pkt_2.l4 );
   TEST_ASSERT_EQUAL_INT ( 1, ret );  // second position of array pkt_ip_frag

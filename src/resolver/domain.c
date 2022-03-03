@@ -54,6 +54,7 @@ hash_uint32 ( uint32_t v )
   return ( v >> 24 ) ^ ( v >> 16 ) ^ ( v >> 8 ) ^ ( v >> 4 ) ^ v;
 }
 
+// TODO use jhash
 static hash_t
 cb_ht_hash ( const void *key )
 {
@@ -112,15 +113,15 @@ ip2domain_exec ( void *arg )
 
   // convert ipv4 and ipv6
   // if error, convert to text ip same
-  if ( getnameinfo ( ( struct sockaddr * ) &host->ss,
-                     sizeof ( host->ss ),
+  if ( getnameinfo ( ( struct sockaddr * ) &host->sa_all,
+                     sizeof ( host->sa_all ),
                      host->fqdn,
                      sizeof ( host->fqdn ),
                      NULL,
                      0,
                      NI_DGRAM ) )
     {
-      sockaddr_ntop ( &host->ss, host->fqdn, sizeof ( host->fqdn ) );
+      sockaddr_ntop ( &host->sa_all, host->fqdn, sizeof ( host->fqdn ) );
     }
 
   host->status = RESOLVED;
@@ -131,11 +132,9 @@ ip2domain_exec ( void *arg )
 //  0 name no resolved
 // -1 error
 int
-ip2domain ( struct sockaddr_storage *restrict ss,
-            char *buff,
-            const size_t buff_len )
+ip2domain ( union sockaddr_all *sa_all, char *buff, const size_t buff_len )
 {
-  struct host *host = hashtable_get ( ht_hosts, ss );
+  struct host *host = hashtable_get ( ht_hosts, sa_all );
 
   if ( host )
     {
@@ -146,13 +145,13 @@ ip2domain ( struct sockaddr_storage *restrict ss,
         }
       else  // resolving, thread working
         {
-          sockaddr_ntop ( ss, buff, buff_len );
+          sockaddr_ntop ( sa_all, buff, buff_len );
           return 0;
         }
     }
   else  // cache miss
     {
-      sockaddr_ntop ( ss, buff, buff_len );
+      sockaddr_ntop ( sa_all, buff, buff_len );
 
       static size_t index = 0;
 
@@ -161,7 +160,7 @@ ip2domain ( struct sockaddr_storage *restrict ss,
           if ( hosts[index]->status == RESOLVING )
             return 0;
 
-          hashtable_remove ( ht_hosts, &hosts[index]->ss );
+          hashtable_remove ( ht_hosts, &hosts[index]->sa_all );
         }
       else
         {
@@ -171,13 +170,13 @@ ip2domain ( struct sockaddr_storage *restrict ss,
             return -1;
         }
 
-      memcpy ( &hosts[index]->ss, ss, sizeof ( struct sockaddr_storage ) );
+      memcpy ( &hosts[index]->sa_all, sa_all, sizeof ( *sa_all ) );
       hosts[index]->status = RESOLVING;
 
       // add task to workers (thread pool)
       add_task ( ip2domain_exec, hosts[index] );
 
-      hashtable_set ( ht_hosts, &hosts[index]->ss, hosts[index] );
+      hashtable_set ( ht_hosts, &hosts[index]->sa_all, hosts[index] );
 
       index = ( index + 1 ) % cache_size;
     }

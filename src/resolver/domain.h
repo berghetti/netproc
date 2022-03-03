@@ -23,9 +23,11 @@
 #include <sys/socket.h>  // struct sockaddr_storage
 #include <netdb.h>       // NI_MAXHOST
 
+#include "../sockaddr.h"  // union sockaddr_all
+
 struct host
 {
-  struct sockaddr_storage ss;
+  union sockaddr_all sa_all;
   char fqdn[NI_MAXHOST];
   int status;
 };
@@ -41,7 +43,7 @@ cache_domain_init ( unsigned int size );
 // irá retornar o dominio que estará em cache (se tudo der certo).
 // evitando a latencia que uma consulta DNS pode ter.
 int
-ip2domain ( struct sockaddr_storage *ss, char *buff, const size_t buff_len );
+ip2domain ( union sockaddr_all *sa_all, char *buff, const size_t buff_len );
 
 void
 cache_domain_free ( void );

@@ -58,9 +58,9 @@ static int
 bind_interface ( int sock, const char *iface )
 {
   struct sockaddr_ll sock_ll = {
-          .sll_family = AF_PACKET,
-          .sll_protocol = htons ( ETH_P_ALL ),
-          .sll_ifindex = 0  // explicit 0 match all interfaces
+    .sll_family = AF_PACKET,
+    .sll_protocol = htons ( ETH_P_ALL ),
+    .sll_ifindex = 0  // explicit 0 match all interfaces
   };
 
   if ( iface )

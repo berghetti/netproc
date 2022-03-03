@@ -22,14 +22,14 @@
 
 #include <sys/socket.h>
 
+#include "../sockaddr.h"
+
+// return 1 if equal or 0
 int
-check_addr_equal ( struct sockaddr_storage *addr1,
-                   struct sockaddr_storage *addr2 );
+check_addr_equal ( union sockaddr_all *addr1, union sockaddr_all *addr2 );
 
 // transform binary to text
 char *
-sockaddr_ntop ( struct sockaddr_storage *addr,
-                char *buf,
-                const size_t len_buff );
+sockaddr_ntop ( union sockaddr_all *addr, char *buf, const size_t len_buff );
 
 #endif  // SOCK_UTIL_H

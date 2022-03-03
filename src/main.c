@@ -133,8 +133,9 @@ main ( int argc, char **argv )
     }
 
   struct pollfd poll_set[2] = {
-          { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 },
-          { .fd = sock, .events = POLLIN | POLLPRI, .revents = 0 } };
+    { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 },
+    { .fd = sock, .events = POLLIN | POLLPRI, .revents = 0 }
+  };
 
   int block_num = 0;
   struct tpacket_block_desc *pbd;

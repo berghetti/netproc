@@ -83,7 +83,7 @@ static const int color_schemes[TOT_SCHEMES][TOT_ELEMENTS] = {
                 [TREE] = A_DIM,
                 [RESUME] = A_DIM,
                 [RESUME_VALUE] = A_NORMAL,
-        } };
+        }};
 
 static void
 pairs_init ( void )

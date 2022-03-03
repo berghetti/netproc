@@ -22,14 +22,15 @@
 #include <arpa/inet.h>   // inet_ntop
 #include <sys/socket.h>  // struct sockaddr_storage
 
+#include "../sockaddr.h"
+
 int
-check_addr_equal ( struct sockaddr_storage *addr1,
-                   struct sockaddr_storage *addr2 )
+check_addr_equal ( union sockaddr_all *addr1, union sockaddr_all *addr2 )
 {
-  if ( addr1->ss_family != addr2->ss_family )
+  if ( addr1->sa.sa_family != addr2->sa.sa_family )
     return 0;
 
-  switch ( addr1->ss_family )
+  switch ( addr1->sa.sa_family )
     {
       case AF_INET:
         {
@@ -55,25 +56,17 @@ check_addr_equal ( struct sockaddr_storage *addr1,
 }
 
 char *
-sockaddr_ntop ( struct sockaddr_storage *addr,
-                char *buf,
-                const size_t len_buff )
+sockaddr_ntop ( union sockaddr_all *addr, char *buf, const size_t len_buff )
 {
   const char *ret;
 
-  switch ( addr->ss_family )
+  switch ( addr->sa.sa_family )
     {
       case AF_INET:
-        ret = inet_ntop ( AF_INET,
-                          &( ( struct sockaddr_in * ) addr )->sin_addr,
-                          buf,
-                          len_buff );
+        ret = inet_ntop ( AF_INET, &addr->in.sin_addr, buf, len_buff );
         break;
       case AF_INET6:
-        ret = inet_ntop ( AF_INET6,
-                          &( ( struct sockaddr_in6 * ) addr )->sin6_addr,
-                          buf,
-                          len_buff );
+        ret = inet_ntop ( AF_INET6, &addr->in6.sin6_addr, buf, len_buff );
         break;
       default:
         ret = NULL;

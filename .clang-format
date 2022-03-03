@@ -1,6 +1,5 @@
----
 Language:        Cpp
-# BasedOnStyle:  LLVM
+BasedOnStyle: GNU
 AccessModifierOffset: -2
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: false
@@ -50,7 +49,6 @@ CompactNamespaces: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 8
-Cpp11BracedListStyle: true
 DerivePointerAlignment: false
 DisableFormat:   false
 ExperimentalAutoDetectBinPacking: false
@@ -108,6 +106,7 @@ SpacesInContainerLiterals: true
 SpacesInCStyleCastParentheses: true
 SpacesInParentheses: true
 SpacesInSquareBrackets: false
+SpacesInContainerLiterals: true
 Standard:        Cpp11
 TabWidth:        8
 UseTab:          Never

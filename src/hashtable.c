@@ -58,7 +58,7 @@ next_power2 ( size_t s )
   s |= s >> 8;
   s |= s >> 16;
 
-#if defined( __amd64__ ) || defined( __x86_64__ )
+#if __SIZEOF_SIZE_T__ == 8
   s |= s >> 32;
 #endif
 

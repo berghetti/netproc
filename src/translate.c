@@ -26,6 +26,7 @@
 #include <linux/in.h>   // IPPROTO_UDP | IPPROTO_TCP
 
 #include "translate.h"
+#include "sockaddr.h"
 #include "resolver/sock_util.h"
 #include "resolver/resolver.h"
 
@@ -35,46 +36,46 @@ char *
 translate ( const connection_t *con, const struct config_op *co )
 {
   // local_socket
-  struct sockaddr_in l_sock = { .sin_family = AF_INET,
-                                .sin_port = con->local_port,
-                                .sin_addr.s_addr = con->local_address };
-  // remote_socket
-  struct sockaddr_in r_sock = { .sin_family = AF_INET,
-                                .sin_port = con->remote_port,
-                                .sin_addr.s_addr = con->remote_address };
+  union sockaddr_all l_sock = { .in = { .sin_family = AF_INET,
+                                        .sin_port = con->local_port,
+                                        .sin_addr.s_addr =
+                                                con->local_address } };
 
-  char l_host[NI_MAXHOST], l_service[NI_MAXSERV];
-  char r_host[NI_MAXHOST], r_service[NI_MAXSERV];
+  // remote_socket
+  union sockaddr_all r_sock = { .in = { .sin_family = AF_INET,
+                                        .sin_port = con->remote_port,
+                                        .sin_addr.s_addr =
+                                                con->remote_address } };
+
+  char l_host[NI_MAXHOST], r_host[NI_MAXHOST];
 
   if ( co->translate_host )
     {
-      ip2domain ( ( struct sockaddr_storage * ) &l_sock,
-                  l_host,
-                  sizeof ( l_host ) );
-      ip2domain ( ( struct sockaddr_storage * ) &r_sock,
-                  r_host,
-                  sizeof ( r_host ) );
+      ip2domain ( &l_sock, l_host, sizeof ( l_host ) );
+      ip2domain ( &r_sock, r_host, sizeof ( r_host ) );
     }
   else
     {
-      sockaddr_ntop ( ( struct sockaddr_storage * ) &l_sock,
-                      l_host,
-                      sizeof ( l_host ) );
-      sockaddr_ntop ( ( struct sockaddr_storage * ) &r_sock,
-                      r_host,
-                      sizeof ( r_host ) );
+      sockaddr_ntop ( &l_sock, l_host, sizeof ( l_host ) );
+      sockaddr_ntop ( &r_sock, r_host, sizeof ( r_host ) );
     }
+
+  char l_service[NI_MAXSERV], r_service[NI_MAXSERV];
 
   if ( co->translate_service )
     {
       const char *proto = ( con->protocol == IPPROTO_UDP ) ? "udp" : "tcp";
 
-      if ( !port2serv (
-                   l_sock.sin_port, proto, l_service, sizeof ( l_service ) ) )
+      if ( !port2serv ( l_sock.in.sin_port,
+                        proto,
+                        l_service,
+                        sizeof ( l_service ) ) )
         snprintf ( l_service, sizeof ( l_service ), "%u", con->local_port );
 
-      if ( !port2serv (
-                   r_sock.sin_port, proto, r_service, sizeof ( r_service ) ) )
+      if ( !port2serv ( r_sock.in.sin_port,
+                        proto,
+                        r_service,
+                        sizeof ( r_service ) ) )
         snprintf ( r_service, sizeof ( r_service ), "%u", con->remote_port );
     }
   else

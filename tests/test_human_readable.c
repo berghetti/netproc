@@ -25,13 +25,8 @@ void
 test_Byte_per_second_si ( void )
 {
   int values[] = { 0, 500, 1024, 2048, 5000, 9999, 10485760 };
-  char *expected[] = { "0",
-                       "500 B/s",
-                       "1.00 KiB/s",
-                       "2.00 KiB/s",
-                       "4.88 KiB/s",
-                       "9.76 KiB/s",
-                       "10.00 MiB/s" };
+  char *expected[] = { "0",          "500 B/s",    "1.00 KiB/s", "2.00 KiB/s",
+                       "4.88 KiB/s", "9.76 KiB/s", "10.00 MiB/s" };
 
   define_sufix ( false, true );
 
@@ -48,13 +43,8 @@ void
 test_bit_per_second_si ( void )
 {
   int values[] = { 0, 1015, 1024, 2048, 6000, 9999, 10485760 };
-  char *expected[] = { "0",
-                       "1015 b/s",
-                       "1.00 Kib/s",
-                       "2.00 Kib/s",
-                       "5.86 Kib/s",
-                       "9.76 Kib/s",
-                       "10.00 Mib/s" };
+  char *expected[] = { "0",          "1015 b/s",   "1.00 Kib/s", "2.00 Kib/s",
+                       "5.86 Kib/s", "9.76 Kib/s", "10.00 Mib/s" };
 
   define_sufix ( false, false );
 
@@ -71,13 +61,8 @@ void
 test_bit_per_second_iec ( void )
 {
   int values[] = { 0, 999, 1015, 1024, 6000, 9999, 10485760 };
-  char *expected[] = { "0",
-                       "999 b/s",
-                       "1.01 Kb/s",
-                       "1.02 Kb/s",
-                       "6.00 Kb/s",
-                       "10.00 Kb/s",
-                       "10.48 Mb/s" };
+  char *expected[] = { "0",         "999 b/s",    "1.01 Kb/s", "1.02 Kb/s",
+                       "6.00 Kb/s", "10.00 Kb/s", "10.48 Mb/s" };
 
   define_sufix ( true, false );
 
