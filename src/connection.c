@@ -40,7 +40,7 @@ static hashtable_t *ht_connections = NULL;
 static hash_t
 ht_cb_hash ( const void *key )
 {
-  return jhash8(key, sizeof(long), 0);
+  return jhash8 ( key, sizeof ( long ), 0 );
 }
 
 static int

@@ -58,7 +58,7 @@ next_power2 ( size_t s )
   s |= s >> 8;
   s |= s >> 16;
 
-#if defined (__amd64__) || defined (__x86_64__)
+#if defined( __amd64__ ) || defined( __x86_64__ )
   s |= s >> 32;
 #endif
 
@@ -108,8 +108,8 @@ hashtable_rehash ( hashtable_t *ht )
   return 1;
 }
 
-static inline
-size_t get_index( hash_t hash, size_t size )
+static inline size_t
+get_index ( hash_t hash, size_t size )
 {
   return ( hash & ( size - 1 ) );
 }
@@ -118,7 +118,7 @@ static hashtable_entry_t *
 hashtable_get_entry ( hashtable_t *restrict ht, const void *restrict key )
 {
   hash_t hash = ht->fhash ( key );
-  size_t index = get_index( hash, ht->nbuckets );
+  size_t index = get_index ( hash, ht->nbuckets );
 
   hashtable_entry_t *entry = TABLE_HEAD ( ht, index );
   while ( entry )
@@ -179,7 +179,7 @@ hashtable_set ( hashtable_t *restrict ht, const void *key, void *value )
         }
     }
 
-  size_t index = get_index( entry->key_hash, ht->nbuckets );
+  size_t index = get_index ( entry->key_hash, ht->nbuckets );
   hashtable_preprend ( &ht->buckets[index], ( slist_item_t * ) entry );
 
   return value;
@@ -223,13 +223,14 @@ hashtable_foreach ( hashtable_t *restrict ht,
 
 // https://github.com/mkirchner/linked-list-good-taste/
 void *
-hashtable_remove ( hashtable_t * restrict ht, const void *key )
+hashtable_remove ( hashtable_t *restrict ht, const void *key )
 {
   hash_t hash = ht->fhash ( key );
-  size_t index = get_index( hash, ht->nbuckets );
+  size_t index = get_index ( hash, ht->nbuckets );
 
   hashtable_entry_t **entry = PP_TABLE_HEAD ( ht, index );
-  while ( *entry && (*entry)->key_hash != hash && !ht->fcompare ( ( *entry )->key, key ) )
+  while ( *entry && ( *entry )->key_hash != hash &&
+          !ht->fcompare ( ( *entry )->key, key ) )
     entry = PP_ENTRY_NEXT ( *entry );
 
   if ( *entry == NULL )
