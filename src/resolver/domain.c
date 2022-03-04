@@ -48,20 +48,21 @@ cb_ht_hash ( const void *key )
 {
   union sockaddr_all *addr = ( union sockaddr_all * ) key;
 
-  size_t size;
   switch ( addr->sa.sa_family )
     {
       case AF_INET:
-        size = sizeof( addr->in.sin_addr );
+        return jhash32 ( (uint32_t *) &addr->in.sin_addr,
+                          sizeof( addr->in.sin_addr ),
+                          0 );
         break;
       case AF_INET6:
-        size = sizeof( addr->in6.sin6_addr );
+        return jhash32 ( (uint32_t *) &addr->in6.sin6_addr,
+                         sizeof( addr->in6.sin6_addr ),
+                         0 );
         break;
       default:
         return 0;
     }
-
-  return jhash32 ( (uint32_t *) addr, size, 0 );
 }
 
 int
