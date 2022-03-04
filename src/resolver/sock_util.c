@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2020-2021 Mayco S. Berghetti
+ *  Copyright (C) 2020-2022 Mayco S. Berghetti
  *
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -34,43 +34,23 @@ check_addr_equal ( union sockaddr_all *addr1, union sockaddr_all *addr2 )
     {
       case AF_INET:
         {
-          struct sockaddr_in *sa1 = ( struct sockaddr_in * ) addr1;
-          struct sockaddr_in *sa2 = ( struct sockaddr_in * ) addr2;
-
-          return ( sa1->sin_addr.s_addr == sa2->sin_addr.s_addr );
-
-          break;
+          return ( addr1->in.sin_addr.s_addr == addr2->in.sin_addr.s_addr );
         }
       case AF_INET6:
         {
-          struct sockaddr_in6 *sa1 = ( struct sockaddr_in6 * ) addr1;
-          struct sockaddr_in6 *sa2 = ( struct sockaddr_in6 * ) addr2;
-
-          return ( memcmp ( &sa1->sin6_addr,
-                            &sa2->sin6_addr,
-                            sizeof ( sa1->sin6_addr ) ) == 0 );
+          return ( 0 == memcmp ( &addr1->in6.sin6_addr,
+                                 &addr2->in6.sin6_addr,
+                                 sizeof ( addr1->in6.sin6_addr ) ) );
         }
     }
 
   return 0;
 }
 
-char *
-sockaddr_ntop ( union sockaddr_all *addr, char *buf, const size_t len_buff )
+void
+sockaddr_ntop ( union sockaddr_all *addr,
+                char *buf,
+                const size_t len_buff )
 {
-  const char *ret;
-
-  switch ( addr->sa.sa_family )
-    {
-      case AF_INET:
-        ret = inet_ntop ( AF_INET, &addr->in.sin_addr, buf, len_buff );
-        break;
-      case AF_INET6:
-        ret = inet_ntop ( AF_INET6, &addr->in6.sin6_addr, buf, len_buff );
-        break;
-      default:
-        ret = NULL;
-    }
-
-  return ( char * ) ret;
+  inet_ntop( addr->sa.sa_family, &addr->sa, buf, len_buff );
 }

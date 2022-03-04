@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2020-2021 Mayco S. Berghetti
+ *  Copyright (C) 2020-2022 Mayco S. Berghetti
  *
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -24,12 +24,14 @@
 
 #include "../sockaddr.h"
 
-// return 1 if equal or 0
+// return 1 if ip address is equal or 0
 int
 check_addr_equal ( union sockaddr_all *addr1, union sockaddr_all *addr2 );
 
-// transform binary to text
-char *
+/* transform binary ip to text
+   only to AF_INET and AF_INET6,
+  len_buff must be enough to store a ip address of correspodent family */
+void
 sockaddr_ntop ( union sockaddr_all *addr, char *buf, const size_t len_buff );
 
 #endif  // SOCK_UTIL_H
