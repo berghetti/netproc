@@ -34,6 +34,8 @@ CFLAGS += -Wall -Wextra -pedantic -Wformat=2
 # environment var
 ifdef DEBUG
 	CFLAGS += -O0 -ggdb
+#	CFLAGS += -fsanitize=address
+#	LDFLAGS += -fsanitize=address
 else
 	CPPFLAGS += -D NDEBUG
 	CFLAGS += -O2 -flto
