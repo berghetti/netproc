@@ -48,9 +48,7 @@ check_addr_equal ( union sockaddr_all *addr1, union sockaddr_all *addr2 )
 }
 
 void
-sockaddr_ntop ( union sockaddr_all *addr,
-                char *buf,
-                const size_t len_buff )
+sockaddr_ntop ( union sockaddr_all *addr, char *buf, const size_t len_buff )
 {
-  inet_ntop( addr->sa.sa_family, &addr->sa, buf, len_buff );
+  inet_ntop ( addr->sa.sa_family, &addr->sa, buf, len_buff );
 }

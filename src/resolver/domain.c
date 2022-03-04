@@ -51,13 +51,13 @@ cb_ht_hash ( const void *key )
   switch ( addr->sa.sa_family )
     {
       case AF_INET:
-        return jhash32 ( (uint32_t *) &addr->in.sin_addr,
-                          sizeof( addr->in.sin_addr ),
-                          0 );
+        return jhash32 ( ( uint32_t * ) &addr->in.sin_addr,
+                         sizeof ( addr->in.sin_addr ),
+                         0 );
         break;
       case AF_INET6:
-        return jhash32 ( (uint32_t *) &addr->in6.sin6_addr,
-                         sizeof( addr->in6.sin6_addr ),
+        return jhash32 ( ( uint32_t * ) &addr->in6.sin6_addr,
+                         sizeof ( addr->in6.sin6_addr ),
                          0 );
         break;
       default:

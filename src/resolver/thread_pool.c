@@ -41,13 +41,13 @@ struct task
   void *args;                 // arg to function
 };
 
-static struct bsem bsem_jobs = {.mutex = PTHREAD_MUTEX_INITIALIZER,
-                                .cond = PTHREAD_COND_INITIALIZER,
-                                .value = false};
+static struct bsem bsem_jobs = { .mutex = PTHREAD_MUTEX_INITIALIZER,
+                                 .cond = PTHREAD_COND_INITIALIZER,
+                                 .value = false };
 
-static struct bsem bsem_exit = {.mutex = PTHREAD_MUTEX_INITIALIZER,
-                                .cond = PTHREAD_COND_INITIALIZER,
-                                .value = false};
+static struct bsem bsem_exit = { .mutex = PTHREAD_MUTEX_INITIALIZER,
+                                 .cond = PTHREAD_COND_INITIALIZER,
+                                 .value = false };
 
 static volatile bool worker_stop = false;
 
