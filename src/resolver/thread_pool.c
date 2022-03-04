@@ -41,13 +41,13 @@ struct task
   void *args;                 // arg to function
 };
 
-static struct bsem bsem_jobs = { .mutex = PTHREAD_MUTEX_INITIALIZER,
-                                 .cond = PTHREAD_COND_INITIALIZER,
-                                 .value = false };
+static struct bsem bsem_jobs = {.mutex = PTHREAD_MUTEX_INITIALIZER,
+                                .cond = PTHREAD_COND_INITIALIZER,
+                                .value = false};
 
-static struct bsem bsem_exit = { .mutex = PTHREAD_MUTEX_INITIALIZER,
-                                 .cond = PTHREAD_COND_INITIALIZER,
-                                 .value = false };
+static struct bsem bsem_exit = {.mutex = PTHREAD_MUTEX_INITIALIZER,
+                                .cond = PTHREAD_COND_INITIALIZER,
+                                .value = false};
 
 static volatile bool worker_stop = false;
 
@@ -164,7 +164,6 @@ thpool_init ( unsigned int num_workers )
   pthread_attr_t attr;
 
   pthread_attr_init ( &attr );
-  pthread_attr_setstacksize ( &attr, PTHREAD_STACK_MIN );
   pthread_attr_setdetachstate ( &attr, PTHREAD_CREATE_DETACHED );
 
   while ( num_workers-- )
