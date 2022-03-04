@@ -113,7 +113,7 @@ ip2domain_exec ( void *arg )
 
   // convert ipv4 and ipv6
   // if error, convert to text ip same
-  if ( getnameinfo ( ( struct sockaddr * ) &host->sa_all,
+  if ( getnameinfo ( &host->sa_all.sa,
                      sizeof ( host->sa_all ),
                      host->fqdn,
                      sizeof ( host->fqdn ),
