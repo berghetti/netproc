@@ -10,7 +10,11 @@ AllowAllParametersOfDeclarationOnNextLine: false
 AllowAllArgumentsOnNextLine: false
 AllowShortFunctionsOnASingleLine: All
 AlwaysBreakAfterReturnType: All
+BinPackArguments: false
+BinPackParameters: false
 BreakBeforeBinaryOperators: None
+IndentWidth: 2
+IndentCaseLabels: true
 ColumnLimit: 80
 ContinuationIndentWidth: 8
 SpaceAfterCStyleCast: true
@@ -18,8 +22,4 @@ SpacesInParentheses: true
 SpacesInCStyleCastParentheses: true
 SpacesBeforeTrailingComments: 2
 SortIncludes: false
-BinPackArguments: false
-BinPackParameters: false
-IndentWidth: 2
-IndentCaseLabels: true
 ...

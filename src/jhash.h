@@ -88,43 +88,20 @@ jhash8 ( const void *key, uint32_t length, uint32_t initval )
   /* Last block: affect all 32 bits of (c) */
   switch ( length )
     {
-      case 12:
-        c += ( uint32_t ) k[11] << 24;
-        fallthrough;
-      case 11:
-        c += ( uint32_t ) k[10] << 16;
-        fallthrough;
-      case 10:
-        c += ( uint32_t ) k[9] << 8;
-        fallthrough;
-      case 9:
-        c += k[8];
-        fallthrough;
-      case 8:
-        b += ( uint32_t ) k[7] << 24;
-        fallthrough;
-      case 7:
-        b += ( uint32_t ) k[6] << 16;
-        fallthrough;
-      case 6:
-        b += ( uint32_t ) k[5] << 8;
-        fallthrough;
-      case 5:
-        b += k[4];
-        fallthrough;
-      case 4:
-        a += ( uint32_t ) k[3] << 24;
-        fallthrough;
-      case 3:
-        a += ( uint32_t ) k[2] << 16;
-        fallthrough;
-      case 2:
-        a += ( uint32_t ) k[1] << 8;
-        fallthrough;
+      case 12: c += ( uint32_t ) k[11] << 24; FALLTHROUGH;
+      case 11: c += ( uint32_t ) k[10] << 16; FALLTHROUGH;
+      case 10: c += ( uint32_t ) k[9] << 8; FALLTHROUGH;
+      case 9: c += k[8]; FALLTHROUGH;
+      case 8: b += ( uint32_t ) k[7] << 24; FALLTHROUGH;
+      case 7: b += ( uint32_t ) k[6] << 16; FALLTHROUGH;
+      case 6: b += ( uint32_t ) k[5] << 8; FALLTHROUGH;
+      case 5: b += k[4]; FALLTHROUGH;
+      case 4: a += ( uint32_t ) k[3] << 24; FALLTHROUGH;
+      case 3: a += ( uint32_t ) k[2] << 16; FALLTHROUGH;
+      case 2: a += ( uint32_t ) k[1] << 8; FALLTHROUGH;
       case 1:
         a += k[0];
         JHASH_FINAL ( a, b, c );
-        break;
     }
 
   return c;
@@ -159,16 +136,11 @@ jhash32 ( const uint32_t *k, uint32_t length, uint32_t initval )
   /* Handle the last 3 uint32_t's */
   switch ( length )
     {
-      case 3:
-        c += k[2];
-        fallthrough;
-      case 2:
-        b += k[1];
-        fallthrough;
+      case 3: c += k[2]; FALLTHROUGH;
+      case 2: b += k[1]; FALLTHROUGH;
       case 1:
         a += k[0];
         JHASH_FINAL ( a, b, c );
-        break;
     }
 
   return c;

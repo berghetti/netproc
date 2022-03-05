@@ -27,10 +27,10 @@
 
 #ifdef __GNUC__
 #define UNUSED __attribute__ ( ( __unused__ ) )
-#define fallthrough __attribute__ ( ( __fallthrough__ ) )
+#define FALLTHROUGH __attribute__ ( ( __fallthrough__ ) )
 #else
 #define UNUSED( x )
-#define fallthrough
+#define FALLTHROUGH
 #endif
 
 #endif  // MACRO_UTIL_H
