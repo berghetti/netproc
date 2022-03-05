@@ -193,8 +193,10 @@ show_header ( const struct config_op *co )
 
   // paint to the end of line
   wattrset ( pad, color_scheme[HEADER] );
-  wprintw (
-          pad, "%*s", -( cur_cols - ( PROGRAM + max_digits_pid ) ), "PROGRAM" );
+  wprintw ( pad,
+            "%*s",
+            -( cur_cols - ( PROGRAM + max_digits_pid ) ),
+            "PROGRAM" );
 
   wattrset ( pad, color_scheme[RESET] );
 
@@ -410,17 +412,25 @@ tui_show ( const struct processes *processes, const struct config_op *co )
 
       char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
       char tx_tot[LEN_STR_TOTAL], rx_tot[LEN_STR_TOTAL];
-      human_readable (
-              tx_rate, sizeof tx_rate, process->net_stat.avg_Bps_tx, RATE );
+      human_readable ( tx_rate,
+                       sizeof tx_rate,
+                       process->net_stat.avg_Bps_tx,
+                       RATE );
 
-      human_readable (
-              rx_rate, sizeof rx_rate, process->net_stat.avg_Bps_rx, RATE );
+      human_readable ( rx_rate,
+                       sizeof rx_rate,
+                       process->net_stat.avg_Bps_rx,
+                       RATE );
 
-      human_readable (
-              tx_tot, sizeof tx_tot, process->net_stat.tot_Bps_tx, TOTAL );
+      human_readable ( tx_tot,
+                       sizeof tx_tot,
+                       process->net_stat.tot_Bps_tx,
+                       TOTAL );
 
-      human_readable (
-              rx_tot, sizeof rx_tot, process->net_stat.tot_Bps_rx, TOTAL );
+      human_readable ( rx_tot,
+                       sizeof rx_tot,
+                       process->net_stat.tot_Bps_rx,
+                       TOTAL );
 
       wprintw ( pad,
                 "%*d %*ld %*ld %*s %*s %*s %*s ",
@@ -490,8 +500,13 @@ tui_show ( const struct processes *processes, const struct config_op *co )
 
   show_header ( co );
 
-  pnoutrefresh (
-          pad, scroll_y, scroll_x, LINE_START + 1, 0, LINES - 1, COLS - 1 );
+  pnoutrefresh ( pad,
+                 scroll_y,
+                 scroll_x,
+                 LINE_START + 1,
+                 0,
+                 LINES - 1,
+                 COLS - 1 );
 
   // full refresh
   doupdate ();

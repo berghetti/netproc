@@ -114,9 +114,11 @@ filter_set ( int sock, const int flags_proto )
   if ( !filter_get ( &fprog, flags_proto ) )
     return false;
 
-  if ( setsockopt (
-               sock, SOL_SOCKET, SO_ATTACH_FILTER, &fprog, sizeof ( fprog ) ) ==
-       -1 )
+  if ( setsockopt ( sock,
+                    SOL_SOCKET,
+                    SO_ATTACH_FILTER,
+                    &fprog,
+                    sizeof ( fprog ) ) == -1 )
     {
       ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
       return false;

@@ -142,8 +142,9 @@ log_init ( const char *path_log )
 
   if ( !file )
     {
-      ERROR_DEBUG (
-              "Error open/create file '%s': %s", path_log, strerror ( errno ) );
+      ERROR_DEBUG ( "Error open/create file '%s': %s",
+                    path_log,
+                    strerror ( errno ) );
       return 0;
     }
 
@@ -157,8 +158,13 @@ log_init ( const char *path_log )
       return 0;
     }
 
-  fprintf (
-          file, "%*s%*s%s\n", -TAXA, "TOTAL TX", -TAXA, "TOTAL RX", "PROGRAM" );
+  fprintf ( file,
+            "%*s%*s%s\n",
+            -TAXA,
+            "TOTAL TX",
+            -TAXA,
+            "TOTAL RX",
+            "PROGRAM" );
 
   return 1;
 }

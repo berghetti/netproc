@@ -239,8 +239,10 @@ processes_get ( struct processes *procs, struct config_op *co )
     {
       // TODO: create variable pid_t
       char path_fd[MAX_PATH_FD];
-      int ret_sn = snprintf (
-              path_fd, sizeof ( path_fd ), "/proc/%d/fd/", pids[index_pid] );
+      int ret_sn = snprintf ( path_fd,
+                              sizeof ( path_fd ),
+                              "/proc/%d/fd/",
+                              pids[index_pid] );
 
       int total_fd_process = get_numeric_directory ( &fds, path_fd );
 
