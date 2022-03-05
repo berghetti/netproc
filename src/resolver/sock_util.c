@@ -50,5 +50,12 @@ check_addr_equal ( union sockaddr_all *addr1, union sockaddr_all *addr2 )
 void
 sockaddr_ntop ( union sockaddr_all *addr, char *buf, const size_t len_buff )
 {
-  inet_ntop ( addr->sa.sa_family, &addr->sa, buf, len_buff );
+  switch ( addr->sa.sa_family )
+    {
+      case AF_INET:
+        inet_ntop ( AF_INET, &addr->in.sin_addr, buf, len_buff );
+        break;
+      case AF_INET6:
+        inet_ntop ( AF_INET6, &addr->in6.sin6_addr, buf, len_buff );
+    }
 }
