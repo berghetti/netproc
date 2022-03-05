@@ -53,11 +53,13 @@ fatal_config ( const char *msg )
   exit ( EXIT_FAILURE );
 }
 
-static void view_bytes ( UNUSED ( char *arg ) )
+static void
+view_bytes ( UNUSED char *arg )
 {
   co.view_bytes = true;
 }
-static void view_conections ( UNUSED ( char *arg ) )
+static void
+view_conections ( UNUSED char *arg )
 {
   co.view_conections = true;
 }
@@ -83,7 +85,8 @@ log_file ( char *arg )
     co.path_log = arg;
 }
 
-static void show_help ( UNUSED ( char *arg ) )
+static void
+show_help ( UNUSED char *arg )
 {
   usage ();
   exit ( EXIT_SUCCESS );
@@ -98,18 +101,21 @@ iface ( char *arg )
   co.iface = arg;
 }
 
-static void show_numeric_host ( UNUSED ( char *arg ) )
+static void
+show_numeric_host ( UNUSED char *arg )
 {
   co.view_conections = true;
   co.translate_host = false;
 }
-static void show_numeric_port ( UNUSED ( char *arg ) )
+static void
+show_numeric_port ( UNUSED char *arg )
 {
   co.view_conections = true;
   co.translate_service = false;
 }
 
-static void show_numeric ( UNUSED ( char *arg ) )
+static void
+show_numeric ( UNUSED char *arg )
 {
   show_numeric_host ( NULL );
   show_numeric_port ( NULL );
@@ -128,17 +134,20 @@ set_proto ( char *arg )
     fatal_config ( "Invalid protocol in argument '-p'" );
 }
 
-static void view_si ( UNUSED ( char *arg ) )
+static void
+view_si ( UNUSED char *arg )
 {
   co.view_si = true;
 }
 
-static void verbose ( UNUSED ( char *arg ) )
+static void
+verbose ( UNUSED char *arg )
 {
   co.verbose = true;
 }
 
-static void version ( UNUSED ( char *arg ) )
+static void
+version ( UNUSED char *arg )
 {
   show_version ();
   exit ( EXIT_SUCCESS );

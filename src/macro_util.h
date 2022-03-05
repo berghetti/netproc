@@ -26,7 +26,7 @@
 #define ARRAY_SIZE( x ) ( sizeof ( x ) / sizeof ( x[0] ) )
 
 #ifdef __GNUC__
-#define UNUSED( x ) __attribute__ ( ( __unused__ ) ) x
+#define UNUSED __attribute__ ( ( __unused__ ) )
 #define fallthrough __attribute__ ( ( __fallthrough__ ) )
 #else
 #define UNUSED( x )
