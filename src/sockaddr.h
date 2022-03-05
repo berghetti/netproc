@@ -2,8 +2,9 @@
 #define SOCKADDR_H
 
 #include <stdint.h>
-#include <linux/in.h>   // struct sockeaddr_in
-#include <linux/in6.h>  // struct sockeaddr_in6
+#include <sys/socket.h> // struct sockaddr
+#include <linux/in.h>   // struct sockaddr_in
+#include <linux/in6.h>  // struct sockaddr_in6
 
 // information network layer
 union inet_all
@@ -45,7 +46,6 @@ union sockaddr_all
   struct sockaddr sa;
   struct sockaddr_in in;
   struct sockaddr_in6 in6;
-  struct sockaddr_storage ss;
 };
 
 #endif  // SOCKADDR_H

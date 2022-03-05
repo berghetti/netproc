@@ -50,7 +50,6 @@
 	b ^= a; b -= rot(a, 14);		\
 	c ^= b; c -= rot(b, 24);		\
 }
-// clang-format on
 
 /* An arbitrary initial parameter */
 #define JHASH_INITVAL 0xDEADBEEF
@@ -146,4 +145,5 @@ jhash32 ( const uint32_t *k, uint32_t length, uint32_t initval )
   return c;
 }
 
+// clang-format on
 #endif /* JHASH_H */

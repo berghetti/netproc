@@ -27,20 +27,16 @@
 int
 check_addr_equal ( union sockaddr_all *addr1, union sockaddr_all *addr2 )
 {
-  if ( addr1->sa.sa_family != addr2->sa.sa_family )
-    return 0;
-
-  switch ( addr1->sa.sa_family )
+  if ( addr1->sa.sa_family == addr2->sa.sa_family )
     {
-      case AF_INET:
+      switch ( addr1->sa.sa_family )
         {
-          return ( addr1->in.sin_addr.s_addr == addr2->in.sin_addr.s_addr );
-        }
-      case AF_INET6:
-        {
-          return ( 0 == memcmp ( &addr1->in6.sin6_addr,
-                                 &addr2->in6.sin6_addr,
-                                 sizeof ( addr1->in6.sin6_addr ) ) );
+          case AF_INET:
+            return ( addr1->in.sin_addr.s_addr == addr2->in.sin_addr.s_addr );
+          case AF_INET6:
+            return ( 0 == memcmp ( &addr1->in6.sin6_addr,
+                                   &addr2->in6.sin6_addr,
+                                   sizeof ( addr1->in6.sin6_addr ) ) );
         }
     }
 
