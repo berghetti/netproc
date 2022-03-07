@@ -35,8 +35,8 @@ CFLAGS += -Wall -Wextra -pedantic -Wformat=2
 ifdef DEBUG
 	CFLAGS += -O0 -ggdb -fsanitize=address
 	LDFLAGS += -fsanitize=address
-else if DEV
-	CFLAGS += -O2 -ggdb
+else ifdef DEV
+	CFLAGS += -O0 -ggdb
 else
 	CPPFLAGS += -D NDEBUG
 	CFLAGS += -O2 -flto

@@ -222,14 +222,10 @@ processes_get ( struct processes *procs, struct config_op *co )
   int total_process = get_numeric_directory ( &pids, "/proc/" );
 
   if ( -1 == total_process )
-    {
-      ERROR_DEBUG ( "%s", "backtrace" );
-      return 0;
-    }
+    return 0;
 
   if ( !connection_update ( co->proto ) )
     {
-      ERROR_DEBUG ( "%s", "backtrace" );
       free ( pids );
       return 0;
     }
@@ -278,7 +274,7 @@ processes_get ( struct processes *procs, struct config_op *co )
           if ( 1 != sscanf ( data_fd, "socket:[%lu", &inode ) )
             continue;
 
-          connection_t *conn = connection_get ( inode );
+          connection_t *conn = connection_get_by_inode ( inode );
 
           if ( !conn )
             continue;
@@ -292,6 +288,7 @@ processes_get ( struct processes *procs, struct config_op *co )
               hashtable_set ( ht_process, &proc->pid, proc );
             }
 
+          conn->proc = proc;
           vector_push ( proc->conections, &conn );
         }
 

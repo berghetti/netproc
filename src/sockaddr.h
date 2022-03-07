@@ -2,9 +2,8 @@
 #define SOCKADDR_H
 
 #include <stdint.h>
-#include <sys/socket.h> // struct sockaddr
-#include <linux/in.h>   // struct sockaddr_in
-#include <linux/in6.h>  // struct sockaddr_in6
+#include <sys/socket.h>  // struct sockaddr
+#include <netinet/in.h>  // struct sockaddr_in sockaddr_in6
 
 // information network layer
 union inet_all
@@ -18,24 +17,21 @@ union inet_all
 
 struct layer3
 {
-  union inet_all source;
-  union inet_all dest;
+  union inet_all local;
+  union inet_all remote;
+  // uint16_t l3_proto; // ipv4 or ipv6
 };
 
 // information transport layer (only port)
-struct itran
-{
-  uint16_t port;
-};
-
 struct layer4
 {
-  struct itran source;
-  struct itran dest;
+  uint16_t local_port;
+  uint16_t remote_port;
+  uint8_t protocol;  // l4 protocol number (e.g 6 to TCP or 17 to UDP)
 };
 
-// connection identify
-struct conn
+// typle identify a connection ip:port <-> ip:port
+struct tuple
 {
   struct layer3 l3;
   struct layer4 l4;

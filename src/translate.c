@@ -35,17 +35,19 @@
 char *
 translate ( const connection_t *con, const struct config_op *co )
 {
+  // NOTE: structs members should be zered
+
   // local_socket
   union sockaddr_all l_sock = { .in = { .sin_family = AF_INET,
-                                        .sin_port = con->local_port,
+                                        .sin_port = con->tuple.l4.local_port,
                                         .sin_addr.s_addr =
-                                                con->local_address } };
+                                                con->tuple.l3.local.ip } };
 
   // remote_socket
   union sockaddr_all r_sock = { .in = { .sin_family = AF_INET,
-                                        .sin_port = con->remote_port,
+                                        .sin_port = con->tuple.l4.remote_port,
                                         .sin_addr.s_addr =
-                                                con->remote_address } };
+                                                con->tuple.l3.remote.ip } };
 
   char l_host[NI_MAXHOST], r_host[NI_MAXHOST];
 
@@ -64,24 +66,37 @@ translate ( const connection_t *con, const struct config_op *co )
 
   if ( co->translate_service )
     {
-      const char *proto = ( con->protocol == IPPROTO_UDP ) ? "udp" : "tcp";
+      const char *proto =
+              ( con->tuple.l4.protocol == IPPROTO_UDP ) ? "udp" : "tcp";
 
       if ( !port2serv ( l_sock.in.sin_port,
                         proto,
                         l_service,
                         sizeof ( l_service ) ) )
-        snprintf ( l_service, sizeof ( l_service ), "%u", con->local_port );
+        snprintf ( l_service,
+                   sizeof ( l_service ),
+                   "%u",
+                   con->tuple.l4.local_port );
 
       if ( !port2serv ( r_sock.in.sin_port,
                         proto,
                         r_service,
                         sizeof ( r_service ) ) )
-        snprintf ( r_service, sizeof ( r_service ), "%u", con->remote_port );
+        snprintf ( r_service,
+                   sizeof ( r_service ),
+                   "%u",
+                   con->tuple.l4.remote_port );
     }
   else
     {
-      snprintf ( l_service, sizeof ( l_service ), "%u", con->local_port );
-      snprintf ( r_service, sizeof ( r_service ), "%u", con->remote_port );
+      snprintf ( l_service,
+                 sizeof ( l_service ),
+                 "%u",
+                 con->tuple.l4.local_port );
+      snprintf ( r_service,
+                 sizeof ( r_service ),
+                 "%u",
+                 con->tuple.l4.remote_port );
     }
 
   // tuple ip:port <-> ip:port

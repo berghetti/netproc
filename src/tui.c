@@ -19,9 +19,8 @@
  */
 
 #include <stdbool.h>
-#include <string.h>    // strlen
-#include <net/if.h>    // if_indextoname, IF_NAMESIZE
-#include <linux/in.h>  // IPPROTO_TCP
+#include <string.h>  // strlen
+#include <net/if.h>  // if_indextoname, IF_NAMESIZE
 #include <ncurses.h>
 
 #include "str.h"
@@ -306,8 +305,9 @@ show_connections ( const process_t *process, const struct config_op *co )
                 IF_NAMESIZE,
                 iface,
                 -11,
-                ( process->conections[i]->protocol == IPPROTO_TCP ) ? "(tcp)"
-                                                                    : "(udp)" );
+                ( process->conections[i]->tuple.l4.protocol == IPPROTO_TCP )
+                        ? "(tcp)"
+                        : "(udp)" );
 
       // space tuple
       wprintw ( pad, "%*s", TUPLE, "" );

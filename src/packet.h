@@ -25,22 +25,20 @@
 #include <sys/socket.h>       // setsockopt
 #include <linux/if_packet.h>  // struct tpacket3_hdr
 
-// values of packet.direction
-#define PKT_DOWN 1
-#define PKT_UPL 2
+#include "sockaddr.h"
 
 // used for function parse_packet e statistics
 struct packet
 {
-  size_t lenght;
-  int if_index;
-  uint32_t local_address;
-  uint32_t remote_address;
-  uint16_t local_port;
-  uint16_t remote_port;
-  uint8_t protocol;
-  uint8_t direction;
+  struct tuple tuple;  // source and dest ip/port
+  uint32_t lenght;     // lenght of packet
+  int if_index;        // interface index
+  uint8_t direction;   // tx or rx
 };
+
+// packet.direction
+#define PKT_DOWN 1
+#define PKT_UPL 2
 
 // preenche a struct packet com os dados do pacote recebido
 int

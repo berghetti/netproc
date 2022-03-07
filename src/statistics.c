@@ -28,92 +28,117 @@
 #include "rate.h"
 #include "processes.h"
 
-static bool
-conection_match_packet ( connection_t *conection, const struct packet *pkt )
-{
-  if ( conection->protocol != pkt->protocol )
-    return false;
+// static bool
+// conection_match_packet ( connection_t *conection, const struct packet *pkt )
+// {
+//   if ( conection->protocol != pkt->protocol )
+//     return false;
+//
+//   // TCP must correspond exactly with the packet, if not, skip
+//   if ( pkt->protocol == IPPROTO_TCP &&
+//        ( conection->local_port != pkt->local_port ||
+//          conection->remote_port != pkt->remote_port ||
+//          conection->remote_address != pkt->remote_address ) )
+//     {
+//       return false;
+//     }
+//
+//   if ( pkt->protocol == IPPROTO_UDP )
+//     {
+//       // the local port is the only parameter that the kernel exports
+//       // in certain UDP situations (like a torrent),
+//       // if that is different, skip
+//       if ( conection->local_port != pkt->local_port )
+//         return false;
+//
+//       // UDP connections with state TCP_ESTABLISHED must
+//       // correspond exactly with the packet, if not, skip
+//       else if ( conection->state == TCP_ESTABLISHED &&
+//                 ( conection->remote_port != pkt->remote_port ||
+//                   conection->remote_address != pkt->remote_address ) )
+//         return false;
+//
+//       // udp connections have no state, however the kernel tries
+//       // to correlate udp packets into connections, when it is able
+//       // to assign the virtual state TCP_ESTABLISHED, when it is
+//       // unable to assign the state TCP_CLOSE, and it ends up not
+//       // exporting some data in /proc/net/udp, but we can "retrieve"
+//       // that information from the captured packet
+//       if ( conection->state == TCP_CLOSE )
+//         {
+//           conection->local_address = pkt->local_address;
+//           conection->remote_address = pkt->remote_address;
+//           conection->remote_port = pkt->remote_port;
+//         }
+//     }
+//
+//   return true;
+// }
 
-  // TCP must correspond exactly with the packet, if not, skip
-  if ( pkt->protocol == IPPROTO_TCP &&
-       ( conection->local_port != pkt->local_port ||
-         conection->remote_port != pkt->remote_port ||
-         conection->remote_address != pkt->remote_address ) )
-    {
-      return false;
-    }
-
-  if ( pkt->protocol == IPPROTO_UDP )
-    {
-      // the local port is the only parameter that the kernel exports
-      // in certain UDP situations (like a torrent),
-      // if that is different, skip
-      if ( conection->local_port != pkt->local_port )
-        return false;
-
-      // UDP connections with state TCP_ESTABLISHED must
-      // correspond exactly with the packet, if not, skip
-      else if ( conection->state == TCP_ESTABLISHED &&
-                ( conection->remote_port != pkt->remote_port ||
-                  conection->remote_address != pkt->remote_address ) )
-        return false;
-
-      // udp connections have no state, however the kernel tries
-      // to correlate udp packets into connections, when it is able
-      // to assign the virtual state TCP_ESTABLISHED, when it is
-      // unable to assign the state TCP_CLOSE, and it ends up not
-      // exporting some data in /proc/net/udp, but we can "retrieve"
-      // that information from the captured packet
-      if ( conection->state == TCP_CLOSE )
-        {
-          conection->local_address = pkt->local_address;
-          conection->remote_address = pkt->remote_address;
-          conection->remote_port = pkt->remote_port;
-        }
-    }
-
-  return true;
-}
+// static bool
+// check_udp( struct tuple *tp1, struct tuple *tp2 )
+// {
+//   if ( ( tp1->l4.remote_port != tp2->l4.remote_port ||
+//          tp1->l3.remote.ip != tp2->l3.remote.ip ) )
+//     return false;
+//
+// }
 
 bool
 statistics_add ( struct processes *processes,
                  const struct packet *pkt,
                  const struct config_op *co )
 {
-  for ( process_t **proc = processes->proc; *proc; proc++ )
+  connection_t *conn;
+
+  // if ( pkt->tuple.l4.protocol == IPPROTO_UDP )
+  //   {
+  //     struct tuple fake_pkt = { .l4.local_port = pkt->tuple.l4.local_port };
+  //     conn = connection_get_by_typle ( ( struct tuple * ) &pkt->tuple );
+  //
+  //     if ( conn )
+  //       {
+  //         switch (conn->state)
+  //           {
+  //             case TCP_ESTABLISHED:
+  //               conection->remote_port != pkt->remote_port ||
+  //               conection->remote_address != pkt->remote_address ) )
+  //             case TCP_CLOSE:
+  //           }
+  //       }
+  //   }
+
+
+  conn = connection_get_by_typle ( ( struct tuple * ) &pkt->tuple );
+
+  if ( conn )
     {
-      process_t *process = *proc;
+      process_t *proc = conn->proc;
 
-      // percorre todas as conexões do processo...
-      for ( size_t c = 0; c < process->total_conections; c++ )
+      /* connection was added but at the time of associating to a process
+         the process had already been closed (probably) */
+      if ( !proc )
+        return false;
+
+      conn->if_index = pkt->if_index;
+
+      switch ( pkt->direction )
         {
-          // check if packet math con conection from this process
-          if ( !conection_match_packet ( process->conections[c], pkt ) )
-            continue;
+          case PKT_DOWN:
+            rate_add_rx ( &proc->net_stat, pkt->lenght );
 
-          process->conections[c]->if_index = pkt->if_index;
+            if ( co->view_conections )
+              rate_add_rx ( &conn->net_stat, pkt->lenght );
 
-          if ( pkt->direction == PKT_DOWN )
-            {
-              // estatisticas geral do processo
-              rate_add_rx ( &process->net_stat, pkt->lenght );
+            break;
+          case PKT_UPL:
+            rate_add_tx ( &proc->net_stat, pkt->lenght );
 
-              // adicionado estatisticas exclusiva da conexão
-              if ( co->view_conections )
-                rate_add_rx ( &process->conections[c]->net_stat, pkt->lenght );
-            }
-          else
-            {
-              // estatisticas geral do processo
-              rate_add_tx ( &process->net_stat, pkt->lenght );
-
-              // adicionado estatisticas exclusiva da conexão
-              if ( co->view_conections )
-                rate_add_tx ( &process->conections[c]->net_stat, pkt->lenght );
-            }
-
-          return true;
+            if ( co->view_conections )
+              rate_add_tx ( &conn->net_stat, pkt->lenght );
         }
+
+      return true;
     }
 
   return false;

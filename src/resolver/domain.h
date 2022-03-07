@@ -20,8 +20,7 @@
 #ifndef DOMAIN_H
 #define DOMAIN_H
 
-#include <sys/socket.h>  // struct sockaddr_storage
-#include <netdb.h>       // NI_MAXHOST
+#include <netdb.h>  // NI_MAXHOST
 
 #include "../sockaddr.h"  // union sockaddr_all
 

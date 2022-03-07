@@ -25,7 +25,6 @@
 #include <stdbool.h>
 #include <stdio.h>        // FILE *
 #include <string.h>       // strlen, strerror
-#include <linux/in.h>     // IPPROTO_UDP | IPPROTO_TCP
 #include <netinet/tcp.h>  // TCP_ESTABLISHED, TCP_TIME_WAIT...
 
 #include "connection.h"
@@ -37,16 +36,149 @@
 
 static hashtable_t *ht_connections = NULL;
 
+// values to key_type
+#define KEY_INODE 1
+#define KEY_TUPLE 2
+
+static int key_type;
+
+void
+print_tuple ( struct tuple *tp1, struct tuple *tp2 )
+{
+  fprintf ( stderr,
+            "tuple 1\n"
+            "local ip - %d\n"
+            "remote ip - %d\n"
+            "protocol - %d\n"
+            "local_port - %d\n"
+            "remote_port - %d\n\n",
+            tp1->l3.local.ip,
+            tp1->l3.remote.ip,
+            tp1->l4.protocol,
+            tp1->l4.local_port,
+            tp1->l4.remote_port );
+
+  fprintf ( stderr,
+            "tuple 2\n"
+            "local ip - %d\n"
+            "remote ip - %d\n"
+            "protocol - %d\n"
+            "local_port - %d\n"
+            "remote_port - %d\n\n",
+            tp2->l3.local.ip,
+            tp2->l3.remote.ip,
+            tp2->l4.protocol,
+            tp2->l4.local_port,
+            tp2->l4.remote_port );
+}
+
 static hash_t
 ht_cb_hash ( const void *key )
 {
-  return jhash8 ( key, sizeof ( long ), 0 );
+  switch ( key_type )
+    {
+      case KEY_INODE:
+        return jhash8 ( key, SIZEOF_MEMBER ( connection_t, inode ), 0 );
+      case KEY_TUPLE:
+        return jhash8 ( key, SIZEOF_MEMBER ( connection_t, tuple ), 0 );
+    }
+
+  return 0;
 }
 
 static int
 ht_cb_compare ( const void *key1, const void *key2 )
 {
-  return ( *( unsigned long * ) key1 == *( unsigned long * ) key2 );
+  switch ( key_type )
+    {
+      case KEY_INODE:
+        return ( *( unsigned long * ) key1 == *( unsigned long * ) key2 );
+      case KEY_TUPLE:
+        print_tuple ( ( struct tuple * ) key1, ( struct tuple * ) key2 );
+        return ( 0 == memcmp ( key1, key2, sizeof ( struct tuple ) ) );
+    }
+
+  return 0;
+}
+
+static void
+ht_cb_free ( void *arg )
+{
+  connection_t *conn = arg;
+
+  if ( !conn->active )
+    {
+      conn->active = true;
+      return;
+    }
+
+  free ( conn );
+}
+
+static connection_t *
+create_new_conn ( unsigned long inode,
+                  char *local_addr,
+                  char *remote_addr,
+                  uint16_t local_port,
+                  uint16_t rem_port,
+                  uint8_t state,
+                  int protocol )
+{
+  // using calloc to ensure that struct tuple is clean
+  connection_t *conn = calloc ( 1, sizeof ( connection_t ) );
+  if ( !conn )
+    {
+      ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
+      return NULL;
+    }
+
+  int rs = sscanf ( local_addr, "%x", &conn->tuple.l3.local.ip );
+
+  if ( 1 != rs )
+    goto EXIT_ERROR;
+
+  rs = sscanf ( remote_addr, "%x", &conn->tuple.l3.remote.ip );
+
+  if ( 1 != rs )
+    goto EXIT_ERROR;
+
+  conn->tuple.l4.local_port = local_port;
+  conn->tuple.l4.remote_port = rem_port;
+  conn->tuple.l4.protocol = protocol;
+  conn->state = state;
+  conn->inode = inode;
+
+  conn->active = true;
+  // memset ( &conn->net_stat, 0, sizeof ( struct net_stat ) );
+
+  return conn;
+
+EXIT_ERROR:
+  ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
+  free ( conn );
+  return NULL;
+}
+
+static inline void
+connection_insert_by_inode ( connection_t *conn )
+{
+  key_type = KEY_INODE;
+  hashtable_set ( ht_connections, &conn->inode, conn );
+}
+
+static inline void
+connection_insert_by_tuple ( connection_t *conn )
+{
+  key_type = KEY_TUPLE;
+  hashtable_set ( ht_connections, &conn->tuple, conn );
+}
+
+static inline void
+connection_insert ( connection_t *conn )
+{
+  // make two entris in hashtable to same connection
+  connection_insert_by_inode( conn );
+  connection_insert_by_tuple( conn );
 }
 
 static int
@@ -105,7 +237,8 @@ connection_update_ ( const char *path_file, const int protocol )
       if ( state == TCP_TIME_WAIT || state == TCP_LISTEN )
         continue;
 
-      connection_t *conn = hashtable_get ( ht_connections, &inode );
+      // TODO: need check to tuple here? linux recycling inode?
+      connection_t *conn = connection_get_by_inode ( inode );
 
       if ( conn )
         {
@@ -113,40 +246,20 @@ connection_update_ ( const char *path_file, const int protocol )
           continue;
         }
 
-      conn = malloc ( sizeof ( connection_t ) );
+      conn = create_new_conn ( inode,
+                               local_addr,
+                               rem_addr,
+                               local_port,
+                               rem_port,
+                               state,
+                               protocol );
       if ( !conn )
         {
-          ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
           ret = 0;
           goto EXIT;
         }
 
-      memset ( &conn->net_stat, 0, sizeof ( struct net_stat ) );
-
-      rs = sscanf ( local_addr, "%x", &conn->local_address );
-      if ( rs != 1 )
-        {
-          ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-          ret = 0;
-          goto EXIT;
-        }
-
-      rs = sscanf ( rem_addr, "%x", &conn->remote_address );
-      if ( rs != 1 )
-        {
-          ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
-          ret = 0;
-          goto EXIT;
-        }
-
-      conn->local_port = local_port;
-      conn->remote_port = rem_port;
-      conn->state = state;
-      conn->inode = inode;
-      conn->protocol = protocol;
-      conn->active = true;
-
-      hashtable_set ( ht_connections, &conn->inode, conn );
+      connection_insert ( conn );
     }
 
 EXIT:
@@ -159,22 +272,45 @@ EXIT:
 bool
 connection_init ( void )
 {
-  ht_connections = hashtable_new ( ht_cb_hash, ht_cb_compare, free );
+  // TODO: check free
+  ht_connections = hashtable_new ( ht_cb_hash, ht_cb_compare, ht_cb_free );
 
   return ( NULL != ht_connections );
 }
 
-static int
-remove_dead_conn ( hashtable_t *ht, void *value, UNUSED void *user_data )
+static inline void
+connection_remove_by_inode ( connection_t *conn )
 {
-  connection_t *conn = value;
+  key_type = KEY_INODE;
+  hashtable_remove ( ht_connections, &conn->inode );
+}
 
-  if ( !conn->active )
-    free ( hashtable_remove ( ht, &conn->inode ) );
-  else
-    conn->active = false;
+static inline void
+connection_remove_by_tuple ( connection_t *conn )
+{
+  key_type = KEY_TUPLE;
+  hashtable_remove ( ht_connections, &conn->tuple );
+}
 
-  return 0;
+static inline void
+connection_remove ( connection_t *conn )
+{
+  connection_remove_by_inode( conn );
+  connection_remove_by_tuple( conn );
+  free ( conn );
+}
+
+static int
+remove_dead_conn ( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data )
+{
+  // connection_t *conn = value;
+  //
+  // if ( !conn->active )
+  //   connection_remove ( conn );
+  // else
+  //   conn->active = false;
+  //
+  // return 0;
 }
 
 #define PATH_TCP "/proc/net/tcp"
@@ -200,9 +336,17 @@ connection_update ( const int proto )
 }
 
 connection_t *
-connection_get ( const unsigned long inode )
+connection_get_by_inode ( const unsigned long inode )
 {
+  key_type = KEY_INODE;
   return hashtable_get ( ht_connections, &inode );
+}
+
+connection_t *
+connection_get_by_typle ( struct tuple *tuple )
+{
+  key_type = KEY_TUPLE;
+  return hashtable_get ( ht_connections, tuple );
 }
 
 void

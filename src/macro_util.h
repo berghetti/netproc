@@ -25,6 +25,8 @@
 
 #define ARRAY_SIZE( x ) ( sizeof ( x ) / sizeof ( x[0] ) )
 
+#define SIZEOF_MEMBER( type, member ) ( sizeof ( ( ( type * ) 0 )->member ) )
+
 #ifdef __GNUC__
 #define UNUSED __attribute__ ( ( __unused__ ) )
 #define FALLTHROUGH __attribute__ ( ( __fallthrough__ ) )

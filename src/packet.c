@@ -207,11 +207,11 @@ insert_data_packet ( struct packet *pkt,
 {
   pkt->if_index = if_index;
   pkt->direction = direction;
-  pkt->protocol = protocol;
-  pkt->local_address = local_address;
-  pkt->remote_address = remote_address;
-  pkt->local_port = ntohs ( local_port );
-  pkt->remote_port = ntohs ( remote_port );
+  pkt->tuple.l3.local.ip = local_address;
+  pkt->tuple.l3.remote.ip = remote_address;
+  pkt->tuple.l4.protocol = protocol;
+  pkt->tuple.l4.local_port = ntohs ( local_port );
+  pkt->tuple.l4.remote_port = ntohs ( remote_port );
   pkt->lenght = len;
 }
 

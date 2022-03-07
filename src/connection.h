@@ -23,25 +23,27 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 #include "rate.h"  // struct net_stat
+#include "sockaddr.h"
 
-// stores the information exported by the kernel in /proc/net/tcp | udp
+// forward declaration
+typedef struct process process_t;
+
+/* stores the information exported by the kernel in /proc/net/tcp | udp.
+   each conn has two entries in hashtable, one with key inode and other with key
+   tuple */
 typedef struct conection
 {
   struct net_stat net_stat;  // assign in statistics.c
-  /* kernel linux usage this type to inode
-  https://elixir.bootlin.com/linux/v5.10.19/source/net/core/sock.c#L2161 */
-  unsigned long inode;
-  bool active;
-  int if_index;  // assign in statistics.c
-  uint32_t local_address;
-  uint32_t remote_address;
-  uint16_t local_port;
-  uint16_t remote_port;
-  uint8_t protocol;
-  uint8_t state;
+  struct tuple tuple;        // layer 3 and 4 info
+  process_t *proc;           // process the connection belongs to
+  unsigned long inode;       // kernel linux usage this type to inode
+  int if_index;              // assign in statistics.c
+  uint8_t state;             // status tcp connection
+
+  // internal state
+  bool active;  // if false, connections is removed from hashtable
 } connection_t;
 
 bool
@@ -51,7 +53,10 @@ bool
 connection_update ( const int proto );
 
 connection_t *
-connection_get ( const unsigned long inode );
+connection_get_by_inode ( const unsigned long inode );
+
+connection_t *
+connection_get_by_typle ( struct tuple *tuple );
 
 void
 connection_free ( void );

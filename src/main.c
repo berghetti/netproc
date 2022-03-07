@@ -151,7 +151,6 @@ main ( int argc, char **argv )
       // read all blocks availables
       while ( pbd->hdr.bh1.block_status & TP_STATUS_USER )
         {
-          struct packet packet;
           struct tpacket3_hdr *ppd;
 
           ppd = ( struct tpacket3_hdr * ) ( ( uint8_t * ) pbd +
@@ -165,6 +164,7 @@ main ( int argc, char **argv )
               // se houver dados porem não foi possivel identificar o trafego,
               // não tem estatisticas para ser adicionada aos processos.
               // deve ser trafego de protocolo não suportado
+              struct packet packet = { 0 };
               if ( !parse_packet ( &packet, ppd ) )
                 continue;
 
