@@ -75,15 +75,20 @@ print_tuple ( struct tuple *tp1, struct tuple *tp2 )
 static hash_t
 ht_cb_hash ( const void *key )
 {
+  size_t size;
   switch ( key_type )
     {
       case KEY_INODE:
-        return jhash8 ( key, SIZEOF_MEMBER ( connection_t, inode ), 0 );
+        size = SIZEOF_MEMBER ( connection_t, inode );
+        break;
       case KEY_TUPLE:
-        return jhash8 ( key, SIZEOF_MEMBER ( connection_t, tuple ), 0 );
+        size = SIZEOF_MEMBER ( connection_t, tuple );
+        break;
+      default:
+        size = 0;
     }
 
-  return 0;
+  return jhash8 ( key, size, 0 );
 }
 
 static int
@@ -94,7 +99,7 @@ ht_cb_compare ( const void *key1, const void *key2 )
       case KEY_INODE:
         return ( *( unsigned long * ) key1 == *( unsigned long * ) key2 );
       case KEY_TUPLE:
-        print_tuple ( ( struct tuple * ) key1, ( struct tuple * ) key2 );
+        // print_tuple ( ( struct tuple * ) key1, ( struct tuple * ) key2 );
         return ( 0 == memcmp ( key1, key2, sizeof ( struct tuple ) ) );
     }
 
@@ -106,13 +111,18 @@ ht_cb_free ( void *arg )
 {
   connection_t *conn = arg;
 
-  if ( !conn->active )
-    {
-      conn->active = true;
-      return;
-    }
+  conn->use--;
+  if ( !conn->use )
+    free ( arg );
+}
 
-  free ( conn );
+bool
+connection_init ( void )
+{
+  // TODO: check free
+  ht_connections = hashtable_new ( ht_cb_hash, ht_cb_compare, ht_cb_free );
+
+  return ( NULL != ht_connections );
 }
 
 static connection_t *
@@ -173,12 +183,14 @@ connection_insert_by_tuple ( connection_t *conn )
   hashtable_set ( ht_connections, &conn->tuple, conn );
 }
 
-static inline void
+static void
 connection_insert ( connection_t *conn )
 {
+  conn->use = 2;  // tow references to conn on hashtable
+
   // make two entris in hashtable to same connection
-  connection_insert_by_inode( conn );
-  connection_insert_by_tuple( conn );
+  connection_insert_by_inode ( conn );
+  connection_insert_by_tuple ( conn );
 }
 
 static int
@@ -269,15 +281,6 @@ EXIT:
   return ret;
 }
 
-bool
-connection_init ( void )
-{
-  // TODO: check free
-  ht_connections = hashtable_new ( ht_cb_hash, ht_cb_compare, ht_cb_free );
-
-  return ( NULL != ht_connections );
-}
-
 static inline void
 connection_remove_by_inode ( connection_t *conn )
 {
@@ -292,25 +295,29 @@ connection_remove_by_tuple ( connection_t *conn )
   hashtable_remove ( ht_connections, &conn->tuple );
 }
 
-static inline void
+static void
 connection_remove ( connection_t *conn )
 {
-  connection_remove_by_inode( conn );
-  connection_remove_by_tuple( conn );
+  connection_remove_by_inode ( conn );
+  connection_remove_by_tuple ( conn );
   free ( conn );
 }
 
 static int
 remove_dead_conn ( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data )
 {
-  // connection_t *conn = value;
-  //
-  // if ( !conn->active )
-  //   connection_remove ( conn );
-  // else
-  //   conn->active = false;
-  //
-  // return 0;
+  connection_t *conn = value;
+
+  if ( !conn->active )
+    {
+      conn->use--;
+      if ( !conn->use )
+        connection_remove ( conn );
+    }
+  else
+    conn->active = false;
+
+  return 0;
 }
 
 #define PATH_TCP "/proc/net/tcp"
@@ -343,7 +350,7 @@ connection_get_by_inode ( const unsigned long inode )
 }
 
 connection_t *
-connection_get_by_typle ( struct tuple *tuple )
+connection_get_by_tuple ( struct tuple *tuple )
 {
   key_type = KEY_TUPLE;
   return hashtable_get ( ht_connections, tuple );

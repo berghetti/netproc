@@ -44,6 +44,7 @@ typedef struct conection
 
   // internal state
   bool active;  // if false, connections is removed from hashtable
+  int use;      // references
 } connection_t;
 
 bool
@@ -56,7 +57,7 @@ connection_t *
 connection_get_by_inode ( const unsigned long inode );
 
 connection_t *
-connection_get_by_typle ( struct tuple *tuple );
+connection_get_by_tuple ( struct tuple *tuple );
 
 void
 connection_free ( void );

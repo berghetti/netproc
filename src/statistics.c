@@ -91,25 +91,7 @@ statistics_add ( struct processes *processes,
 {
   connection_t *conn;
 
-  // if ( pkt->tuple.l4.protocol == IPPROTO_UDP )
-  //   {
-  //     struct tuple fake_pkt = { .l4.local_port = pkt->tuple.l4.local_port };
-  //     conn = connection_get_by_typle ( ( struct tuple * ) &pkt->tuple );
-  //
-  //     if ( conn )
-  //       {
-  //         switch (conn->state)
-  //           {
-  //             case TCP_ESTABLISHED:
-  //               conection->remote_port != pkt->remote_port ||
-  //               conection->remote_address != pkt->remote_address ) )
-  //             case TCP_CLOSE:
-  //           }
-  //       }
-  //   }
-
-
-  conn = connection_get_by_typle ( ( struct tuple * ) &pkt->tuple );
+  conn = connection_get_by_tuple ( ( struct tuple * ) &pkt->tuple );
 
   if ( conn )
     {

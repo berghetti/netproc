@@ -12,6 +12,7 @@ void test_human_readable ( void );
 void test_packet ( void );
 void test_vector ( void );
 void test_sec2clock ( void );
+void test_hash_conn( void );
 
 // need to unity
 void setUp ( void ) { /* set stuff up here */ }
@@ -22,15 +23,16 @@ int
 main ( void )
 {
   UNITY_BEGIN ();
-  RUN_TEST ( test_hashtable );
-  RUN_TEST ( test_full_read );
-  RUN_TEST ( test_queue );
-  RUN_TEST ( test_str );
-  RUN_TEST ( test_rate );
-  RUN_TEST ( test_human_readable );
-  RUN_TEST ( test_packet );
-  RUN_TEST ( test_vector );
-  RUN_TEST ( test_sec2clock );
+  // RUN_TEST ( test_hashtable );
+  // RUN_TEST ( test_full_read );
+  // RUN_TEST ( test_queue );
+  // RUN_TEST ( test_str );
+  // RUN_TEST ( test_rate );
+  // RUN_TEST ( test_human_readable );
+  // RUN_TEST ( test_packet );
+  // RUN_TEST ( test_vector );
+  // RUN_TEST ( test_sec2clock );
+  RUN_TEST ( test_hash_conn );
 
   return UNITY_END ();
 }
