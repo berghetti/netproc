@@ -37,36 +37,6 @@
 static hashtable_t *ht_connections_inode = NULL;
 static hashtable_t *ht_connections_tuple = NULL;
 
-void
-print_tuple ( struct tuple *tp1, struct tuple *tp2 )
-{
-  fprintf ( stderr,
-            "tuple 1\n"
-            "local ip - %d\n"
-            "remote ip - %d\n"
-            "protocol - %d\n"
-            "local_port - %d\n"
-            "remote_port - %d\n\n",
-            tp1->l3.local.ip,
-            tp1->l3.remote.ip,
-            tp1->l4.protocol,
-            tp1->l4.local_port,
-            tp1->l4.remote_port );
-
-  fprintf ( stderr,
-            "tuple 2\n"
-            "local ip - %d\n"
-            "remote ip - %d\n"
-            "protocol - %d\n"
-            "local_port - %d\n"
-            "remote_port - %d\n\n",
-            tp2->l3.local.ip,
-            tp2->l3.remote.ip,
-            tp2->l4.protocol,
-            tp2->l4.local_port,
-            tp2->l4.remote_port );
-}
-
 static hash_t
 hash ( const void *key, size_t size )
 {
@@ -85,13 +55,13 @@ ht_cb_hash_tuple ( const void *key )
   return hash ( key, SIZEOF_MEMBER ( connection_t, tuple ) );
 }
 
-static int
+static bool
 ht_cb_compare_inode ( const void *key1, const void *key2 )
 {
   return ( *( unsigned long * ) key1 == *( unsigned long * ) key2 );
 }
 
-static int
+static bool
 ht_cb_compare_tuple ( const void *key1, const void *key2 )
 {
   return ( 0 == memcmp ( key1, key2, sizeof ( struct tuple ) ) );
@@ -103,7 +73,7 @@ connection_init ( void )
   ht_connections_inode =
           hashtable_new ( ht_cb_hash_inode, ht_cb_compare_inode, free );
 
-  // connections pointers will be free from hashtable_inode 
+  // connections pointers will be free from hashtable_inode
   ht_connections_tuple =
           hashtable_new ( ht_cb_hash_tuple, ht_cb_compare_tuple, NULL );
 

@@ -20,12 +20,13 @@
 #ifndef SOCK_UTIL_H
 #define SOCK_UTIL_H
 
+#include <stdbool.h>
 #include <sys/socket.h>
 
 #include "../sockaddr.h"
 
 // return 1 if ip address is equal or 0
-int
+bool
 check_addr_equal ( union sockaddr_all *addr1, union sockaddr_all *addr2 );
 
 /* transform binary ip to text

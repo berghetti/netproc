@@ -21,6 +21,7 @@
 #ifndef HASHTABLE_H
 #define HASHTABLE_H
 
+#include <stdbool.h>
 #include <stddef.h>  // size_t
 
 typedef struct slist_item
@@ -36,7 +37,7 @@ typedef struct slist
 typedef size_t hash_t;
 
 typedef void ( *func_clear ) ( void * );
-typedef int ( *func_compare ) ( const void *key1, const void *key2 );
+typedef bool ( *func_compare ) ( const void *key1, const void *key2 );
 typedef hash_t ( *func_hash ) ( const void *data );
 
 typedef struct hashtable

@@ -17,6 +17,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
 #include <stddef.h>      // size_t
 #include <string.h>      // memcmp
 #include <arpa/inet.h>   // inet_ntop
@@ -24,7 +25,7 @@
 
 #include "../sockaddr.h"
 
-int
+bool
 check_addr_equal ( union sockaddr_all *addr1, union sockaddr_all *addr2 )
 {
   if ( addr1->sa.sa_family == addr2->sa.sa_family )
@@ -40,7 +41,7 @@ check_addr_equal ( union sockaddr_all *addr1, union sockaddr_all *addr2 )
         }
     }
 
-  return 0;
+  return false;
 }
 
 void

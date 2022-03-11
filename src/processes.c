@@ -177,7 +177,7 @@ copy_ht_to_array ( hashtable_t *ht, process_t **proc )
   return pp;
 }
 
-static int
+static bool
 ht_cb_compare ( const void *key1, const void *key2 )
 {
   return ( *( pid_t * ) key1 == *( pid_t * ) key2 );

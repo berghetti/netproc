@@ -36,7 +36,7 @@ static hashtable_t *ht_hosts = NULL;
 static struct host **hosts = NULL;
 static size_t cache_size;
 
-static int
+static bool
 cb_ht_compare ( const void *key1, const void *key2 )
 {
   return check_addr_equal ( ( union sockaddr_all * ) key1,
