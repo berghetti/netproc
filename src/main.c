@@ -173,7 +173,7 @@ main ( int argc, char **argv )
               // de um processo existente, que ainda não foi mapeado, então
               // anotamos que sera necessario atualizar a lista de processos
               // com conexões ativas.
-              if ( !statistics_add ( processes, &packet, co ) )
+              if ( !statistics_add ( &packet, co->view_conections ) )
                 {
                   need_update_processes = true;
                   continue;

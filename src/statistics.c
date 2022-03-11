@@ -85,9 +85,8 @@
 // }
 
 bool
-statistics_add ( struct processes *processes,
-                 const struct packet *pkt,
-                 const struct config_op *co )
+statistics_add ( const struct packet *pkt,
+                 bool view_conections )
 {
   connection_t *conn;
 
@@ -109,14 +108,14 @@ statistics_add ( struct processes *processes,
           case PKT_DOWN:
             rate_add_rx ( &proc->net_stat, pkt->lenght );
 
-            if ( co->view_conections )
+            if ( view_conections )
               rate_add_rx ( &conn->net_stat, pkt->lenght );
 
             break;
           case PKT_UPL:
             rate_add_tx ( &proc->net_stat, pkt->lenght );
 
-            if ( co->view_conections )
+            if ( view_conections )
               rate_add_tx ( &conn->net_stat, pkt->lenght );
         }
 
