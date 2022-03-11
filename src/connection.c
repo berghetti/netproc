@@ -90,7 +90,7 @@ create_new_conn ( unsigned long inode,
                   int protocol )
 {
   // using calloc to ensure that struct tuple is clean
-  connection_t *conn = calloc ( 1, sizeof ( connection_t ) );
+  connection_t *conn = calloc ( 1, sizeof *conn );
   if ( !conn )
     {
       ERROR_DEBUG ( "\"%s\"", strerror ( errno ) );
@@ -232,24 +232,28 @@ EXIT:
   return ret;
 }
 
-static inline void
+static inline connection_t *
 connection_remove_by_inode ( connection_t *conn )
 {
-  hashtable_remove ( ht_connections_inode, &conn->inode );
+  return hashtable_remove ( ht_connections_inode, &conn->inode );
 }
 
-static inline void
+static inline connection_t *
 connection_remove_by_tuple ( connection_t *conn )
 {
-  hashtable_remove ( ht_connections_tuple, &conn->tuple );
+  return hashtable_remove ( ht_connections_tuple, &conn->tuple );
 }
 
 static void
 connection_remove ( connection_t *conn )
 {
-  connection_remove_by_inode ( conn );
-  connection_remove_by_tuple ( conn );
-  free ( conn );
+  if ( !connection_remove_by_inode ( conn ) )
+    ERROR_DEBUG("%s\n", "ruim aqui");
+
+  if ( !connection_remove_by_tuple ( conn ) )
+    ERROR_DEBUG("%s\n", "ruim aqui");
+
+  free( conn );
 }
 
 static int
@@ -258,7 +262,7 @@ remove_dead_conn ( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data )
   connection_t *conn = value;
 
   if ( !conn->active )
-    connection_remove ( conn );
+    connection_remove ( conn )  ;
   else
     conn->active = false;
 

@@ -196,6 +196,8 @@ processes_init ( void )
   if ( !procs )
     return NULL;
 
+  procs->proc = vector_new( sizeof ( process_t *) );
+
   ht_process = hashtable_new ( ht_cb_hash, ht_cb_compare, free_process );
   if ( !ht_process )
     {
@@ -217,6 +219,9 @@ processes_init ( void )
 int
 processes_get ( struct processes *procs, struct config_op *co )
 {
+  if ( !connection_update ( co->proto ) )
+    return 0;
+
   // TODO: check if type uint32_t is correct/safe
   uint32_t *pids = NULL;
   int total_process = get_numeric_directory ( &pids, "/proc/" );
@@ -224,11 +229,8 @@ processes_get ( struct processes *procs, struct config_op *co )
   if ( -1 == total_process )
     return 0;
 
-  if ( !connection_update ( co->proto ) )
-    {
-      free ( pids );
-      return 0;
-    }
+
+  vector_clear ( procs->proc);
 
   uint32_t *fds = NULL;
   for ( int index_pid = 0; index_pid < total_process; index_pid++ )
@@ -293,14 +295,19 @@ processes_get ( struct processes *procs, struct config_op *co )
         }
 
       if ( proc )
-        proc->total_conections = vector_size ( proc->conections );
+        {
+          proc->total_conections = vector_size ( proc->conections );
+          vector_push ( procs->proc, &proc );
+        }
+
     }
 
   free ( fds );
   free ( pids );
 
-  procs->proc = copy_ht_to_array ( ht_process, procs->proc );
-  procs->total = ht_process->nentries;
+  // procs->proc = copy_ht_to_array ( ht_process, procs->proc );
+  // procs->total = ht_process->nentries;
+  procs->total = vector_size( procs->proc );
 
   return 1;
 }
@@ -311,7 +318,8 @@ processes_free ( struct processes *processes )
   if ( !processes )
     return;
 
-  free ( processes->proc );
+  // free ( processes->proc );
+  vector_free (processes->proc );
   free ( processes );
   hashtable_destroy ( ht_process );
 }

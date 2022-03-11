@@ -59,9 +59,10 @@ rate_net_stat ( struct net_stat *ns, bool view_bytes )
 void
 rate_calc ( struct processes *processes, const struct config_op *co )
 {
-  for ( process_t **proc = processes->proc; *proc; proc++ )
+  for ( size_t i = 0; i < processes->total; i++ )
     {
-      process_t *process = *proc;
+      // process_t *process = *proc;
+      process_t *process = processes->proc[i];
 
       rate_net_stat ( &process->net_stat, co->view_bytes );
 
@@ -103,9 +104,10 @@ rate_update ( struct processes *processes, const struct config_op *co )
 {
   UPDATE_ID_BUFF ( idx_cir );
 
-  for ( process_t **proc = processes->proc; *proc; proc++ )
+  for ( size_t i = 0; i < processes->total; i++ )
     {
-      process_t *process = *proc;
+      // process_t *process = *proc;
+      process_t *process = processes->proc[i];
 
       process->net_stat.Bps_rx[idx_cir] = 0;
       process->net_stat.Bps_tx[idx_cir] = 0;

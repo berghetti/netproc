@@ -36,7 +36,7 @@ ifdef DEBUG
 	CFLAGS += -O0 -ggdb -fsanitize=address
 	LDFLAGS += -fsanitize=address
 else ifdef DEV
-	CFLAGS += -O2 -ggdb
+	CFLAGS += -O0 -ggdb
 else
 	CPPFLAGS += -D NDEBUG
 	CFLAGS += -O2 -flto

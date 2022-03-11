@@ -383,9 +383,11 @@ tui_show ( const struct processes *processes, const struct config_op *co )
   sort ( processes->proc, processes->total, sort_by, co );
 
   wmove ( pad, LINE_START + 1, 0 );  // move second line after header
-  for ( process_t **procs = processes->proc; *procs; procs++ )
+  
+  for ( size_t i = 0; i < processes->total; i++ )
     {
-      process_t *process = *procs;
+      // process_t *process = *proc;
+      process_t *process = processes->proc[i];
       //
       if ( !( process->net_stat.tot_Bps_rx || process->net_stat.tot_Bps_tx ) &&
            !co->verbose )
