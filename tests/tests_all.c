@@ -23,16 +23,15 @@ int
 main ( void )
 {
   UNITY_BEGIN ();
-  // RUN_TEST ( test_hashtable );
-  // RUN_TEST ( test_full_read );
-  // RUN_TEST ( test_queue );
-  // RUN_TEST ( test_str );
-  // RUN_TEST ( test_rate );
-  // RUN_TEST ( test_human_readable );
-  // RUN_TEST ( test_packet );
-  // RUN_TEST ( test_vector );
-  // RUN_TEST ( test_sec2clock );
-  RUN_TEST ( test_hash_conn );
+  RUN_TEST ( test_hashtable );
+  RUN_TEST ( test_full_read );
+  RUN_TEST ( test_queue );
+  RUN_TEST ( test_str );
+  RUN_TEST ( test_rate );
+  RUN_TEST ( test_human_readable );
+  RUN_TEST ( test_packet );
+  RUN_TEST ( test_vector );
+  RUN_TEST ( test_sec2clock );
 
   return UNITY_END ();
 }
