@@ -51,20 +51,25 @@ next_power2 ( size_t s )
   if ( s < HASHTABLE_MIN_SIZE )
     return HASHTABLE_MIN_SIZE;
 
-  s--;
-  s |= s >> 1;
-  s |= s >> 2;
-  s |= s >> 4;
-  s |= s >> 8;
-  s |= s >> 16;
+  size_t ns = HASHTABLE_MIN_SIZE;
 
-#if __SIZEOF_SIZE_T__ == 8
-  s |= s >> 32;
-#endif
+  while ( ns < s )
+    ns <<= 1;
 
-  s++;
+  //   s--;
+  //   s |= s >> 1;
+  //   s |= s >> 2;
+  //   s |= s >> 4;
+  //   s |= s >> 8;
+  //   s |= s >> 16;
+  //
+  // #if __SIZEOF_SIZE_T__ == 8
+  //   s |= s >> 32;
+  // #endif
+  //
+  //   s++;
 
-  return s;
+  return ns;
 }
 
 static inline void
@@ -72,6 +77,12 @@ hashtable_preprend ( slist_t *list, slist_item_t *item )
 {
   item->next = list->head;
   list->head = item;
+}
+
+static inline size_t
+get_index ( hash_t hash, size_t size )
+{
+  return ( hash & ( size - 1 ) );
 }
 
 static int
@@ -94,7 +105,7 @@ hashtable_rehash ( hashtable_t *ht )
         {
           hashtable_entry_t *next = ENTRY_NEXT ( entry );
 
-          size_t index = entry->key_hash & ( num_buckets - 1 );
+          size_t index = get_index ( entry->key_hash, num_buckets );
           hashtable_preprend ( &new_buckets[index], ( slist_item_t * ) entry );
 
           entry = next;
@@ -106,12 +117,6 @@ hashtable_rehash ( hashtable_t *ht )
   ht->buckets = new_buckets;
 
   return 1;
-}
-
-static inline size_t
-get_index ( hash_t hash, size_t size )
-{
-  return ( hash & ( size - 1 ) );
 }
 
 static hashtable_entry_t *
@@ -209,12 +214,41 @@ hashtable_foreach ( hashtable_t *restrict ht,
           if ( ret )
             return ret;
 
-          // callback can delete current element, and if element is last
-          // from linked list, *entry will be NULL
-          if ( *entry == NULL )
-            break;
-
           entry = PP_ENTRY_NEXT ( *entry );
+        }
+    }
+
+  return 0;
+}
+
+int
+hashtable_foreach_safe ( hashtable_t *restrict ht,
+                    hashtable_foreach_func func,
+                    void *user_data )
+{
+  for ( size_t i = 0; i < ht->nbuckets; i++ )
+    {
+      hashtable_entry_t **entry = PP_TABLE_HEAD ( ht, i );
+      while ( *entry )
+        {
+          hashtable_entry_t *entry_safe = *entry;
+
+          int ret = func ( ht, ( *entry )->value, user_data );
+          if ( ret )
+            return ret;
+
+          /* callback can delete current element and the next element on linked
+           list must be tested, if element was removed *entry can be new element
+           or NULL, if new element, continue loop to test element */
+          if ( *entry )
+            {
+              if ( *entry != entry_safe )
+                continue;
+              else
+                entry = PP_ENTRY_NEXT ( *entry );
+            }
+          else
+            break;
         }
     }
 
@@ -229,9 +263,14 @@ hashtable_remove ( hashtable_t *restrict ht, const void *key )
   size_t index = get_index ( hash, ht->nbuckets );
 
   hashtable_entry_t **entry = PP_TABLE_HEAD ( ht, index );
-  while ( *entry && ( *entry )->key_hash != hash &&
-          !ht->fcompare ( ( *entry )->key, key ) )
-    entry = PP_ENTRY_NEXT ( *entry );
+  while ( *entry )
+    {
+      if ( ( *entry )->key_hash == hash &&
+           ht->fcompare ( ( *entry )->key, key ) )
+        break;
+
+      entry = PP_ENTRY_NEXT ( *entry );
+    }
 
   if ( *entry == NULL )
     return NULL;

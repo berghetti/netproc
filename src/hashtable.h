@@ -86,18 +86,20 @@ hashtable_foreach ( hashtable_t *restrict ht,
                     hashtable_foreach_func func,
                     void *user_data );
 
+/* same 'hashtable_foreach' but entry can be removed on function of user */
+int
+hashtable_foreach_safe ( hashtable_t *restrict ht,
+                           hashtable_foreach_func func,
+                           void *user_data );
+
 /* remove entry from hashtable and return a pointer to entry,
-  the entry needs to be handled by the user's skin yet (e.g free if necessary )
+  the entry needs to be handled by the user's skin yet (e.g free if
+  necessary )
 */
 void *
 hashtable_remove ( hashtable_t *restrict ht, const void *key );
 
 void
 hashtable_destroy ( hashtable_t *ht );
-
-/* useful to usage pointer as value,
-   in argument 'key' the functions set, get and remove */
-#define TO_PTR( v ) ( ( void * ) ( uintptr_t ) v )
-#define FROM_PTR( p ) ( ( uintptr_t ) p )
 
 #endif  // HASHTABLE_H
