@@ -34,8 +34,7 @@
 #include "m_error.h"
 #include "macro_util.h"
 
-static hashtable_t *ht_connections_inode = NULL;
-static hashtable_t *ht_connections_tuple = NULL;
+static hashtable_min *ht_connections = NULL;
 
 static hash_t
 hash ( const void *key, size_t size )
@@ -43,41 +42,30 @@ hash ( const void *key, size_t size )
   return jhash8 ( key, size, 0 );
 }
 
-static hash_t
-ht_cb_hash_inode ( const void *key )
-{
-  return hash ( key, SIZEOF_MEMBER ( connection_t, inode ) );
-}
-
-static hash_t
-ht_cb_hash_tuple ( const void *key )
-{
-  return hash ( key, SIZEOF_MEMBER ( connection_t, tuple ) );
-}
-
 static bool
 ht_cb_compare_inode ( const void *key1, const void *key2 )
 {
+  if ( key1 == key2 )
+    return true;
+
   return ( *( unsigned long * ) key1 == *( unsigned long * ) key2 );
 }
 
 static bool
 ht_cb_compare_tuple ( const void *key1, const void *key2 )
 {
+  if ( key1 == key2 )
+    return true;
+
   return ( 0 == memcmp ( key1, key2, sizeof ( struct tuple ) ) );
 }
 
 bool
 connection_init ( void )
 {
-  ht_connections_inode =
-          hashtable_new ( ht_cb_hash_inode, ht_cb_compare_inode, free );
+  ht_connections = hashtable_min_new ();
 
-  // connections pointers will be free from hashtable_inode
-  ht_connections_tuple =
-          hashtable_new ( ht_cb_hash_tuple, ht_cb_compare_tuple, NULL );
-
-  return ( NULL != ht_connections_inode && NULL != ht_connections_tuple );
+  return !!ht_connections;
 }
 
 static connection_t *
@@ -89,7 +77,8 @@ create_new_conn ( unsigned long inode,
                   uint8_t state,
                   int protocol )
 {
-  // using calloc to ensure that struct tuple is clean
+  /* using calloc to ensure that struct tuple is clean
+     necessary to struct net_stat */
   connection_t *conn = calloc ( 1, sizeof *conn );
   if ( !conn )
     {
@@ -113,8 +102,9 @@ create_new_conn ( unsigned long inode,
   conn->state = state;
   conn->inode = inode;
 
-  conn->active = true;
-  // memset ( &conn->net_stat, 0, sizeof ( struct net_stat ) );
+  /* each conn has two entries on hashtable,
+   this is used to remove inactives conns and free only one time a conn */
+  conn->refs_active = conn->refs_exit = 2;
 
   return conn;
 
@@ -124,24 +114,21 @@ EXIT_ERROR:
   return NULL;
 }
 
-static inline void
-connection_insert_by_inode ( connection_t *conn )
-{
-  hashtable_set ( ht_connections_inode, &conn->inode, conn );
-}
-
-static inline void
-connection_insert_by_tuple ( connection_t *conn )
-{
-  hashtable_set ( ht_connections_tuple, &conn->tuple, conn );
-}
-
 static void
 connection_insert ( connection_t *conn )
 {
   // make one entrie in each hashtable to same connection
-  connection_insert_by_inode ( conn );
-  connection_insert_by_tuple ( conn );
+  hashtable_min_set (
+          ht_connections,
+          conn,
+          &conn->inode,
+          hash ( &conn->inode, SIZEOF_MEMBER ( connection_t, inode ) ) );
+
+  hashtable_min_set (
+          ht_connections,
+          conn,
+          &conn->tuple,
+          hash ( &conn->tuple, SIZEOF_MEMBER ( connection_t, tuple ) ) );
 }
 
 static int
@@ -205,7 +192,7 @@ connection_update_ ( const char *path_file, const int protocol )
 
       if ( conn )
         {
-          conn->active = true;
+          conn->refs_active = 2;
           continue;
         }
 
@@ -232,41 +219,37 @@ EXIT:
   return ret;
 }
 
-static inline connection_t *
-connection_remove_by_inode ( connection_t *conn )
-{
-  return hashtable_remove ( ht_connections_inode, &conn->inode );
-}
-
-static inline connection_t *
-connection_remove_by_tuple ( connection_t *conn )
-{
-  return hashtable_remove ( ht_connections_tuple, &conn->tuple );
-}
-
-static void
-connection_remove ( connection_t *conn )
-{
-  if ( !connection_remove_by_inode ( conn ) )
-    ERROR_DEBUG("%s\n", "ruim aqui");
-
-  if ( !connection_remove_by_tuple ( conn ) )
-    ERROR_DEBUG("%s\n", "ruim aqui");
-
-  free( conn );
-}
-
 static int
-remove_dead_conn ( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data )
+remove_inactives_ ( hashtable_t *ht, void *value, UNUSED void *user_data )
 {
   connection_t *conn = value;
 
-  if ( !conn->active )
-    connection_remove ( conn )  ;
-  else
-    conn->active = false;
+  /* on last pass conn->refs_active be 0,
+   if connection_update not assign 2 again this be removed */
+
+  if ( 0 == conn->refs_active-- )
+    {
+      hashtable_min_remove (
+              ht,
+              &conn->inode,
+              hash ( &conn->inode, SIZEOF_MEMBER ( connection_t, inode ) ),
+              ht_cb_compare_inode );
+      hashtable_min_remove (
+              ht,
+              &conn->tuple,
+              hash ( &conn->tuple, SIZEOF_MEMBER ( connection_t, tuple ) ),
+              ht_cb_compare_tuple );
+
+      free ( conn );
+    }
 
   return 0;
+}
+
+static void
+remove_inactives_conns ( void )
+{
+  hashtable_min_foreach ( ht_connections, remove_inactives_, NULL );
 }
 
 #define PATH_TCP "/proc/net/tcp"
@@ -287,29 +270,43 @@ connection_update ( const int proto )
         return 0;
     }
 
-  // a search removes both tables
-  hashtable_foreach ( ht_connections_inode, remove_dead_conn, NULL );
+  remove_inactives_conns ();
+
   return 1;
 }
 
 connection_t *
 connection_get_by_inode ( const unsigned long inode )
 {
-  return hashtable_get ( ht_connections_inode, &inode );
+  return hashtable_min_get ( ht_connections,
+                             &inode,
+                             hash ( &inode, sizeof ( inode ) ),
+                             ht_cb_compare_inode );
 }
 
 connection_t *
 connection_get_by_tuple ( struct tuple *tuple )
 {
-  return hashtable_get ( ht_connections_tuple, tuple );
+  return hashtable_min_get (
+          ht_connections,
+          tuple,
+          hash ( tuple, SIZEOF_MEMBER ( connection_t, tuple ) ),
+          ht_cb_compare_tuple );
+}
+
+static void
+conn_free( void *data )
+{
+  connection_t *conn = data;
+
+  /* free second entry from hashtable to this connection */
+  if ( 1 == conn->refs_exit-- )
+    free ( conn );
+
 }
 
 void
 connection_free ( void )
 {
-  if ( ht_connections_inode )
-    hashtable_destroy ( ht_connections_inode );
-
-  if ( ht_connections_tuple )
-    hashtable_destroy ( ht_connections_tuple );
+  hashtable_min_detroy ( ht_connections, conn_free );
 }

@@ -12,7 +12,7 @@ void test_human_readable ( void );
 void test_packet ( void );
 void test_vector ( void );
 void test_sec2clock ( void );
-void test_hash_conn( void );
+void test_ht_conn( void );
 
 // need to unity
 void setUp ( void ) { /* set stuff up here */ }
@@ -32,6 +32,7 @@ main ( void )
   RUN_TEST ( test_packet );
   RUN_TEST ( test_vector );
   RUN_TEST ( test_sec2clock );
+  RUN_TEST ( test_ht_conn );
 
   return UNITY_END ();
 }

@@ -133,50 +133,6 @@ free_process ( void *arg )
   free ( process );
 }
 
-struct my_array
-{
-  process_t **data;
-  size_t pos;
-};
-
-/* copy hashtable to array removing processes inactives */
-static int
-to_array ( hashtable_t *ht, void *value, void *user_data )
-{
-  struct my_array *ar = user_data;
-  process_t *proc = value;
-
-  if ( !proc->active )
-    free_process ( hashtable_remove ( ht, &proc->pid ) );
-  else
-    {
-      proc->active = false;  // reset status to next update checking
-
-      ar->data[ar->pos] = proc;
-      ar->pos++;
-    }
-
-  return 0;
-}
-
-static process_t **
-copy_ht_to_array ( hashtable_t *ht, process_t **proc )
-{
-  process_t **pp =
-          realloc ( proc, ( ht->nentries + 1 ) * sizeof ( process_t * ) );
-
-  if ( pp )
-    {
-      struct my_array my_array = { .data = pp, .pos = 0 };
-
-      hashtable_foreach ( ht, to_array, &my_array );
-
-      pp[ht->nentries] = NULL;  // last pointer
-    }
-
-  return pp;
-}
-
 static bool
 ht_cb_compare ( const void *key1, const void *key2 )
 {
@@ -196,7 +152,7 @@ processes_init ( void )
   if ( !procs )
     return NULL;
 
-  procs->proc = vector_new( sizeof ( process_t *) );
+  procs->proc = vector_new ( sizeof ( process_t * ) );
 
   ht_process = hashtable_new ( ht_cb_hash, ht_cb_compare, free_process );
   if ( !ht_process )
@@ -229,8 +185,7 @@ processes_get ( struct processes *procs, struct config_op *co )
   if ( -1 == total_process )
     return 0;
 
-
-  vector_clear ( procs->proc);
+  vector_clear ( procs->proc );
 
   uint32_t *fds = NULL;
   for ( int index_pid = 0; index_pid < total_process; index_pid++ )
@@ -299,15 +254,12 @@ processes_get ( struct processes *procs, struct config_op *co )
           proc->total_conections = vector_size ( proc->conections );
           vector_push ( procs->proc, &proc );
         }
-
     }
 
   free ( fds );
   free ( pids );
 
-  // procs->proc = copy_ht_to_array ( ht_process, procs->proc );
-  // procs->total = ht_process->nentries;
-  procs->total = vector_size( procs->proc );
+  procs->total = vector_size ( procs->proc );
 
   return 1;
 }
@@ -319,7 +271,7 @@ processes_free ( struct processes *processes )
     return;
 
   // free ( processes->proc );
-  vector_free (processes->proc );
+  vector_free ( processes->proc );
   free ( processes );
   hashtable_destroy ( ht_process );
 }

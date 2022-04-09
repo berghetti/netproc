@@ -68,12 +68,12 @@ hashtable_new ( func_hash fhash, func_compare fcompare, func_clear fclear );
 
 /* return pointer value for convenience on sucess */
 void *
-hashtable_set ( hashtable_t *restrict ht, const void *key, void *value );
+hashtable_set ( hashtable_t *ht, const void *key, void *value );
 
 void *
-hashtable_get ( hashtable_t *restrict ht, const void *key );
+hashtable_get ( hashtable_t *ht, const void *key );
 
-typedef int ( *hashtable_foreach_func ) ( hashtable_t *restrict ht,
+typedef int ( *hashtable_foreach_func ) ( hashtable_t *ht,
                                           void *value,
                                           void *user_data );
 
@@ -82,24 +82,58 @@ typedef int ( *hashtable_foreach_func ) ( hashtable_t *restrict ht,
     if 'func' return different of zero hashtable_foreach stop
     and return the value returned from 'func' */
 int
-hashtable_foreach ( hashtable_t *restrict ht,
+hashtable_foreach ( hashtable_t *ht,
                     hashtable_foreach_func func,
                     void *user_data );
-
-/* same 'hashtable_foreach' but entry can be removed on function of user */
-int
-hashtable_foreach_safe ( hashtable_t *restrict ht,
-                           hashtable_foreach_func func,
-                           void *user_data );
 
 /* remove entry from hashtable and return a pointer to entry,
   the entry needs to be handled by the user's skin yet (e.g free if
   necessary )
 */
 void *
-hashtable_remove ( hashtable_t *restrict ht, const void *key );
+hashtable_remove ( hashtable_t *ht, const void *key );
+
+/* equal hashtable_remove but not resize hashtable */
+void *
+hashtable_simple_remove ( hashtable_t *ht, const void *key );
 
 void
 hashtable_destroy ( hashtable_t *ht );
 
+/* simple hashtable */
+
+typedef struct hashtable_min
+{
+  size_t nentries;  // Total number of entries in the table
+  size_t nbuckets;
+  slist_t *buckets;
+} hashtable_min;
+
+hashtable_min *
+hashtable_min_new ( void );
+
+void *
+hashtable_min_set ( hashtable_min *ht,
+                    void *value,
+                    const void *key,
+                    const hash_t hash );
+
+void *
+hashtable_min_get ( hashtable_min *ht,
+                    const void *key,
+                    hash_t hash,
+                    func_compare cmp );
+
+int
+hashtable_min_foreach ( hashtable_min *ht,
+                        hashtable_foreach_func func,
+                        void *user_data );
+
+void *
+hashtable_min_remove ( hashtable_t *ht,
+                       const void *key,
+                       hash_t hash,
+                       func_compare cmp );
+void
+hashtable_min_detroy ( hashtable_min *ht, func_clear fclear );
 #endif  // HASHTABLE_H

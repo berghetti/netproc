@@ -48,28 +48,28 @@
 static inline size_t
 next_power2 ( size_t s )
 {
-  if ( s < HASHTABLE_MIN_SIZE )
-    return HASHTABLE_MIN_SIZE;
-
-  size_t ns = HASHTABLE_MIN_SIZE;
-
-  while ( ns < s )
-    ns <<= 1;
-
-  //   s--;
-  //   s |= s >> 1;
-  //   s |= s >> 2;
-  //   s |= s >> 4;
-  //   s |= s >> 8;
-  //   s |= s >> 16;
+  // if ( s < HASHTABLE_MIN_SIZE )
+  //   return HASHTABLE_MIN_SIZE;
   //
-  // #if __SIZEOF_SIZE_T__ == 8
-  //   s |= s >> 32;
-  // #endif
+  // size_t ns = HASHTABLE_MIN_SIZE;
   //
-  //   s++;
+  // while ( ns < s )
+  //   ns <<= 1;
 
-  return ns;
+  s--;
+  s |= s >> 1;
+  s |= s >> 2;
+  s |= s >> 4;
+  s |= s >> 8;
+  s |= s >> 16;
+
+#if __SIZEOF_SIZE_T__ == 8
+  s |= s >> 32;
+#endif
+
+  s++;
+
+  return s;
 }
 
 static inline void
@@ -207,48 +207,16 @@ hashtable_foreach ( hashtable_t *restrict ht,
 {
   for ( size_t i = 0; i < ht->nbuckets; i++ )
     {
-      hashtable_entry_t **entry = PP_TABLE_HEAD ( ht, i );
-      while ( *entry )
+      hashtable_entry_t *entry = TABLE_HEAD ( ht, i );
+      while ( entry )
         {
-          int ret = func ( ht, ( *entry )->value, user_data );
+          hashtable_entry_t *entry_next = ENTRY_NEXT ( entry );
+
+          int ret = func ( ht, entry->value, user_data );
           if ( ret )
             return ret;
 
-          entry = PP_ENTRY_NEXT ( *entry );
-        }
-    }
-
-  return 0;
-}
-
-int
-hashtable_foreach_safe ( hashtable_t *restrict ht,
-                    hashtable_foreach_func func,
-                    void *user_data )
-{
-  for ( size_t i = 0; i < ht->nbuckets; i++ )
-    {
-      hashtable_entry_t **entry = PP_TABLE_HEAD ( ht, i );
-      while ( *entry )
-        {
-          hashtable_entry_t *entry_safe = *entry;
-
-          int ret = func ( ht, ( *entry )->value, user_data );
-          if ( ret )
-            return ret;
-
-          /* callback can delete current element and the next element on linked
-           list must be tested, if element was removed *entry can be new element
-           or NULL, if new element, continue loop to test element */
-          if ( *entry )
-            {
-              if ( *entry != entry_safe )
-                continue;
-              else
-                entry = PP_ENTRY_NEXT ( *entry );
-            }
-          else
-            break;
+          entry = entry_next;
         }
     }
 
@@ -256,8 +224,8 @@ hashtable_foreach_safe ( hashtable_t *restrict ht,
 }
 
 // https://github.com/mkirchner/linked-list-good-taste/
-void *
-hashtable_remove ( hashtable_t *restrict ht, const void *key )
+static void *
+remove_entry ( hashtable_t *restrict ht, const void *key )
 {
   hash_t hash = ht->fhash ( key );
   size_t index = get_index ( hash, ht->nbuckets );
@@ -282,10 +250,29 @@ hashtable_remove ( hashtable_t *restrict ht, const void *key )
   free ( del );
 
   ht->nentries--;
-  if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
-    hashtable_rehash ( ht );
 
   return value;
+}
+
+void *
+hashtable_remove ( hashtable_t *restrict ht, const void *key )
+{
+
+  void *res = remove_entry ( ht, key );
+
+  if ( res )
+    {
+      if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
+        hashtable_rehash ( ht );
+    }
+
+  return res;
+}
+
+void *
+hashtable_simple_remove ( hashtable_t *restrict ht, const void *key )
+{
+  return remove_entry ( ht, key );
 }
 
 static inline void
@@ -310,6 +297,186 @@ hashtable_destroy ( hashtable_t *ht )
         {
           hashtable_entry_t *entry_next = ENTRY_NEXT ( entry );
           hashtable_destroy_entry ( ht, entry );
+          ht->nentries--;
+          entry = entry_next;
+        }
+    }
+
+  free ( ht->buckets );
+  free ( ht );
+}
+
+///////////////////////
+
+hashtable_min *
+hashtable_min_new ( void )
+{
+  hashtable_min *ht = malloc ( sizeof *ht );
+
+  if ( !ht )
+    return NULL;
+
+  ht->nbuckets = HASHTABLE_MIN_SIZE;
+  ht->buckets = calloc ( ht->nbuckets, sizeof ( ht->buckets[0] ) );
+
+  if ( !ht->buckets )
+    {
+      free ( ht );
+      return NULL;
+    }
+
+  ht->nentries = 0;
+
+  return ht;
+}
+
+void *
+hashtable_min_set ( hashtable_min *ht,
+                    void *value,
+                    const void *key,
+                    const hash_t hash )
+{
+  hashtable_entry_t *entry = malloc ( sizeof *entry );
+
+  if ( !entry )
+    return NULL;
+
+  entry->key_hash = hash;
+  entry->key = ( void * ) key;
+  entry->value = value;
+
+  ht->nentries++;
+  if ( ( float ) ht->nentries / ( float ) ht->nbuckets > HASHTABLE_HIGH )
+    {
+      if ( !hashtable_rehash ( ( hashtable_t * ) ht ) )
+        {
+          ht->nentries--;
+          free ( entry );
+          return NULL;
+        }
+    }
+
+  size_t index = get_index ( entry->key_hash, ht->nbuckets );
+  hashtable_preprend ( &ht->buckets[index], ( slist_item_t * ) entry );
+
+  return value;
+}
+
+static hashtable_entry_t *
+hashtable_min_get_entry ( hashtable_min *restrict ht,
+                          const void *key,
+                          hash_t hash,
+                          func_compare cmp )
+{
+  size_t index = get_index ( hash, ht->nbuckets );
+
+  hashtable_entry_t *entry = TABLE_HEAD ( ht, index );
+
+  while ( entry )
+    {
+      if ( entry->key_hash == hash && cmp ( entry->key, key ) )
+        break;
+
+      entry = ENTRY_NEXT ( entry );
+    }
+
+  return entry;
+}
+
+void *
+hashtable_min_get ( hashtable_min *restrict ht,
+                    const void *key,
+                    hash_t hash,
+                    func_compare cmp )
+{
+  hashtable_entry_t *entry = hashtable_min_get_entry ( ht, key, hash, cmp );
+
+  if ( entry )
+    return entry->value;
+
+  return NULL;
+}
+
+int
+hashtable_min_foreach ( hashtable_min *restrict ht,
+                        hashtable_foreach_func func,
+                        void *user_data )
+{
+  for ( size_t i = 0; i < ht->nbuckets; i++ )
+    {
+      hashtable_entry_t *entry = TABLE_HEAD ( ht, i );
+      while ( entry )
+        {
+          hashtable_entry_t *entry_next = ENTRY_NEXT ( entry );
+
+          int ret = func ( ( hashtable_t * ) ht, entry->value, user_data );
+          if ( ret )
+            return ret;
+
+          entry = entry_next;
+        }
+    }
+
+  return 0;
+}
+
+// https://github.com/mkirchner/linked-list-good-taste/
+void *
+hashtable_min_remove ( hashtable_t *restrict ht,
+                       const void *key,
+                       hash_t hash,
+                       func_compare cmp )
+{
+  size_t index = get_index ( hash, ht->nbuckets );
+
+  hashtable_entry_t **entry = PP_TABLE_HEAD ( ht, index );
+  while ( *entry )
+    {
+      if ( ( *entry )->key_hash == hash && cmp ( ( *entry )->key, key ) )
+        break;
+
+      entry = PP_ENTRY_NEXT ( *entry );
+    }
+
+  if ( *entry == NULL )
+    return NULL;
+
+  hashtable_entry_t *del = *entry;
+  void *value = del->value;
+
+  *entry = ENTRY_NEXT ( del );
+  free ( del );
+
+  ht->nentries--;
+
+  if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
+    hashtable_rehash ( ht );
+
+  return value;
+}
+
+static inline void
+hashtable_min_destroy_entry ( func_clear fclear, hashtable_entry_t *entry )
+{
+  if ( fclear )
+    fclear ( entry->value );
+
+  free ( entry );
+}
+
+void
+hashtable_min_detroy ( hashtable_min *ht, func_clear fclear )
+{
+  for ( size_t i = 0; i < ht->nbuckets; i++ )
+    {
+      if ( !ht->nentries )
+        break;
+
+      hashtable_entry_t *entry = TABLE_HEAD ( ht, i );
+      while ( entry )
+        {
+          hashtable_entry_t *entry_next = ENTRY_NEXT ( entry );
+          hashtable_min_destroy_entry ( fclear, entry );
           ht->nentries--;
           entry = entry_next;
         }

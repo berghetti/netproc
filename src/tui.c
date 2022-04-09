@@ -383,7 +383,7 @@ tui_show ( const struct processes *processes, const struct config_op *co )
   sort ( processes->proc, processes->total, sort_by, co );
 
   wmove ( pad, LINE_START + 1, 0 );  // move second line after header
-  
+
   for ( size_t i = 0; i < processes->total; i++ )
     {
       // process_t *process = *proc;

@@ -85,8 +85,7 @@
 // }
 
 bool
-statistics_add ( const struct packet *pkt,
-                 bool view_conections )
+statistics_add ( const struct packet *pkt, bool view_conections )
 {
   connection_t *conn;
 

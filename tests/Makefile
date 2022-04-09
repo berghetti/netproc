@@ -3,12 +3,12 @@
 C_SOURCE= ./unity/unity.c
 INC_DIRS= -Iunity
 
-CFLAGS=-Wall -Wextra -pedantic -ggdb -O2
+CFLAGS=-Wall -Wextra -pedantic -ggdb -O0
 
 INC_DIRS += -I../src -I ../src/resolver
 
 C_TMP= $(wildcard ./test*.c)
-OBJS= $(C_TMP:.c=.o)
+OBJS_TEST= $(C_TMP:.c=.o)
 
 TEST = tests_all
 
@@ -21,14 +21,17 @@ C_SOURCE += ../src/hashtable.c \
 						../src/round.c \
 						../src/human_readable.c \
 						../src/vector.c \
-						../src/timer.c
+						../src/timer.c \
+						../src/m_error.c
+
+OBJS_MODS = $(C_SOURCE:.c=.o)
 
 .PHONY: all clean run
 
 all: $(TEST) run clean
 
-$(TEST): $(OBJS)
-	$(CC) $(LDFLAGS) $(C_SOURCE) $^ $(LDLIBS) -o $@
+$(TEST): $(OBJS_TEST) $(OBJS_MODS)
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 %.o : %.c
 	$(CC) $(CFLAGS) $(INC_DIRS) $(CPPFLAGS) -c $< -o $@

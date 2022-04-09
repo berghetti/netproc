@@ -35,8 +35,6 @@ cb_hash ( const void *key )
   return n;
 }
 
-
-
 void
 test1 ( void )
 {
@@ -80,17 +78,16 @@ test1 ( void )
   hashtable_destroy ( ht );
 }
 
-
 static bool
 cb_compare2 ( const void *key1, const void *key2 )
 {
-  return ( *(int *) key1 == *(int *) key2 );
+  return ( *( int * ) key1 == *( int * ) key2 );
 }
 
 static hash_t
 cb_hash2 ( const void *key )
 {
-  return *(int *)key;
+  return *( int * ) key;
 }
 
 static int
@@ -98,7 +95,7 @@ remove_foreach ( hashtable_t *ht, void *value, void *user_data )
 {
   user_data = user_data;
 
-  hashtable_remove ( ht, value );
+  hashtable_simple_remove ( ht, value );
 
   return 0;
 }
@@ -108,7 +105,8 @@ test_hashtable_foreach_safe ( void )
 {
   hashtable_t *ht = hashtable_new ( cb_hash2, cb_compare2, NULL );
 
-  int values[] = { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 };
+  int values[] = { 10, 20,  30,  40,  50,  60,  70, 80,
+                   90, 100, 110, 120, 130, 140, 150 };
   int *p;
 
   size_t i;
@@ -118,7 +116,7 @@ test_hashtable_foreach_safe ( void )
       TEST_ASSERT_EQUAL_INT ( values[i], *p );
     }
 
-  hashtable_foreach_safe ( ht, remove_foreach, NULL );
+  hashtable_foreach ( ht, remove_foreach, NULL );
 
   TEST_ASSERT_EQUAL_INT ( 0, ht->nentries );
 
