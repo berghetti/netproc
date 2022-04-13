@@ -60,14 +60,6 @@ ht_cb_compare_tuple ( const void *key1, const void *key2 )
   return ( 0 == memcmp ( key1, key2, sizeof ( struct tuple ) ) );
 }
 
-bool
-connection_init ( void )
-{
-  ht_connections = hashtable_min_new ();
-
-  return !!ht_connections;
-}
-
 static connection_t *
 create_new_conn ( unsigned long inode,
                   char *local_addr,
@@ -144,6 +136,7 @@ connection_update_ ( const char *path_file, const int protocol )
   int ret = 1;
   char *line = NULL;
   size_t len = 0;
+
   // ignore header in first line
   if ( ( getline ( &line, &len, arq ) ) == -1 )
     {
@@ -154,12 +147,12 @@ connection_update_ ( const char *path_file, const int protocol )
 
   while ( ( getline ( &line, &len, arq ) ) != -1 )
     {
-      // clang-format off
-      // sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
-      // 0: 3500007F:0035 00000000:0000 0A 00000000:00000000 00:00000000 00000000   101        0 20911 1 0000000000000000 100 0 0 10 0
-      // 1: 0100007F:0277 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 44385 1 0000000000000000 100 0 0 10 0
-      // 2: 0100007F:1733 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 27996 1 0000000000000000 100 0 0 10 0
-      // clang-format on
+      /* clang-format off
+      sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
+      0: 3500007F:0035 00000000:0000 0A 00000000:00000000 00:00000000 00000000   101        0 20911 1 0000000000000000 100 0 0 10 0
+      1: 0100007F:0277 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 44385 1 0000000000000000 100 0 0 10 0
+      2: 0100007F:1733 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 27996 1 0000000000000000 100 0 0 10 0
+      clang-format on */
 
       char local_addr[10], rem_addr[10];  // enough for ipv4
       unsigned long inode;
@@ -224,17 +217,17 @@ remove_inactives_ ( hashtable_t *ht, void *value, UNUSED void *user_data )
 {
   connection_t *conn = value;
 
-  /* on last pass conn->refs_active be 0,
+  /* on next pass conn->refs_active be 0,
    if connection_update not assign 2 again this be removed */
 
   if ( 0 == conn->refs_active-- )
     {
-      hashtable_min_remove (
+      hashtable_min_simple_remove (
               ht,
               &conn->inode,
               hash ( &conn->inode, SIZEOF_MEMBER ( connection_t, inode ) ),
               ht_cb_compare_inode );
-      hashtable_min_remove (
+      hashtable_min_simple_remove (
               ht,
               &conn->tuple,
               hash ( &conn->tuple, SIZEOF_MEMBER ( connection_t, tuple ) ),
@@ -250,6 +243,14 @@ static void
 remove_inactives_conns ( void )
 {
   hashtable_min_foreach ( ht_connections, remove_inactives_, NULL );
+}
+
+bool
+connection_init ( void )
+{
+  ht_connections = hashtable_min_new ();
+
+  return !!ht_connections;
 }
 
 #define PATH_TCP "/proc/net/tcp"
@@ -295,14 +296,13 @@ connection_get_by_tuple ( struct tuple *tuple )
 }
 
 static void
-conn_free( void *data )
+conn_free ( void *data )
 {
   connection_t *conn = data;
 
   /* free second entry from hashtable to this connection */
   if ( 1 == conn->refs_exit-- )
     free ( conn );
-
 }
 
 void

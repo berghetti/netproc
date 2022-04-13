@@ -36,8 +36,7 @@ test_insert ( void )
       TEST_ASSERT_NOT_NULL ( conn );
 
       connection_insert ( conn );
-      TEST_ASSERT_EQUAL_INT ( i + 1, ht_connections_inode->nentries );
-      TEST_ASSERT_EQUAL_INT ( i + 1, ht_connections_tuple->nentries );
+      TEST_ASSERT_EQUAL_INT ( 2 * ( 1 + i ), ht_connections->nentries );
     }
 }
 
@@ -52,8 +51,7 @@ test_search ( void )
 
   connection_insert ( conn );
 
-  TEST_ASSERT_EQUAL ( NUN_CONN + 1, ht_connections_inode->nentries );
-  TEST_ASSERT_EQUAL ( NUN_CONN + 1, ht_connections_tuple->nentries );
+  TEST_ASSERT_EQUAL ( NUN_CONN * 2 + 2, ht_connections->nentries );
 
   connection_t *tmp;
 
@@ -68,17 +66,13 @@ static void
 test_delete ( void )
 {
   remove_inactives_conns ();
-  TEST_ASSERT_EQUAL ( 0, ht_connections_inode->nentries );
-  TEST_ASSERT_EQUAL ( 0, ht_connections_tuple->nentries );
+  TEST_ASSERT_EQUAL ( 0, ht_connections->nentries );
 }
 
 static void
 test_conn_update ( void )
 {
   TEST_ASSERT_TRUE ( connection_update ( TCP | UDP ) );
-
-  // TEST_ASSERT_TRUE ( connection_update_ ( PATH_TCP, IPPROTO_TCP ) );
-  // TEST_ASSERT_TRUE ( connection_update_ ( PATH_TCP, IPPROTO_UDP ) );
 }
 
 void

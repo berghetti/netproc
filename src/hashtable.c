@@ -420,12 +420,11 @@ hashtable_min_foreach ( hashtable_min *restrict ht,
   return 0;
 }
 
-// https://github.com/mkirchner/linked-list-good-taste/
-void *
-hashtable_min_remove ( hashtable_t *restrict ht,
-                       const void *key,
-                       hash_t hash,
-                       func_compare cmp )
+static void *
+hashtable_min_remove_entry ( hashtable_t *restrict ht,
+                             const void *key,
+                             hash_t hash,
+                             func_compare cmp )
 {
   size_t index = get_index ( hash, ht->nbuckets );
 
@@ -449,10 +448,34 @@ hashtable_min_remove ( hashtable_t *restrict ht,
 
   ht->nentries--;
 
-  if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
-    hashtable_rehash ( ht );
-
   return value;
+}
+
+void *
+hashtable_min_remove ( hashtable_t *ht,
+                       const void *key,
+                       hash_t hash,
+                       func_compare cmp )
+{
+
+  void *res = hashtable_min_remove_entry ( ht, key, hash, cmp );
+
+  if ( res )
+    {
+      if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
+        hashtable_rehash ( ht );
+    }
+
+  return res;
+}
+
+void *
+hashtable_min_simple_remove ( hashtable_t *ht,
+                              const void *key,
+                              hash_t hash,
+                              func_compare cmp )
+{
+  return hashtable_min_remove_entry ( ht, key, hash, cmp );
 }
 
 static inline void

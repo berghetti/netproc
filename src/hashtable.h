@@ -134,6 +134,13 @@ hashtable_min_remove ( hashtable_t *ht,
                        const void *key,
                        hash_t hash,
                        func_compare cmp );
+
+void *
+hashtable_min_simple_remove ( hashtable_t *ht,
+                              const void *key,
+                              hash_t hash,
+                              func_compare cmp );
+
 void
 hashtable_min_detroy ( hashtable_min *ht, func_clear fclear );
 #endif  // HASHTABLE_H
