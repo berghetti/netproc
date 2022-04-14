@@ -105,6 +105,7 @@ create_new_conn ( unsigned long inode,
   /* each conn has two entries on hashtable,
    this is used to remove inactives conns and free only one time a conn */
   conn->refs_active = conn->refs_exit = 2;
+  conn->active = true;
 
   return conn;
 
@@ -192,6 +193,7 @@ connection_update_ ( const char *path_file, const int protocol )
 
       if ( conn )
         {
+          conn->active = true;
           conn->refs_active = 2;
           continue;
         }
@@ -220,27 +222,33 @@ EXIT:
 }
 
 static int
-remove_inactives_ ( hashtable_t *ht, void *value, UNUSED void *user_data )
+remove_inactives_ ( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data )
 {
   connection_t *conn = value;
 
-  /* on last pass conn->refs_active be 0,
-   if connection_update not assign 2 again this be removed */
+  /* each conn has two entries in hashtable (ht),
+   on first time conn->active assign false and conn is not removed,
+   on second time conn->refs_active is 2  and conn is not removed.
 
-  if ( 0 == conn->refs_active-- )
+   on third time, in next update, if conn is not mark as active,
+   she go be on first time removed only from ht and in second time is removed
+   from ht and free
+  */
+
+  if ( conn->active )
     {
-      hashtable_min_remove (
-              ht,
-              &conn->inode,
-              hash ( &conn->inode, SIZEOF_MEMBER ( connection_t, inode ) ),
-              ht_cb_compare_inode );
-      hashtable_min_remove (
-              ht,
-              &conn->tuple,
-              hash ( &conn->tuple, SIZEOF_MEMBER ( connection_t, tuple ) ),
-              ht_cb_compare_tuple );
+      conn->active = false;
+      return 0;
+    }
 
-      free ( conn );
+  switch ( conn->refs_active-- )
+    {
+      case 1:
+        return 1;
+
+      case 0:
+        free ( conn );
+        return 1;
     }
 
   return 0;
@@ -249,7 +257,7 @@ remove_inactives_ ( hashtable_t *ht, void *value, UNUSED void *user_data )
 static void
 remove_inactives_conns ( void )
 {
-  hashtable_min_foreach ( ht_connections, remove_inactives_, NULL );
+  hashtable_min_foreach_remove ( ht_connections, remove_inactives_, NULL );
 }
 
 #define PATH_TCP "/proc/net/tcp"
@@ -299,7 +307,7 @@ conn_free( void *data )
 {
   connection_t *conn = data;
 
-  /* free second entry from hashtable to this connection */
+  /* free second entry from hashtable to this each connection */
   if ( 1 == conn->refs_exit-- )
     free ( conn );
 

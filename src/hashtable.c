@@ -397,6 +397,16 @@ hashtable_min_get ( hashtable_min *restrict ht,
   return NULL;
 }
 
+static void
+slist_remove( slist_t *list, slist_item_t *previous,
+                 slist_item_t *item)
+{
+    if (previous != NULL)
+        previous->next = item->next;
+    else
+        list->head = item->next;
+}
+
 int
 hashtable_min_foreach ( hashtable_min *restrict ht,
                         hashtable_foreach_func func,
@@ -407,13 +417,45 @@ hashtable_min_foreach ( hashtable_min *restrict ht,
       hashtable_entry_t *entry = TABLE_HEAD ( ht, i );
       while ( entry )
         {
-          hashtable_entry_t *entry_next = ENTRY_NEXT ( entry );
+          hashtable_entry_t *next = ENTRY_NEXT ( entry );
 
           int ret = func ( ( hashtable_t * ) ht, entry->value, user_data );
           if ( ret )
             return ret;
 
-          entry = entry_next;
+          entry = next;
+        }
+    }
+
+  return 0;
+}
+
+int
+hashtable_min_foreach_remove ( hashtable_min *restrict ht,
+                        hashtable_foreach_func func,
+                        void *user_data )
+{
+  for ( size_t i = 0; i < ht->nbuckets; i++ )
+    {
+      hashtable_entry_t *entry = TABLE_HEAD ( ht, i );
+      hashtable_entry_t *prev = NULL;
+      while ( entry )
+        {
+          hashtable_entry_t *next = ENTRY_NEXT ( entry );
+
+          int ret = func ( ( hashtable_t * ) ht, entry->value, user_data );
+          if ( ret )
+            {
+              slist_remove( &ht->buckets[i], (slist_item_t *)prev, (slist_item_t *) entry);
+              free ( entry );
+              ht->nentries--;
+            }
+          else
+            {
+              prev = entry;
+            }
+
+          entry = next;
         }
     }
 
@@ -421,6 +463,40 @@ hashtable_min_foreach ( hashtable_min *restrict ht,
 }
 
 // https://github.com/mkirchner/linked-list-good-taste/
+// void *
+// hashtable_min_remove ( hashtable_t *restrict ht,
+//                        const void *key,
+//                        hash_t hash,
+//                        func_compare cmp )
+// {
+//   size_t index = get_index ( hash, ht->nbuckets );
+//
+//   hashtable_entry_t **entry = PP_TABLE_HEAD ( ht, index );
+//   while ( *entry )
+//     {
+//       if ( ( *entry )->key_hash == hash && cmp ( ( *entry )->key, key ) )
+//         break;
+//
+//       entry = PP_ENTRY_NEXT ( *entry );
+//     }
+//
+//   if ( *entry == NULL )
+//     return NULL;
+//
+//   void *value = (*entry)->value;
+//
+//   hashtable_entry_t *next = ENTRY_NEXT ( *entry );
+//   free ( *entry );
+//   *entry = next;
+//
+//   ht->nentries--;
+//
+//   if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
+//     hashtable_rehash ( ht );
+//
+//   return value;
+// }
+
 void *
 hashtable_min_remove ( hashtable_t *restrict ht,
                        const void *key,
@@ -429,28 +505,32 @@ hashtable_min_remove ( hashtable_t *restrict ht,
 {
   size_t index = get_index ( hash, ht->nbuckets );
 
-  hashtable_entry_t **entry = PP_TABLE_HEAD ( ht, index );
-  while ( *entry )
+  hashtable_entry_t *entry = TABLE_HEAD ( ht, index );
+  hashtable_entry_t *prev = NULL;
+  while ( entry )
     {
-      if ( ( *entry )->key_hash == hash && cmp ( ( *entry )->key, key ) )
+      if ( entry->key_hash == hash && cmp ( entry->key, key ) )
         break;
 
-      entry = PP_ENTRY_NEXT ( *entry );
+      prev = entry;
+      entry = ENTRY_NEXT ( entry );
     }
 
-  if ( *entry == NULL )
+  if ( entry == NULL )
     return NULL;
 
-  hashtable_entry_t *del = *entry;
-  void *value = del->value;
+  if ( prev )
+    (( slist_item_t * ) prev)->next = (( slist_item_t *) entry)->next;
+  else
+    ht->buckets[index].head = (( slist_item_t *)  entry )->next;
 
-  *entry = ENTRY_NEXT ( del );
-  free ( del );
+  void *value = entry->value;
+  free ( entry );
 
   ht->nentries--;
 
-  if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
-    hashtable_rehash ( ht );
+  // if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
+  //   hashtable_rehash ( ht );
 
   return value;
 }

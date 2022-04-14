@@ -43,8 +43,9 @@ typedef struct conection
   uint8_t state;             // status tcp connection
 
   // internal state
-  int refs_active;  // if false, connections is removed from hashtable
-  int refs_exit;    // references
+  uint8_t refs_active;  // if false, connections is removed from hashtable
+  uint8_t refs_exit;    // references
+  bool active;
 } connection_t;
 
 bool

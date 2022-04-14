@@ -128,6 +128,11 @@ int
 hashtable_min_foreach ( hashtable_min *ht,
                         hashtable_foreach_func func,
                         void *user_data );
+                        
+int
+hashtable_min_foreach_remove ( hashtable_min *restrict ht,
+                               hashtable_foreach_func func,
+                               void *user_data );
 
 void *
 hashtable_min_remove ( hashtable_t *ht,
