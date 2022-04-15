@@ -535,32 +535,24 @@ hashtable_min_remove ( hashtable_t *restrict ht,
   return value;
 }
 
-void *
-hashtable_min_remove ( hashtable_t *ht,
-                       const void *key,
-                       hash_t hash,
-                       func_compare cmp )
-{
+// void *
+// hashtable_min_remove ( hashtable_t *ht,
+//                        const void *key,
+//                        hash_t hash,
+//                        func_compare cmp )
+// {
+//
+//   void *res = hashtable_min_remove_entry ( ht, key, hash, cmp );
+//
+//   if ( res )
+//     {
+//       if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
+//         hashtable_rehash ( ht );
+//     }
+//
+//   return res;
+// }
 
-  void *res = hashtable_min_remove_entry ( ht, key, hash, cmp );
-
-  if ( res )
-    {
-      if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
-        hashtable_rehash ( ht );
-    }
-
-  return res;
-}
-
-void *
-hashtable_min_simple_remove ( hashtable_t *ht,
-                              const void *key,
-                              hash_t hash,
-                              func_compare cmp )
-{
-  return hashtable_min_remove_entry ( ht, key, hash, cmp );
-}
 
 static inline void
 hashtable_min_destroy_entry ( func_clear fclear, hashtable_entry_t *entry )

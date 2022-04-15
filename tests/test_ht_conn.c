@@ -38,11 +38,7 @@ test_insert ( void )
       TEST_ASSERT_NOT_NULL ( conn );
 
       connection_insert ( conn );
-<<<<<<< HEAD
-      TEST_ASSERT_EQUAL_INT ( 2 * ( 1 + i ), ht_connections->nentries );
-=======
       TEST_ASSERT_EQUAL_INT ( 2 * (i + 1), ht_connections->nentries );
->>>>>>> 03e1b339a3fbaf5e6d687593d4d00adeeb22526a
     }
 }
 
@@ -57,11 +53,7 @@ test_search ( void )
 
   connection_insert ( conn );
 
-<<<<<<< HEAD
-  TEST_ASSERT_EQUAL ( NUN_CONN * 2 + 2, ht_connections->nentries );
-=======
   TEST_ASSERT_EQUAL ( 2 * (NUN_CONN + 1), ht_connections->nentries );
->>>>>>> 03e1b339a3fbaf5e6d687593d4d00adeeb22526a
 
   connection_t *tmp;
 

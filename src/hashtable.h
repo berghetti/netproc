@@ -128,7 +128,7 @@ int
 hashtable_min_foreach ( hashtable_min *ht,
                         hashtable_foreach_func func,
                         void *user_data );
-                        
+
 int
 hashtable_min_foreach_remove ( hashtable_min *restrict ht,
                                hashtable_foreach_func func,
@@ -139,12 +139,6 @@ hashtable_min_remove ( hashtable_t *ht,
                        const void *key,
                        hash_t hash,
                        func_compare cmp );
-
-void *
-hashtable_min_simple_remove ( hashtable_t *ht,
-                              const void *key,
-                              hash_t hash,
-                              func_compare cmp );
 
 void
 hashtable_min_detroy ( hashtable_min *ht, func_clear fclear );
