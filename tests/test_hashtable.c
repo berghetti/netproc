@@ -3,8 +3,7 @@
 
 #include "hashtable.h"
 #include "unity.h"
-
-#define ARRAY_SIZE( a ) ( sizeof ( a ) / sizeof ( a[0] ) )
+#include "../src/macro_util.h"
 
 static int
 cb_func ( hashtable_t *ht, void *value, void *user_data )
@@ -41,8 +40,8 @@ test1 ( void )
   hashtable_t *ht = hashtable_new ( cb_hash, cb_compare, NULL );
 
   TEST_ASSERT_NOT_NULL ( ht );
-  TEST_ASSERT_EQUAL_INT ( 0, ht->nentries );
-  TEST_ASSERT_GREATER_THAN ( 0, ht->nbuckets );
+  TEST_ASSERT_EQUAL_INT ( 0, hashtable_get_nentries( ht ) );
+  TEST_ASSERT_GREATER_THAN ( 0, hashtable_get_size ( ht ) );
 
   TEST_ASSERT_NULL ( hashtable_get ( ht, 0 ) );
 
@@ -56,8 +55,8 @@ test1 ( void )
       TEST_ASSERT_EQUAL_INT ( values[i], *p );
     }
 
-  TEST_ASSERT_EQUAL_INT ( ARRAY_SIZE ( values ), ht->nentries );
-  TEST_ASSERT_GREATER_THAN ( ht->nentries, ht->nbuckets );
+  TEST_ASSERT_EQUAL_INT ( ARRAY_SIZE ( values ), hashtable_get_nentries (ht ) );
+  TEST_ASSERT_GREATER_THAN ( hashtable_get_nentries ( ht ), hashtable_get_size ( ht ) );
 
   for ( i = 0; i < ARRAY_SIZE ( values ); i++ )
     {
@@ -67,13 +66,13 @@ test1 ( void )
 
   p = hashtable_remove ( ht, TO_PTR ( values[0] ) );
   TEST_ASSERT_EQUAL_INT ( *p, values[0] );
-  TEST_ASSERT_EQUAL_INT ( ARRAY_SIZE ( values ) - 1, ht->nentries );
+  TEST_ASSERT_EQUAL_INT ( ARRAY_SIZE ( values ) - 1, hashtable_get_nentries ( ht ) );
   TEST_ASSERT_NULL ( hashtable_remove ( ht, TO_PTR ( values[0] ) ) );
 
   int count = 0;
   TEST_ASSERT_EQUAL_INT ( 0, hashtable_foreach ( ht, cb_func, &count ) );
   TEST_ASSERT_EQUAL_INT ( ARRAY_SIZE ( values ) - 1, count );
-  TEST_ASSERT_EQUAL_INT ( count, ht->nentries );
+  TEST_ASSERT_EQUAL_INT ( count, hashtable_get_nentries ( ht ) );
 
   hashtable_destroy ( ht );
 }
@@ -91,13 +90,11 @@ cb_hash2 ( const void *key )
 }
 
 static int
-remove_foreach ( hashtable_t *ht, void *value, void *user_data )
+remove_foreach ( UNUSED hashtable_t *ht,
+                 UNUSED void *value,
+                 UNUSED void *user_data )
 {
-  user_data = user_data;
-
-  hashtable_simple_remove ( ht, value );
-
-  return 0;
+  return 1;
 }
 
 static void
@@ -116,9 +113,9 @@ test_hashtable_foreach_safe ( void )
       TEST_ASSERT_EQUAL_INT ( values[i], *p );
     }
 
-  hashtable_foreach ( ht, remove_foreach, NULL );
+  hashtable_foreach_remove ( ht, remove_foreach, NULL );
 
-  TEST_ASSERT_EQUAL_INT ( 0, ht->nentries );
+  TEST_ASSERT_EQUAL_INT ( 0, hashtable_get_nentries ( ht ) );
 
   hashtable_destroy ( ht );
 }

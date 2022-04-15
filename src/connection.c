@@ -34,7 +34,7 @@
 #include "m_error.h"
 #include "macro_util.h"
 
-static hashtable_min *ht_connections = NULL;
+static hashtable_t *ht_connections = NULL;
 
 static hash_t
 hash ( const void *key, size_t size )
@@ -238,7 +238,7 @@ remove_inactives_ ( UNUSED hashtable_t *ht,
 static void
 remove_inactives_conns ( void )
 {
-  hashtable_min_foreach_remove ( ht_connections, remove_inactives_, NULL );
+  hashtable_foreach_remove ( ht_connections, remove_inactives_, NULL );
 }
 
 bool
