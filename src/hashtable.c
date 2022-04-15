@@ -398,13 +398,12 @@ hashtable_min_get ( hashtable_min *restrict ht,
 }
 
 static void
-slist_remove( slist_t *list, slist_item_t *previous,
-                 slist_item_t *item)
+slist_remove ( slist_t *list, slist_item_t *previous, slist_item_t *item )
 {
-    if (previous != NULL)
-        previous->next = item->next;
-    else
-        list->head = item->next;
+  if ( previous != NULL )
+    previous->next = item->next;
+  else
+    list->head = item->next;
 }
 
 int
@@ -432,8 +431,8 @@ hashtable_min_foreach ( hashtable_min *restrict ht,
 
 int
 hashtable_min_foreach_remove ( hashtable_min *restrict ht,
-                        hashtable_foreach_func func,
-                        void *user_data )
+                               hashtable_foreach_func func,
+                               void *user_data )
 {
   for ( size_t i = 0; i < ht->nbuckets; i++ )
     {
@@ -446,7 +445,9 @@ hashtable_min_foreach_remove ( hashtable_min *restrict ht,
           int ret = func ( ( hashtable_t * ) ht, entry->value, user_data );
           if ( ret )
             {
-              slist_remove( &ht->buckets[i], (slist_item_t *)prev, (slist_item_t *) entry);
+              slist_remove ( &ht->buckets[i],
+                             ( slist_item_t * ) prev,
+                             ( slist_item_t * ) entry );
               free ( entry );
               ht->nentries--;
             }
@@ -461,41 +462,6 @@ hashtable_min_foreach_remove ( hashtable_min *restrict ht,
 
   return 0;
 }
-
-// https://github.com/mkirchner/linked-list-good-taste/
-// void *
-// hashtable_min_remove ( hashtable_t *restrict ht,
-//                        const void *key,
-//                        hash_t hash,
-//                        func_compare cmp )
-// {
-//   size_t index = get_index ( hash, ht->nbuckets );
-//
-//   hashtable_entry_t **entry = PP_TABLE_HEAD ( ht, index );
-//   while ( *entry )
-//     {
-//       if ( ( *entry )->key_hash == hash && cmp ( ( *entry )->key, key ) )
-//         break;
-//
-//       entry = PP_ENTRY_NEXT ( *entry );
-//     }
-//
-//   if ( *entry == NULL )
-//     return NULL;
-//
-//   void *value = (*entry)->value;
-//
-//   hashtable_entry_t *next = ENTRY_NEXT ( *entry );
-//   free ( *entry );
-//   *entry = next;
-//
-//   ht->nentries--;
-//
-//   if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
-//     hashtable_rehash ( ht );
-//
-//   return value;
-// }
 
 void *
 hashtable_min_remove ( hashtable_t *restrict ht,
@@ -519,40 +485,20 @@ hashtable_min_remove ( hashtable_t *restrict ht,
   if ( entry == NULL )
     return NULL;
 
-  if ( prev )
-    (( slist_item_t * ) prev)->next = (( slist_item_t *) entry)->next;
-  else
-    ht->buckets[index].head = (( slist_item_t *)  entry )->next;
+  slist_remove ( &ht->buckets[index],
+                 ( slist_item_t * ) prev,
+                 ( slist_item_t * ) entry );
 
   void *value = entry->value;
   free ( entry );
 
   ht->nentries--;
 
-  // if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
-  //   hashtable_rehash ( ht );
+  if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
+    hashtable_rehash ( ht );
 
   return value;
 }
-
-// void *
-// hashtable_min_remove ( hashtable_t *ht,
-//                        const void *key,
-//                        hash_t hash,
-//                        func_compare cmp )
-// {
-//
-//   void *res = hashtable_min_remove_entry ( ht, key, hash, cmp );
-//
-//   if ( res )
-//     {
-//       if ( ( float ) ht->nentries / ( float ) ht->nbuckets < HASHTABLE_LOW )
-//         hashtable_rehash ( ht );
-//     }
-//
-//   return res;
-// }
-
 
 static inline void
 hashtable_min_destroy_entry ( func_clear fclear, hashtable_entry_t *entry )

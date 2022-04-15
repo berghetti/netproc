@@ -60,6 +60,8 @@ ht_cb_compare_tuple ( const void *key1, const void *key2 )
   return ( 0 == memcmp ( key1, key2, sizeof ( struct tuple ) ) );
 }
 
+#define MARK_ACTIVE_CON( conn ) ( ( conn )->refs_active = 3 )
+
 static connection_t *
 create_new_conn ( unsigned long inode,
                   char *local_addr,
@@ -96,8 +98,7 @@ create_new_conn ( unsigned long inode,
 
   /* each conn has two entries on hashtable,
    this is used to remove inactives conns and free only one time a conn */
-  conn->refs_active = conn->refs_exit = 2;
-  conn->active = true;
+  MARK_ACTIVE_CON ( conn );
 
   return conn;
 
@@ -110,7 +111,7 @@ EXIT_ERROR:
 static void
 connection_insert ( connection_t *conn )
 {
-  // make one entrie in each hashtable to same connection
+  // make one entries in hashtable to same connection
   hashtable_min_set (
           ht_connections,
           conn,
@@ -186,8 +187,7 @@ connection_update_ ( const char *path_file, const int protocol )
 
       if ( conn )
         {
-          conn->active = true;
-          conn->refs_active = 2;
+          MARK_ACTIVE_CON ( conn );
           continue;
         }
 
@@ -215,24 +215,11 @@ EXIT:
 }
 
 static int
-remove_inactives_ ( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data )
+remove_inactives_ ( UNUSED hashtable_t *ht,
+                    void *value,
+                    UNUSED void *user_data )
 {
   connection_t *conn = value;
-
-  /* each conn has two entries in hashtable (ht),
-   on first time conn->active assign false and conn is not removed,
-   on second time conn->refs_active is 2  and conn is not removed.
-
-   on third time, in next update, if conn is not mark as active,
-   she go be on first time removed only from ht and in second time is removed
-   from ht and free
-  */
-
-  if ( conn->active )
-    {
-      conn->active = false;
-      return 0;
-    }
 
   switch ( conn->refs_active-- )
     {
@@ -242,9 +229,10 @@ remove_inactives_ ( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data 
       case 0:
         free ( conn );
         return 1;
-    }
 
-  return 0;
+      default:
+        return 0;
+    }
 }
 
 static void
@@ -267,21 +255,21 @@ connection_init ( void )
 bool
 connection_update ( const int proto )
 {
+  remove_inactives_conns ();
+
   if ( proto & TCP )
     {
       if ( !connection_update_ ( PATH_TCP, IPPROTO_TCP ) )
-        return 0;
+        return false;
     }
 
   if ( proto & UDP )
     {
       if ( !connection_update_ ( PATH_UDP, IPPROTO_UDP ) )
-        return 0;
+        return false;
     }
 
-  remove_inactives_conns ();
-
-  return 1;
+  return true;
 }
 
 connection_t *
@@ -308,8 +296,8 @@ conn_free ( void *data )
 {
   connection_t *conn = data;
 
-  /* free second entry from hashtable to this each connection */
-  if ( 1 == conn->refs_exit-- )
+  /* first entry go be 0, not free, remove second entry */
+  if ( conn->refs_exit++ == 1 )
     free ( conn );
 }
 

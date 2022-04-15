@@ -20,25 +20,24 @@ create_conn_fake ( void )
       conn->tuple.l3.remote.ip = rand ();
       conn->tuple.l4.local_port = rand () % 0xffff;
       conn->tuple.l4.remote_port = rand () % 0xffff;
-      conn->refs_active = 2;
-      conn->active = false;
+      conn->refs_active = 3;
     }
 
   return conn;
 }
 
-#define NUN_CONN 16
+#define NUM_CONN 16
 
 static void
 test_insert ( void )
 {
-  for ( int i = 0; i < NUN_CONN; i++ )
+  for ( int i = 0; i < NUM_CONN; i++ )
     {
       connection_t *conn = create_conn_fake ();
       TEST_ASSERT_NOT_NULL ( conn );
 
       connection_insert ( conn );
-      TEST_ASSERT_EQUAL_INT ( 2 * (i + 1), ht_connections->nentries );
+      TEST_ASSERT_EQUAL_INT ( 2 * ( i + 1 ), ht_connections->nentries );
     }
 }
 
@@ -53,7 +52,7 @@ test_search ( void )
 
   connection_insert ( conn );
 
-  TEST_ASSERT_EQUAL ( 2 * (NUN_CONN + 1), ht_connections->nentries );
+  TEST_ASSERT_EQUAL ( 2 * ( NUM_CONN + 1 ), ht_connections->nentries );
 
   connection_t *tmp;
 
@@ -67,6 +66,10 @@ test_search ( void )
 static void
 test_delete ( void )
 {
+  remove_inactives_conns ();
+  TEST_ASSERT_EQUAL ( NUM_CONN * 2 + 2, ht_connections->nentries );
+
+  // removed conns only next update
   remove_inactives_conns ();
   TEST_ASSERT_EQUAL ( 0, ht_connections->nentries );
 }
@@ -89,8 +92,12 @@ test_ht_conn ( void )
   test_delete ();
 
   test_conn_update ();
+  size_t hold = ht_connections->nentries;
+  remove_inactives_conns ();
+  TEST_ASSERT_EQUAL ( hold, ht_connections->nentries );
 
-  test_delete ();
+  remove_inactives_conns ();
+  TEST_ASSERT_EQUAL ( 0, ht_connections->nentries );
 
   connection_free ();
 }
