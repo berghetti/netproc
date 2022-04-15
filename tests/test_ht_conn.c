@@ -20,6 +20,8 @@ create_conn_fake ( void )
       conn->tuple.l3.remote.ip = rand ();
       conn->tuple.l4.local_port = rand () % 0xffff;
       conn->tuple.l4.remote_port = rand () % 0xffff;
+      conn->refs_active = 2;
+      conn->active = false;
     }
 
   return conn;
@@ -36,7 +38,11 @@ test_insert ( void )
       TEST_ASSERT_NOT_NULL ( conn );
 
       connection_insert ( conn );
+<<<<<<< HEAD
       TEST_ASSERT_EQUAL_INT ( 2 * ( 1 + i ), ht_connections->nentries );
+=======
+      TEST_ASSERT_EQUAL_INT ( 2 * (i + 1), ht_connections->nentries );
+>>>>>>> 03e1b339a3fbaf5e6d687593d4d00adeeb22526a
     }
 }
 
@@ -51,7 +57,11 @@ test_search ( void )
 
   connection_insert ( conn );
 
+<<<<<<< HEAD
   TEST_ASSERT_EQUAL ( NUN_CONN * 2 + 2, ht_connections->nentries );
+=======
+  TEST_ASSERT_EQUAL ( 2 * (NUN_CONN + 1), ht_connections->nentries );
+>>>>>>> 03e1b339a3fbaf5e6d687593d4d00adeeb22526a
 
   connection_t *tmp;
 
@@ -79,6 +89,7 @@ void
 test_ht_conn ( void )
 {
   srand ( time ( NULL ) );
+
   TEST_ASSERT_TRUE ( connection_init () );
 
   test_insert ();
@@ -87,7 +98,7 @@ test_ht_conn ( void )
 
   test_conn_update ();
 
-  // test_delete ();
+  test_delete ();
 
   connection_free ();
 }

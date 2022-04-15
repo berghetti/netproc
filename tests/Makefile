@@ -3,7 +3,8 @@
 C_SOURCE= ./unity/unity.c
 INC_DIRS= -Iunity
 
-CFLAGS=-Wall -Wextra -pedantic -ggdb -O0
+CFLAGS=-Wall -Wextra -pedantic -ggdb -O0 -fsanitize=address
+LDFLAGS+= -fsanitize=address
 
 INC_DIRS += -I../src -I ../src/resolver
 

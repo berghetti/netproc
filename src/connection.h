@@ -45,6 +45,10 @@ typedef struct conection
   // internal state
   uint8_t refs_active;  // if false, connections is removed from hashtable
   uint8_t refs_exit;    // references
+<<<<<<< HEAD
+=======
+  bool active;
+>>>>>>> 03e1b339a3fbaf5e6d687593d4d00adeeb22526a
 } connection_t;
 
 bool
