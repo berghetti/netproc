@@ -18,8 +18,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// based implementation python
-// https://github.com/python/cpython/blob/main/Python/hashtable.c
+/* based implementation python
+ https://github.com/python/cpython/blob/main/Python/hashtable.c */
 
 #include <stdlib.h>
 #include "slist.h"
@@ -350,7 +350,7 @@ hashtable_remove ( hashtable_t *restrict ht, const void *key )
 }
 
 static inline void
-hashtable_min_destroy_entry ( func_clear fclear, hashtable_entry_t *entry )
+destroy_entry ( func_clear fclear, hashtable_entry_t *entry )
 {
   if ( fclear )
     fclear ( entry->value );
@@ -370,7 +370,7 @@ hashtable_min_detroy ( hashtable_t *ht, func_clear fclear )
       while ( entry )
         {
           hashtable_entry_t *entry_next = ENTRY_NEXT ( entry );
-          hashtable_min_destroy_entry ( fclear, entry );
+          destroy_entry ( fclear, entry );
           ht->nentries--;
           entry = entry_next;
         }
