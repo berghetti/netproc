@@ -164,6 +164,20 @@ processes_init ( void )
   return procs;
 }
 
+static int
+remove_dead_proc( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data )
+{
+  process_t *proc = value;
+  if ( !proc->active )
+    {
+      free_process( proc );
+      return 1;
+    }
+
+  proc->active = false;
+  return 0;
+}
+
 /*
  percorre todos os processos encontrados no diretório '/proc/',
  em cada processo encontrado armazena todos os file descriptors
@@ -188,35 +202,35 @@ processes_get ( struct processes *procs, struct config_op *co )
   vector_clear ( procs->proc );
 
   uint32_t *fds = NULL;
-  for ( int index_pid = 0; index_pid < total_process; index_pid++ )
+  for ( int i = 0; i < total_process; i++ )
     {
       // TODO: create variable pid_t
       char path_fd[MAX_PATH_FD];
       int ret_sn = snprintf ( path_fd,
                               sizeof ( path_fd ),
                               "/proc/%d/fd/",
-                              pids[index_pid] );
+                              pids[i] );
 
       int total_fd_process = get_numeric_directory ( &fds, path_fd );
 
       if ( -1 == total_fd_process )
         continue;
 
-      process_t *proc = hashtable_get ( ht_process, &pids[index_pid] );
+      process_t *proc = hashtable_get ( ht_process, &pids[i] );
 
       if ( proc )
         {
-          proc->active = 1;
+          proc->active = true;
           vector_clear ( proc->conections );
         }
 
-      for ( int index_fd = 0; index_fd < total_fd_process; index_fd++ )
+      for ( int j = 0; j < total_fd_process; j++ )
         {
           // concat "/proc/<pid>/fd/%d"
           snprintf ( path_fd + ret_sn,
                      sizeof ( path_fd ) - ret_sn,
                      "%d",
-                     fds[index_fd] );
+                     fds[j] );
 
           char data_fd[MAX_NAME_SOCKET];
           ssize_t len_link =
@@ -238,7 +252,7 @@ processes_get ( struct processes *procs, struct config_op *co )
 
           if ( !proc )
             {
-              proc = create_new_process ( pids[index_pid] );
+              proc = create_new_process ( pids[i] );
               if ( !proc )
                 break;  // no return error, check others processes
 
@@ -260,6 +274,8 @@ processes_get ( struct processes *procs, struct config_op *co )
   free ( pids );
 
   procs->total = vector_size ( procs->proc );
+
+  hashtable_foreach_remove( ht_process, remove_dead_proc, NULL );
 
   return 1;
 }
