@@ -8,7 +8,7 @@ Legend:
   - bug count of time
   - call to resolver_init being done unnecessarily in some cases
   - lost connection stats on updates
-  * using hashtable in search of connections
+  * using hashtable in search of connections, by inode and tuple
 
 0.6.3 - 2021-12-06
   + add new color scheme
