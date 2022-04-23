@@ -63,7 +63,6 @@ https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2 */
 static inline size_t
 next_power2 ( size_t s )
 {
-
   s--;
   s |= s >> 1;
   s |= s >> 2;
@@ -71,6 +70,7 @@ next_power2 ( size_t s )
   s |= s >> 8;
   s |= s >> 16;
 
+// 64 bits version
 #if __SIZEOF_SIZE_T__ == 8
   s |= s >> 32;
 #endif
@@ -287,8 +287,7 @@ hashtable_foreach_remove ( hashtable_t *restrict ht,
         {
           hashtable_entry_t *next = ENTRY_NEXT ( entry );
 
-          int rem = to_remove ( ( hashtable_t * ) ht, entry->value, user_data );
-          if ( rem )
+          if ( to_remove ( ( hashtable_t * ) ht, entry->value, user_data ) )
             {
               slist_remove ( &ht->buckets[i],
                              ( slist_item_t * ) prev,
