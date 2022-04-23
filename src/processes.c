@@ -170,7 +170,6 @@ remove_dead_proc( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data )
   process_t *proc = value;
   if ( !proc->active )
     {
-      ERROR_DEBUG( "removendo %s", proc->name );
       free_process( proc );
       return 1;
     }
