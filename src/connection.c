@@ -215,7 +215,7 @@ EXIT:
 }
 
 static int
-remove_inactives_ ( UNUSED hashtable_t *ht,
+remove_inactives_conns ( UNUSED hashtable_t *ht,
                     void *value,
                     UNUSED void *user_data )
 {
@@ -235,12 +235,6 @@ remove_inactives_ ( UNUSED hashtable_t *ht,
     }
 }
 
-static void
-remove_inactives_conns ( void )
-{
-  hashtable_foreach_remove ( ht_connections, remove_inactives_, NULL );
-}
-
 bool
 connection_init ( void )
 {
@@ -255,7 +249,7 @@ connection_init ( void )
 bool
 connection_update ( const int proto )
 {
-  remove_inactives_conns ();
+  hashtable_foreach_remove ( ht_connections, remove_inactives_conns, NULL );
 
   if ( proto & TCP )
     {
