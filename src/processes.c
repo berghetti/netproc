@@ -170,6 +170,7 @@ remove_dead_proc( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data )
   process_t *proc = value;
   if ( !proc->active )
     {
+      ERROR_DEBUG( "removendo %s", proc->name );
       free_process( proc );
       return 1;
     }
@@ -199,6 +200,7 @@ processes_get ( struct processes *procs, struct config_op *co )
   if ( -1 == total_process )
     return 0;
 
+  hashtable_foreach_remove( ht_process, remove_dead_proc, NULL );
   vector_clear ( procs->proc );
 
   uint32_t *fds = NULL;
@@ -274,8 +276,6 @@ processes_get ( struct processes *procs, struct config_op *co )
   free ( pids );
 
   procs->total = vector_size ( procs->proc );
-
-  hashtable_foreach_remove( ht_process, remove_dead_proc, NULL );
 
   return 1;
 }
