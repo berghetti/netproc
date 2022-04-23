@@ -2,7 +2,4 @@
 * use macro %pri% in functions like printf
 * Add support IPv6
 * Usage tcp_diag to get conections
-* add filter of port
-* improve process to add conections in to process whitout duplicate and whitout
-  remove current statistics.
-  ideia: create one table hash of conections and add a pointer to array of processes
+* make a lib netproc
