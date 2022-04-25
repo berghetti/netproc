@@ -48,15 +48,20 @@ typedef uint64_t nstats_t;
 
 struct net_stat
 {
-  nstats_t pps_rx[SAMPLE_SPACE_SIZE];  // amostras
+  // samples pps and bytes per second rx/tx
+  nstats_t pps_rx[SAMPLE_SPACE_SIZE];
   nstats_t pps_tx[SAMPLE_SPACE_SIZE];
-  nstats_t Bps_rx[SAMPLE_SPACE_SIZE];  // amostras
+  nstats_t Bps_rx[SAMPLE_SPACE_SIZE];
   nstats_t Bps_tx[SAMPLE_SPACE_SIZE];
-  nstats_t avg_Bps_rx;  // média de bytes/bits por segundos
+
+  // averege bytes/second and packets/second rx/tx
+  nstats_t avg_Bps_rx;
   nstats_t avg_Bps_tx;
-  nstats_t avg_pps_rx;  // média de pacotes por segundos
+  nstats_t avg_pps_rx;
   nstats_t avg_pps_tx;
-  nstats_t tot_Bps_rx;  // trafego total
+
+  // total bytes traffic rx/tx
+  nstats_t tot_Bps_rx;
   nstats_t tot_Bps_tx;
 
   // used by function log.c/log_file()

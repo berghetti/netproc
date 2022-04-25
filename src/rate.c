@@ -30,7 +30,7 @@ rate_net_stat ( struct net_stat *ns, bool view_bytes )
 {
   uint64_t sum_bytes_rx = 0, sum_bytes_tx = 0, sum_pps_rx = 0, sum_pps_tx = 0;
 
-  // soma todos os bytes e pacotes recebidos do processo
+  // sum all bytes and packets received and sent
   for ( int i = 0; i < SAMPLE_SPACE_SIZE; i++ )
     {
       sum_bytes_rx += ns->Bps_rx[i];
@@ -40,18 +40,18 @@ rate_net_stat ( struct net_stat *ns, bool view_bytes )
       sum_pps_tx += ns->pps_tx[i];
     }
 
-  // bytes to bits
+  // transform bytes to bits
   if ( !view_bytes )
     {
       sum_bytes_rx *= 8;
       sum_bytes_tx *= 8;
     }
 
-  // calcula a média de bytes recebidos /  enviados
+  // calc averege of bytes received / sent
   ns->avg_Bps_rx = m_round ( ( double ) sum_bytes_rx / SAMPLE_SPACE_SIZE );
   ns->avg_Bps_tx = m_round ( ( double ) sum_bytes_tx / SAMPLE_SPACE_SIZE );
 
-  // calcula a média de pacotes recebidos / enviados
+  // calc averege of packets received / sent
   ns->avg_pps_rx = m_round ( ( double ) sum_pps_rx / SAMPLE_SPACE_SIZE );
   ns->avg_pps_tx = m_round ( ( double ) sum_pps_tx / SAMPLE_SPACE_SIZE );
 }
@@ -61,12 +61,11 @@ rate_calc ( struct processes *processes, const struct config_op *co )
 {
   for ( size_t i = 0; i < processes->total; i++ )
     {
-      // process_t *process = *proc;
       process_t *process = processes->proc[i];
 
       rate_net_stat ( &process->net_stat, co->view_bytes );
 
-      // calcula taxa individual de cada conexão
+      // calc rate to each connection
       if ( co->view_conections )
         {
           for ( size_t i = 0; i < process->total_conections; i++ )
@@ -106,7 +105,6 @@ rate_update ( struct processes *processes, const struct config_op *co )
 
   for ( size_t i = 0; i < processes->total; i++ )
     {
-      // process_t *process = *proc;
       process_t *process = processes->proc[i];
 
       process->net_stat.Bps_rx[idx_cir] = 0;
@@ -117,7 +115,7 @@ rate_update ( struct processes *processes, const struct config_op *co )
       process->net_stat.bytes_last_sec_rx = 0;
       process->net_stat.bytes_last_sec_tx = 0;
 
-      // zera estatisticas da conexões tambem
+      // clear statistics of each connection alsa
       if ( co->view_conections )
         {
           for ( size_t c = 0; c < process->total_conections; c++ )
