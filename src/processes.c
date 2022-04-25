@@ -205,19 +205,20 @@ processes_get ( struct processes *procs, struct config_op *co )
   uint32_t *fds = NULL;
   for ( int i = 0; i < total_process; i++ )
     {
-      // TODO: create variable pid_t
       char path_fd[MAX_PATH_FD];
+      pid_t pid = pids[i];
+
       int ret_sn = snprintf ( path_fd,
                               sizeof ( path_fd ),
                               "/proc/%d/fd/",
-                              pids[i] );
+                              pid );
 
       int total_fd_process = get_numeric_directory ( &fds, path_fd );
 
       if ( -1 == total_fd_process )
         continue;
 
-      process_t *proc = hashtable_get ( ht_process, &pids[i] );
+      process_t *proc = hashtable_get ( ht_process, &pid );
 
       if ( proc )
         {
@@ -253,7 +254,7 @@ processes_get ( struct processes *procs, struct config_op *co )
 
           if ( !proc )
             {
-              proc = create_new_process ( pids[i] );
+              proc = create_new_process ( pid );
               if ( !proc )
                 break;  // no return error, check others processes
 
