@@ -118,7 +118,7 @@ main ( int argc, char **argv )
 
   config_sig_handler ();
 
-  if ( !processes_get ( processes, co ) )
+  if ( !processes_update ( processes, co ) )
     {
       fatal_error ( "Error get processes" );
       goto EXIT;
@@ -253,7 +253,7 @@ main ( int argc, char **argv )
 
               if ( need_update_processes )
                 {
-                  if ( !processes_get ( processes, co ) )
+                  if ( !processes_update ( processes, co ) )
                     goto EXIT;
 
                   need_update_processes = false;

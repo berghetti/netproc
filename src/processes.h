@@ -49,7 +49,7 @@ struct processes *
 processes_init ( void );
 
 int
-processes_get ( struct processes *procs, struct config_op *co );
+processes_update ( struct processes *procs, struct config_op *co );
 
 void
 processes_free ( struct processes *procs );

@@ -187,7 +187,7 @@ remove_dead_proc( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data )
  encontramos o processo que corresponde ao inode (conexão).
 */
 int
-processes_get ( struct processes *procs, struct config_op *co )
+processes_update ( struct processes *procs, struct config_op *co )
 {
   if ( !connection_update ( co->proto ) )
     return 0;
