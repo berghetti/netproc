@@ -40,7 +40,7 @@ test1 ( void )
   hashtable_t *ht = hashtable_new ( cb_hash, cb_compare, NULL );
 
   TEST_ASSERT_NOT_NULL ( ht );
-  TEST_ASSERT_EQUAL_INT ( 0, hashtable_get_nentries( ht ) );
+  TEST_ASSERT_EQUAL_INT ( 0, hashtable_get_nentries ( ht ) );
   TEST_ASSERT_GREATER_THAN ( 0, hashtable_get_size ( ht ) );
 
   TEST_ASSERT_NULL ( hashtable_get ( ht, 0 ) );
@@ -55,8 +55,10 @@ test1 ( void )
       TEST_ASSERT_EQUAL_INT ( values[i], *p );
     }
 
-  TEST_ASSERT_EQUAL_INT ( ARRAY_SIZE ( values ), hashtable_get_nentries (ht ) );
-  TEST_ASSERT_GREATER_THAN ( hashtable_get_nentries ( ht ), hashtable_get_size ( ht ) );
+  TEST_ASSERT_EQUAL_INT ( ARRAY_SIZE ( values ),
+                          hashtable_get_nentries ( ht ) );
+  TEST_ASSERT_GREATER_THAN ( hashtable_get_nentries ( ht ),
+                             hashtable_get_size ( ht ) );
 
   for ( i = 0; i < ARRAY_SIZE ( values ); i++ )
     {
@@ -66,7 +68,8 @@ test1 ( void )
 
   p = hashtable_remove ( ht, TO_PTR ( values[0] ) );
   TEST_ASSERT_EQUAL_INT ( *p, values[0] );
-  TEST_ASSERT_EQUAL_INT ( ARRAY_SIZE ( values ) - 1, hashtable_get_nentries ( ht ) );
+  TEST_ASSERT_EQUAL_INT ( ARRAY_SIZE ( values ) - 1,
+                          hashtable_get_nentries ( ht ) );
   TEST_ASSERT_NULL ( hashtable_remove ( ht, TO_PTR ( values[0] ) ) );
 
   int count = 0;

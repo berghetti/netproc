@@ -37,7 +37,8 @@ test_insert ( void )
       TEST_ASSERT_NOT_NULL ( conn );
 
       connection_insert ( conn );
-      TEST_ASSERT_EQUAL_INT ( 2 * ( i + 1 ), hashtable_get_nentries ( ht_connections ) );
+      TEST_ASSERT_EQUAL_INT ( 2 * ( i + 1 ),
+                              hashtable_get_nentries ( ht_connections ) );
     }
 }
 
@@ -52,7 +53,8 @@ test_search ( void )
 
   connection_insert ( conn );
 
-  TEST_ASSERT_EQUAL ( 2 * ( NUM_CONN + 1 ), hashtable_get_nentries ( ht_connections ) );
+  TEST_ASSERT_EQUAL ( 2 * ( NUM_CONN + 1 ),
+                      hashtable_get_nentries ( ht_connections ) );
 
   connection_t *tmp;
 
@@ -67,7 +69,8 @@ static void
 test_delete ( void )
 {
   hashtable_foreach_remove ( ht_connections, remove_inactives_conns, NULL );
-  TEST_ASSERT_EQUAL ( NUM_CONN * 2 + 2, hashtable_get_nentries ( ht_connections ) );
+  TEST_ASSERT_EQUAL ( NUM_CONN * 2 + 2,
+                      hashtable_get_nentries ( ht_connections ) );
 
   // removed conns only next update
   hashtable_foreach_remove ( ht_connections, remove_inactives_conns, NULL );

@@ -216,8 +216,8 @@ EXIT:
 
 static int
 remove_inactives_conns ( UNUSED hashtable_t *ht,
-                    void *value,
-                    UNUSED void *user_data )
+                         void *value,
+                         UNUSED void *user_data )
 {
   connection_t *conn = value;
 

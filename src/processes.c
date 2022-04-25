@@ -165,12 +165,12 @@ processes_init ( void )
 }
 
 static int
-remove_dead_proc( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data )
+remove_dead_proc ( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data )
 {
   process_t *proc = value;
   if ( !proc->active )
     {
-      free_process( proc );
+      free_process ( proc );
       return 1;
     }
 
@@ -199,7 +199,7 @@ processes_update ( struct processes *procs, struct config_op *co )
   if ( -1 == total_process )
     return 0;
 
-  hashtable_foreach_remove( ht_process, remove_dead_proc, NULL );
+  hashtable_foreach_remove ( ht_process, remove_dead_proc, NULL );
   vector_clear ( procs->proc );
 
   uint32_t *fds = NULL;
@@ -208,10 +208,8 @@ processes_update ( struct processes *procs, struct config_op *co )
       char path_fd[MAX_PATH_FD];
       pid_t pid = pids[i];
 
-      int ret_sn = snprintf ( path_fd,
-                              sizeof ( path_fd ),
-                              "/proc/%d/fd/",
-                              pid );
+      int ret_sn =
+              snprintf ( path_fd, sizeof ( path_fd ), "/proc/%d/fd/", pid );
 
       int total_fd_process = get_numeric_directory ( &fds, path_fd );
 
