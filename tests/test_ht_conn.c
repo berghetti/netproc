@@ -66,11 +66,11 @@ test_search ( void )
 static void
 test_delete ( void )
 {
-  remove_inactives_conns ();
+  hashtable_foreach_remove ( ht_connections, remove_inactives_conns, NULL );
   TEST_ASSERT_EQUAL ( NUM_CONN * 2 + 2, hashtable_get_nentries ( ht_connections ) );
 
   // removed conns only next update
-  remove_inactives_conns ();
+  hashtable_foreach_remove ( ht_connections, remove_inactives_conns, NULL );
   TEST_ASSERT_EQUAL ( 0, hashtable_get_nentries ( ht_connections ) );
 }
 
@@ -93,10 +93,10 @@ test_ht_conn ( void )
 
   test_conn_update ();
   size_t hold = hashtable_get_nentries ( ht_connections );
-  remove_inactives_conns ();
+  hashtable_foreach_remove ( ht_connections, remove_inactives_conns, NULL );
   TEST_ASSERT_EQUAL ( hold, hashtable_get_nentries ( ht_connections ) );
 
-  remove_inactives_conns ();
+  hashtable_foreach_remove ( ht_connections, remove_inactives_conns, NULL );
   TEST_ASSERT_EQUAL ( 0, hashtable_get_nentries ( ht_connections ) );
 
   connection_free ();
