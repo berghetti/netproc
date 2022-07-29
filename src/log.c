@@ -32,6 +32,8 @@ struct log_processes
   char *name;
   nstats_t tot_Bps_rx;  // trafego total
   nstats_t tot_Bps_tx;
+  nstats_t avg_Bps_rx;
+  nstats_t avg_Bps_tx;
 };
 
 static struct log_processes *buffer = NULL;
@@ -44,7 +46,7 @@ static FILE *file = NULL;
 #define TAXA 14
 
 // TAXA + TAXA + PROGRAM + '\n'
-#define LEN_HEADER TAXA * 2 + 7 + 1
+#define LEN_HEADER TAXA * 4 + 7 + 1
 
 static void
 write_process_to_file ( struct log_processes *processes,
@@ -54,18 +56,31 @@ write_process_to_file ( struct log_processes *processes,
   char rx_tot[LEN_STR_TOTAL];
   char tx_tot[LEN_STR_TOTAL];
 
+  char tx_rate[LEN_STR_RATE];
+  char rx_rate[LEN_STR_RATE];
+
+
   for ( size_t i = 0; i < tot_process; i++ )
     {
       // not log process whitout traffic
       if ( !processes[i].tot_Bps_rx && !processes[i].tot_Bps_tx )
         continue;
 
+      human_readable ( tx_rate, sizeof tx_rate, processes[i].avg_Bps_tx, RATE );
+
+      human_readable ( rx_rate, sizeof rx_rate, processes[i].avg_Bps_rx, RATE );
+
       human_readable ( tx_tot, sizeof tx_tot, processes[i].tot_Bps_tx, TOTAL );
 
       human_readable ( rx_tot, sizeof rx_tot, processes[i].tot_Bps_rx, TOTAL );
 
+
       fprintf ( file,
-                "%*s%*s%s\n",
+                "%*s%*s%*s%*s%s\n",
+                -TAXA,
+                tx_rate,
+                -TAXA,
+                rx_rate,
                 -TAXA,
                 tx_tot,
                 -TAXA,
@@ -119,6 +134,8 @@ update_log_process ( process_t **new_proc,
           locate = true;
           log->tot_Bps_rx += new_proc[i]->net_stat.bytes_last_sec_rx;
           log->tot_Bps_tx += new_proc[i]->net_stat.bytes_last_sec_tx;
+          log->avg_Bps_rx = new_proc[i]->net_stat.avg_Bps_rx;
+          log->avg_Bps_tx = new_proc[i]->net_stat.avg_Bps_tx;
 
           // only one process with same name exist in this buffer
           break;
@@ -132,6 +149,8 @@ update_log_process ( process_t **new_proc,
           log->name = strndup ( new_proc[i]->name, len_name );
           log->tot_Bps_rx = new_proc[i]->net_stat.tot_Bps_rx;
           log->tot_Bps_tx = new_proc[i]->net_stat.tot_Bps_tx;
+          log->avg_Bps_rx = new_proc[i]->net_stat.avg_Bps_rx;
+          log->avg_Bps_tx = new_proc[i]->net_stat.avg_Bps_tx;
           ( *len_buff )++;
         }
     }
@@ -153,7 +172,7 @@ log_init ( const struct config_op *co )
     }
 
   fprintf (
-          file, "%*s%*s%s\n", -TAXA, "TOTAL TX", -TAXA, "TOTAL RX", "PROGRAM" );
+          file, "%*s%*s%*s%*s%s\n",-TAXA, "RATE TX", -TAXA, "RATE RX", -TAXA, "TOTAL TX", -TAXA, "TOTAL RX", "PROGRAM" );
 
   return 1;
 }
