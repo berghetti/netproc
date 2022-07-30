@@ -27,10 +27,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "processes.h"  // process_t
+#include "jhash.h"
 #include "hashtable.h"
 #include "vector.h"
 #include "full_read.h"
-#include "processes.h"  // process_t
 #include "config.h"
 #include "m_error.h"  // ERROR_DEBUG
 #include "macro_util.h"
@@ -48,15 +49,6 @@
 #define MAX_NAME_SOCKET 9 + LEN_MAX_INT + 5
 
 static hashtable_t *ht_process;
-
-// static conection_t *
-void
-add_conection_to_process ( process_t *proc, conection_t *con )
-{
-  proc->total_conections++;
-
-  vector_push ( proc->conections, con );
-}
 
 static void
 handle_cmdline ( char *buff, size_t len )
@@ -112,9 +104,9 @@ create_new_process ( pid_t pid )
   if ( proc )
     {
       proc->pid = pid;
-      proc->active = 1;
+      proc->active = true;
 
-      proc->conections = vector_new ( 0, sizeof ( conection_t ) );
+      proc->conections = vector_new ( sizeof ( connection_t * ) );
       if ( !proc->conections )
         goto ERROR;
 
@@ -141,65 +133,16 @@ free_process ( void *arg )
   free ( process );
 }
 
-static int
-free_dead_process ( hashtable_t *ht, void *value, UNUSED ( void *user_data ) )
+static bool
+ht_cb_compare ( const void *key1, const void *key2 )
 {
-  process_t *proc = value;
-
-  if ( !proc->active )
-    free_process ( hashtable_remove ( ht, TO_PTR ( proc->pid ) ) );
-
-  return 0;
-}
-
-struct my_array
-{
-  process_t **data;
-  size_t pos;
-};
-
-static int
-to_array ( UNUSED ( hashtable_t *ht ), void *value, void *user_data )
-{
-  struct my_array *ar = user_data;
-  process_t *proc = value;
-  proc->active = 0;  // reset status process
-
-  ar->data[ar->pos] = proc;
-  ar->pos++;
-
-  return 0;
-}
-
-static process_t **
-copy_ht_to_array ( hashtable_t *ht, process_t **proc )
-{
-  process_t **pp = realloc ( proc, ( ht->nentries + 1 ) * sizeof ( *pp ) );
-
-  if ( pp )
-    {
-      struct my_array my_array = { .data = pp, .pos = 0 };
-
-      hashtable_foreach ( ht, to_array, &my_array );
-
-      pp[ht->nentries] = NULL;  // last pointer
-    }
-
-  return pp;
-}
-
-static int
-cb_compare ( const void *key1, const void *key2 )
-{
-  return ( key1 == key2 );
+  return ( *( pid_t * ) key1 == *( pid_t * ) key2 );
 }
 
 static hash_t
-cb_hash_func ( const void *key )
+ht_cb_hash ( const void *key )
 {
-  size_t k = ( size_t ) FROM_PTR ( key );
-
-  return ( k >> 24 ) ^ ( k >> 16 ) ^ ( k >> 8 ) ^ k;
+  return jhash8 ( key, sizeof ( pid_t ), 0 );
 }
 
 struct processes *
@@ -209,7 +152,9 @@ processes_init ( void )
   if ( !procs )
     return NULL;
 
-  ht_process = hashtable_new ( cb_hash_func, cb_compare, free_process );
+  procs->proc = vector_new ( sizeof ( process_t * ) );
+
+  ht_process = hashtable_new ( ht_cb_hash, ht_cb_compare, free_process );
   if ( !ht_process )
     {
       free ( procs );
@@ -217,6 +162,20 @@ processes_init ( void )
     }
 
   return procs;
+}
+
+static int
+remove_dead_proc ( UNUSED hashtable_t *ht, void *value, UNUSED void *user_data )
+{
+  process_t *proc = value;
+  if ( !proc->active )
+    {
+      free_process ( proc );
+      return 1;
+    }
+
+  proc->active = false;
+  return 0;
 }
 
 /*
@@ -228,56 +187,50 @@ processes_init ( void )
  encontramos o processo que corresponde ao inode (conexão).
 */
 int
-processes_get ( struct processes *procs, struct config_op *co )
+processes_update ( struct processes *procs, struct config_op *co )
 {
+  if ( !connection_update ( co->proto ) )
+    return 0;
+
+  // TODO: check if type uint32_t is correct/safe
   uint32_t *pids = NULL;
   int total_process = get_numeric_directory ( &pids, "/proc/" );
 
   if ( -1 == total_process )
-    {
-      ERROR_DEBUG ( "%s", "backtrace" );
-      return 0;
-    }
+    return 0;
 
-  conection_t *conections;
-  int total_conections = get_conections ( &conections, co->proto );
-
-  if ( -1 == total_conections )
-    {
-      ERROR_DEBUG ( "%s", "backtrace" );
-      free ( pids );
-      return 0;
-    }
+  hashtable_foreach_remove ( ht_process, remove_dead_proc, NULL );
+  vector_clear ( procs->proc );
 
   uint32_t *fds = NULL;
-  for ( int index_pid = 0; index_pid < total_process; index_pid++ )
+  for ( int i = 0; i < total_process; i++ )
     {
       char path_fd[MAX_PATH_FD];
-      int ret_sn = snprintf (
-              path_fd, sizeof ( path_fd ), "/proc/%d/fd/", pids[index_pid] );
+      pid_t pid = pids[i];
+
+      int ret_sn =
+              snprintf ( path_fd, sizeof ( path_fd ), "/proc/%d/fd/", pid );
 
       int total_fd_process = get_numeric_directory ( &fds, path_fd );
 
       if ( -1 == total_fd_process )
         continue;
 
-      process_t *proc =
-              hashtable_get ( ht_process, TO_PTR ( pids[index_pid] ) );
+      process_t *proc = hashtable_get ( ht_process, &pid );
 
       if ( proc )
         {
-          proc->active = 1;
-          // proc->total_conections = 0;
-          // vector_clear ( proc->conections );
+          proc->active = true;
+          vector_clear ( proc->conections );
         }
 
-      for ( int index_fd = 0; index_fd < total_fd_process; index_fd++ )
+      for ( int j = 0; j < total_fd_process; j++ )
         {
           // concat "/proc/<pid>/fd/%d"
           snprintf ( path_fd + ret_sn,
                      sizeof ( path_fd ) - ret_sn,
                      "%d",
-                     fds[index_fd] );
+                     fds[j] );
 
           char data_fd[MAX_NAME_SOCKET];
           ssize_t len_link =
@@ -292,38 +245,35 @@ processes_get ( struct processes *procs, struct config_op *co )
           if ( 1 != sscanf ( data_fd, "socket:[%lu", &inode ) )
             continue;
 
-          for ( int c = 0; c < total_conections; c++ )
+          connection_t *conn = connection_get_by_inode ( inode );
+
+          if ( !conn )
+            continue;
+
+          if ( !proc )
             {
-              if ( conections[c].inode != inode )
-                continue;
-
+              proc = create_new_process ( pid );
               if ( !proc )
-                {
-                  proc = create_new_process ( pids[index_pid] );
-                  if ( !proc )
-                    break;  // no return error, check others processes
+                break;  // no return error, check others processes
 
-                  hashtable_set (
-                          ht_process, TO_PTR ( pids[index_pid] ), proc );
-                }
-
-              add_conection_to_process ( proc, &conections[c] );
-
-              conections[c] = conections[total_conections - 1];
-              total_conections--;
+              hashtable_set ( ht_process, &proc->pid, proc );
             }
+
+          conn->proc = proc;
+          vector_push ( proc->conections, &conn );
+        }
+
+      if ( proc )
+        {
+          proc->total_conections = vector_size ( proc->conections );
+          vector_push ( procs->proc, &proc );
         }
     }
 
   free ( fds );
   free ( pids );
-  free ( conections );
 
-  hashtable_foreach ( ht_process, free_dead_process, NULL );
-
-  procs->total = ht_process->nentries;
-
-  procs->proc = copy_ht_to_array ( ht_process, procs->proc );
+  procs->total = vector_size ( procs->proc );
 
   return 1;
 }
@@ -334,7 +284,8 @@ processes_free ( struct processes *processes )
   if ( !processes )
     return;
 
-  free ( processes->proc );
+  // free ( processes->proc );
+  vector_free ( processes->proc );
   free ( processes );
   hashtable_destroy ( ht_process );
 }

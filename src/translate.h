@@ -21,10 +21,10 @@
 #ifndef TRANSLETE_H
 #define TRANSLETE_H
 
-#include "conection.h"
+#include "connection.h"
 #include "config.h"
 
 char *
-translate ( const conection_t *con, const struct config_op *co );
+translate ( const connection_t *con, const struct config_op *co );
 
 #endif  // TRANSLETE_H

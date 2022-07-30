@@ -207,11 +207,11 @@ insert_data_packet ( struct packet *pkt,
 {
   pkt->if_index = if_index;
   pkt->direction = direction;
-  pkt->protocol = protocol;
-  pkt->local_address = local_address;
-  pkt->remote_address = remote_address;
-  pkt->local_port = ntohs ( local_port );
-  pkt->remote_port = ntohs ( remote_port );
+  pkt->tuple.l3.local.ip = local_address;
+  pkt->tuple.l3.remote.ip = remote_address;
+  pkt->tuple.l4.protocol = protocol;
+  pkt->tuple.l4.local_port = ntohs ( local_port );
+  pkt->tuple.l4.remote_port = ntohs ( remote_port );
   pkt->lenght = len;
 }
 
@@ -232,11 +232,11 @@ parse_packet ( struct packet *pkt, struct tpacket3_hdr *ppd )
   l4 = ( struct layer_4 * ) ( ( uint8_t * ) ppd + ppd->tp_net +
                               ( l3->ihl * 4 ) );
 
-  // fprintf(stderr, "ll->sll_pkttype - %d\n", ll->sll_pkttype);
-  // fprintf(stderr, "ll->sll_hatype - %d\n", ll->sll_hatype);
-  // fprintf(stderr, "l2->h_proto - %x\n", ntohs(l2->h_proto));
-  // fprintf(stderr, "l3->proto - %d\n", l3->protocol );
-  // fprintf(stderr, "l4->dest - %x\n", ntohs(l4->dest));
+  // ERROR_DEBUG( "ll->sll_pkttype - %d\n", ll->sll_pkttype );
+  // ERROR_DEBUG( "ll->sll_hatype - %d\n", ll->sll_hatype );
+  // ERROR_DEBUG( "l2->h_proto - %x\n", ntohs(l2->h_proto) );
+  // ERROR_DEBUG( "l3->proto - %d\n", l3->protocol  );
+  // ERROR_DEBUG( "l4->dest - %x\n", ntohs(l4->dest) );
 
   int ret = 1;
   int id_frag = get_fragment ( l3, l4 );

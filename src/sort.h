@@ -23,7 +23,7 @@
 
 #include <stdlib.h>
 #include "processes.h"
-#include "conection.h"
+#include "connection.h"
 
 enum cols_sort
 {

@@ -59,7 +59,7 @@ main ( int argc, char **argv )
 
   struct config_op *co = parse_options ( argc, argv );
 
-  int sock = socket_init ( co );
+  int sock = socket_init ( co->iface );
   if ( sock == -1 )
     {
       if ( getuid () )
@@ -78,13 +78,13 @@ main ( int argc, char **argv )
     }
 
   // filter BPF
-  if ( !filter_set ( sock, co ) )
+  if ( !filter_set ( sock, co->proto ) )
     {
       fatal_error ( "Error set filter network" );
       goto EXIT;
     }
 
-  if ( co->log && !log_init ( co ) )
+  if ( co->log && !log_init ( co->path_log ) )
     {
       fatal_error ( "Error log_init" );
       goto EXIT;
@@ -97,13 +97,19 @@ main ( int argc, char **argv )
       goto EXIT;
     }
 
+  if ( !connection_init () )
+    {
+      fatal_error ( "Error connection_init" );
+      goto EXIT;
+    }
+
   if ( co->view_conections && co->translate_host && !resolver_init ( 0, 0 ) )
     {
       fatal_error ( "Error resolver_init" );
       goto EXIT;
     }
 
-  define_sufix ( co );
+  define_sufix ( co->view_si, co->view_bytes );
   if ( !tui_init ( co ) )
     {
       fatal_error ( "Error setup terminal user interface" );
@@ -112,7 +118,7 @@ main ( int argc, char **argv )
 
   config_sig_handler ();
 
-  if ( !processes_get ( processes, co ) )
+  if ( !processes_update ( processes, co ) )
     {
       fatal_error ( "Error get processes" );
       goto EXIT;
@@ -127,8 +133,9 @@ main ( int argc, char **argv )
     }
 
   struct pollfd poll_set[2] = {
-          { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 },
-          { .fd = sock, .events = POLLIN | POLLPRI, .revents = 0 } };
+    { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 },
+    { .fd = sock, .events = POLLIN | POLLPRI, .revents = 0 }
+  };
 
   int block_num = 0;
   struct tpacket_block_desc *pbd;
@@ -144,7 +151,6 @@ main ( int argc, char **argv )
       // read all blocks availables
       while ( pbd->hdr.bh1.block_status & TP_STATUS_USER )
         {
-          struct packet packet;
           struct tpacket3_hdr *ppd;
 
           ppd = ( struct tpacket3_hdr * ) ( ( uint8_t * ) pbd +
@@ -158,6 +164,7 @@ main ( int argc, char **argv )
               // se houver dados porem não foi possivel identificar o trafego,
               // não tem estatisticas para ser adicionada aos processos.
               // deve ser trafego de protocolo não suportado
+              struct packet packet = { 0 };
               if ( !parse_packet ( &packet, ppd ) )
                 continue;
 
@@ -166,7 +173,7 @@ main ( int argc, char **argv )
               // de um processo existente, que ainda não foi mapeado, então
               // anotamos que sera necessario atualizar a lista de processos
               // com conexões ativas.
-              if ( !statistics_add ( processes, &packet, co ) )
+              if ( !statistics_add ( &packet, co->view_conections ) )
                 {
                   need_update_processes = true;
                   continue;
@@ -237,7 +244,7 @@ main ( int argc, char **argv )
 
               tui_show ( processes, co );
 
-              if ( co->log && !log_file ( processes->proc, processes->total ) )
+              if ( co->log && !log_file ( processes->proc ) )
                 {
                   goto EXIT;
                 }
@@ -246,7 +253,7 @@ main ( int argc, char **argv )
 
               if ( need_update_processes )
                 {
-                  if ( !processes_get ( processes, co ) )
+                  if ( !processes_update ( processes, co ) )
                     goto EXIT;
 
                   need_update_processes = false;
@@ -262,6 +269,7 @@ EXIT:
   ring_free ( ring );
   log_free ();
   processes_free ( processes );
+  connection_free ();
   resolver_free ();
   tui_free ();
 

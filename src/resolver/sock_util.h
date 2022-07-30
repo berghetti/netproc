@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2020-2021 Mayco S. Berghetti
+ *  Copyright (C) 2020-2022 Mayco S. Berghetti
  *
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -20,16 +20,19 @@
 #ifndef SOCK_UTIL_H
 #define SOCK_UTIL_H
 
+#include <stdbool.h>
 #include <sys/socket.h>
 
-int
-check_addr_equal ( struct sockaddr_storage *addr1,
-                   struct sockaddr_storage *addr2 );
+#include "../sockaddr.h"
 
-// transform binary to text
-char *
-sockaddr_ntop ( struct sockaddr_storage *addr,
-                char *buf,
-                const size_t len_buff );
+// return 1 if ip address is equal or 0
+bool
+check_addr_equal ( union sockaddr_all *addr1, union sockaddr_all *addr2 );
+
+/* transform binary ip to text
+   only to AF_INET and AF_INET6,
+  len_buff must be enough to store a ip address of correspodent family */
+void
+sockaddr_ntop ( union sockaddr_all *addr, char *buf, const size_t len_buff );
 
 #endif  // SOCK_UTIL_H

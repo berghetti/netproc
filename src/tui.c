@@ -19,15 +19,14 @@
  */
 
 #include <stdbool.h>
-#include <string.h>    // strlen
-#include <net/if.h>    // if_indextoname, IF_NAMESIZE
-#include <linux/in.h>  // IPPROTO_TCP
+#include <string.h>  // strlen
+#include <net/if.h>  // if_indextoname, IF_NAMESIZE
 #include <ncurses.h>
 
 #include "str.h"
 #include "timer.h"
 #include "processes.h"
-#include "conection.h"
+#include "connection.h"
 #include "color.h"
 #include "m_error.h"
 #include "translate.h"
@@ -193,8 +192,10 @@ show_header ( const struct config_op *co )
 
   // paint to the end of line
   wattrset ( pad, color_scheme[HEADER] );
-  wprintw (
-          pad, "%*s", -( cur_cols - ( PROGRAM + max_digits_pid ) ), "PROGRAM" );
+  wprintw ( pad,
+            "%*s",
+            -( cur_cols - ( PROGRAM + max_digits_pid ) ),
+            "PROGRAM" );
 
   wattrset ( pad, color_scheme[RESET] );
 
@@ -246,7 +247,7 @@ resize_pad ( const int l, const int c )
 }
 
 static void
-show_conections ( const process_t *process, const struct config_op *co )
+show_connections ( const process_t *process, const struct config_op *co )
 {
   resize_pad ( process->total_conections + tot_rows, 0 );
 
@@ -258,23 +259,23 @@ show_conections ( const process_t *process, const struct config_op *co )
       // se a proxima conexão estiver com estatisticas zeradas, essa é a ultima
       // conexão, as conexões são ordenadas de forma decrescente previamente
       if ( ( i < process->total_conections - 1 &&
-             process->conections[i + 1].net_stat.avg_Bps_rx == 0 &&
-             process->conections[i + 1].net_stat.avg_Bps_tx == 0 ) ||
+             process->conections[i + 1]->net_stat.avg_Bps_rx == 0 &&
+             process->conections[i + 1]->net_stat.avg_Bps_tx == 0 ) ||
            i == process->total_conections - 1 )
         last_con = true;
 
-      char *tuple = translate ( &process->conections[i], co );
+      char *tuple = translate ( process->conections[i], co );
 
       char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
 
       human_readable ( tx_rate,
                        sizeof tx_rate,
-                       process->conections[i].net_stat.avg_Bps_tx,
+                       process->conections[i]->net_stat.avg_Bps_tx,
                        RATE );
 
       human_readable ( rx_rate,
                        sizeof rx_rate,
-                       process->conections[i].net_stat.avg_Bps_rx,
+                       process->conections[i]->net_stat.avg_Bps_rx,
                        RATE );
 
       wattrset ( pad, color_scheme[CONECTIONS] );
@@ -283,9 +284,9 @@ show_conections ( const process_t *process, const struct config_op *co )
                 max_digits_pid,
                 "",
                 PPS,
-                process->conections[i].net_stat.avg_pps_tx,
+                process->conections[i]->net_stat.avg_pps_tx,
                 PPS,
-                process->conections[i].net_stat.avg_pps_rx,
+                process->conections[i]->net_stat.avg_pps_rx,
                 J_RATE,
                 tx_rate,
                 J_RATE,
@@ -294,7 +295,7 @@ show_conections ( const process_t *process, const struct config_op *co )
       char iface_buff[IF_NAMESIZE];
       char *iface;
 
-      if ( if_indextoname ( process->conections[i].if_index, iface_buff ) )
+      if ( if_indextoname ( process->conections[i]->if_index, iface_buff ) )
         iface = iface_buff;
       else
         iface = "";
@@ -304,8 +305,9 @@ show_conections ( const process_t *process, const struct config_op *co )
                 IF_NAMESIZE,
                 iface,
                 -11,
-                ( process->conections[i].protocol == IPPROTO_TCP ) ? "(tcp)"
-                                                                   : "(udp)" );
+                ( process->conections[i]->tuple.l4.protocol == IPPROTO_TCP )
+                        ? "(tcp)"
+                        : "(udp)" );
 
       // space tuple
       wprintw ( pad, "%*s", TUPLE, "" );
@@ -381,10 +383,12 @@ tui_show ( const struct processes *processes, const struct config_op *co )
   sort ( processes->proc, processes->total, sort_by, co );
 
   wmove ( pad, LINE_START + 1, 0 );  // move second line after header
-  for ( process_t **procs = processes->proc; *procs; procs++ )
-    {
-      process_t *process = *procs;
 
+  for ( size_t i = 0; i < processes->total; i++ )
+    {
+      // process_t *process = *proc;
+      process_t *process = processes->proc[i];
+      //
       if ( !( process->net_stat.tot_Bps_rx || process->net_stat.tot_Bps_tx ) &&
            !co->verbose )
         continue;
@@ -410,17 +414,25 @@ tui_show ( const struct processes *processes, const struct config_op *co )
 
       char tx_rate[LEN_STR_RATE], rx_rate[LEN_STR_RATE];
       char tx_tot[LEN_STR_TOTAL], rx_tot[LEN_STR_TOTAL];
-      human_readable (
-              tx_rate, sizeof tx_rate, process->net_stat.avg_Bps_tx, RATE );
+      human_readable ( tx_rate,
+                       sizeof tx_rate,
+                       process->net_stat.avg_Bps_tx,
+                       RATE );
 
-      human_readable (
-              rx_rate, sizeof rx_rate, process->net_stat.avg_Bps_rx, RATE );
+      human_readable ( rx_rate,
+                       sizeof rx_rate,
+                       process->net_stat.avg_Bps_rx,
+                       RATE );
 
-      human_readable (
-              tx_tot, sizeof tx_tot, process->net_stat.tot_Bps_tx, TOTAL );
+      human_readable ( tx_tot,
+                       sizeof tx_tot,
+                       process->net_stat.tot_Bps_tx,
+                       TOTAL );
 
-      human_readable (
-              rx_tot, sizeof rx_tot, process->net_stat.tot_Bps_rx, TOTAL );
+      human_readable ( rx_tot,
+                       sizeof rx_tot,
+                       process->net_stat.tot_Bps_rx,
+                       TOTAL );
 
       wprintw ( pad,
                 "%*d %*ld %*ld %*s %*s %*s %*s ",
@@ -473,7 +485,7 @@ tui_show ( const struct processes *processes, const struct config_op *co )
       // option -c and process with traffic at the moment
       if ( co->view_conections &&
            ( process->net_stat.avg_Bps_rx || process->net_stat.avg_Bps_tx ) )
-        show_conections ( process, co );
+        show_connections ( process, co );
     }
 
   // clear lines begin cursor end screen, "replace" wclear()
@@ -490,8 +502,13 @@ tui_show ( const struct processes *processes, const struct config_op *co )
 
   show_header ( co );
 
-  pnoutrefresh (
-          pad, scroll_y, scroll_x, LINE_START + 1, 0, LINES - 1, COLS - 1 );
+  pnoutrefresh ( pad,
+                 scroll_y,
+                 scroll_x,
+                 LINE_START + 1,
+                 0,
+                 LINES - 1,
+                 COLS - 1 );
 
   // full refresh
   doupdate ();

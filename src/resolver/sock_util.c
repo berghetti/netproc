@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2020-2021 Mayco S. Berghetti
+ *  Copyright (C) 2020-2022 Mayco S. Berghetti
  *
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -17,67 +17,42 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
 #include <stddef.h>      // size_t
 #include <string.h>      // memcmp
 #include <arpa/inet.h>   // inet_ntop
 #include <sys/socket.h>  // struct sockaddr_storage
 
-int
-check_addr_equal ( struct sockaddr_storage *addr1,
-                   struct sockaddr_storage *addr2 )
+#include "../sockaddr.h"
+
+bool
+check_addr_equal ( union sockaddr_all *addr1, union sockaddr_all *addr2 )
 {
-  if ( addr1->ss_family != addr2->ss_family )
-    return 0;
-
-  switch ( addr1->ss_family )
+  if ( addr1->sa.sa_family == addr2->sa.sa_family )
     {
-      case AF_INET:
+      switch ( addr1->sa.sa_family )
         {
-          struct sockaddr_in *sa1 = ( struct sockaddr_in * ) addr1;
-          struct sockaddr_in *sa2 = ( struct sockaddr_in * ) addr2;
-
-          return ( sa1->sin_addr.s_addr == sa2->sin_addr.s_addr );
-
-          break;
-        }
-      case AF_INET6:
-        {
-          struct sockaddr_in6 *sa1 = ( struct sockaddr_in6 * ) addr1;
-          struct sockaddr_in6 *sa2 = ( struct sockaddr_in6 * ) addr2;
-
-          return ( memcmp ( &sa1->sin6_addr,
-                            &sa2->sin6_addr,
-                            sizeof ( sa1->sin6_addr ) ) == 0 );
+          case AF_INET:
+            return ( addr1->in.sin_addr.s_addr == addr2->in.sin_addr.s_addr );
+          case AF_INET6:
+            return ( 0 == memcmp ( &addr1->in6.sin6_addr,
+                                   &addr2->in6.sin6_addr,
+                                   sizeof ( addr1->in6.sin6_addr ) ) );
         }
     }
 
-  return 0;
+  return false;
 }
 
-char *
-sockaddr_ntop ( struct sockaddr_storage *addr,
-                char *buf,
-                const size_t len_buff )
+void
+sockaddr_ntop ( union sockaddr_all *addr, char *buf, const size_t len_buff )
 {
-  const char *ret;
-
-  switch ( addr->ss_family )
+  switch ( addr->sa.sa_family )
     {
       case AF_INET:
-        ret = inet_ntop ( AF_INET,
-                          &( ( struct sockaddr_in * ) addr )->sin_addr,
-                          buf,
-                          len_buff );
+        inet_ntop ( AF_INET, &addr->in.sin_addr, buf, len_buff );
         break;
       case AF_INET6:
-        ret = inet_ntop ( AF_INET6,
-                          &( ( struct sockaddr_in6 * ) addr )->sin6_addr,
-                          buf,
-                          len_buff );
-        break;
-      default:
-        ret = NULL;
+        inet_ntop ( AF_INET6, &addr->in6.sin6_addr, buf, len_buff );
     }
-
-  return ( char * ) ret;
 }

@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2020-2021 Mayco S. Berghetti
+ *  Copyright (C) 2021 Mayco S. Berghetti
  *
  *  This file is part of Netproc.
  *
@@ -18,30 +18,33 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CONECTION_H
-#define CONECTION_H
+#ifndef SLIST_H
+#define SLIST_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
-
-#include "rate.h"  // struct net_stat
-
-// stores the information exported by the kernel in /proc/net/tcp | udp
-typedef struct conection
+typedef struct slist_item
 {
-  struct net_stat net_stat;  // this assign in src/statistics.c
-  unsigned long int inode;
-  uint32_t if_index;  // this assign in src/statistics.c
-  uint32_t local_address;
-  uint32_t remote_address;
-  uint16_t local_port;
-  uint16_t remote_port;
-  uint8_t protocol;
-  uint8_t state;
-} conection_t;
+  struct slist_item *next;
+} slist_item_t;
 
-int
-get_conections ( conection_t **buffer, const int proto );
+typedef struct slist
+{
+  slist_item_t *head;
+} slist_t;
 
-#endif  // CONECTION_H
+static inline void
+slist_preprend ( slist_t *list, slist_item_t *item )
+{
+  item->next = list->head;
+  list->head = item;
+}
+
+static void
+slist_remove ( slist_t *list, slist_item_t *previous, slist_item_t *item )
+{
+  if ( previous )
+    previous->next = item->next;
+  else
+    list->head = item->next;
+}
+
+#endif  // SLIST_H

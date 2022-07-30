@@ -24,8 +24,8 @@ test_full_read ( void )
   TEST_ASSERT_NOT_NULL ( buff );
   TEST_ASSERT_EQUAL_INT ( 10, total_read );
 
-  unsigned char expected[10] = {
-          0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90 };
+  unsigned char expected[10] = { 0x00, 0x10, 0x20, 0x30, 0x40,
+                                 0x50, 0x60, 0x70, 0x80, 0x90 };
 
   TEST_ASSERT_EQUAL_MEMORY ( expected, buff, 10 );
 

@@ -58,9 +58,9 @@ static int
 bind_interface ( int sock, const char *iface )
 {
   struct sockaddr_ll sock_ll = {
-          .sll_family = AF_PACKET,
-          .sll_protocol = htons ( ETH_P_ALL ),
-          .sll_ifindex = 0  // explicit 0 match all interfaces
+    .sll_family = AF_PACKET,
+    .sll_protocol = htons ( ETH_P_ALL ),
+    .sll_ifindex = 0  // explicit 0 match all interfaces
   };
 
   if ( iface )
@@ -82,7 +82,7 @@ bind_interface ( int sock, const char *iface )
 }
 
 int
-socket_init ( const struct config_op *co )
+socket_init ( const char *iface )
 {
   int sock;
 
@@ -95,7 +95,7 @@ socket_init ( const struct config_op *co )
   if ( !socket_setnonblocking ( sock ) )
     goto ERROR_EXIT;
 
-  if ( !bind_interface ( sock, co->iface ) )
+  if ( !bind_interface ( sock, iface ) )
     goto ERROR_EXIT;
 
   return sock;

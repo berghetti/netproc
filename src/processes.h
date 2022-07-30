@@ -21,20 +21,22 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
+#include <stdbool.h>
+
 #include "config.h"
-#include "conection.h"
+#include "connection.h"
 #include "directory.h"
 #include "rate.h"
 
 typedef struct process
 {
-  struct net_stat net_stat;   // estatisticas de rede
-  conection_t *conections;    // array de conexoes do processo
-  char *name;                 // nome processo
-  pid_t pid;                  // pid do processo
-  uint32_t total_conections;  // total de conexões apontada por conection_t *
+  struct net_stat net_stat;   // network statistics
+  connection_t **conections;  // connections of process
+  char *name;                 // process name
+  pid_t pid;                  // process pid
+  uint32_t total_conections;  // total process connections
 
-  int active;
+  bool active;  // check if processes is active in update of processes
 } process_t;
 
 struct processes
@@ -47,7 +49,7 @@ struct processes *
 processes_init ( void );
 
 int
-processes_get ( struct processes *procs, struct config_op *co );
+processes_update ( struct processes *procs, struct config_op *co );
 
 void
 processes_free ( struct processes *procs );

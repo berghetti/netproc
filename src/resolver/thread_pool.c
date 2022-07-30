@@ -164,7 +164,6 @@ thpool_init ( unsigned int num_workers )
   pthread_attr_t attr;
 
   pthread_attr_init ( &attr );
-  pthread_attr_setstacksize ( &attr, PTHREAD_STACK_MIN );
   pthread_attr_setdetachstate ( &attr, PTHREAD_CREATE_DETACHED );
 
   while ( num_workers-- )

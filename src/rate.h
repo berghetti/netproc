@@ -26,37 +26,41 @@
 
 #include "config.h"
 
-// espaço amostral para calcular a média
-// de estatisticas de rede.
-// 5 é um bom valor...
+/* amostral space, from last five seconds */
 #define SAMPLE_SPACE_SIZE 5
 
-// Considerando que a cada 1024 bits ou bytes (bits por segundo ou bytes por
-// segundo), caso escolhido o padrão IEC com base 2, ou 1000 bits/bytes caso
-// escolhido o padrão SI, com base 10, o valor sera dividido por 1000 ou 1024
-// para que possa ser apresentado de forma "legivel por humanos", assim sempre
-// teremos algo como: 1023 B/s, 1023.99 KB/s, 1023.99 Mib/s, 1023.99 Gib/s, ou
-// 8388608 TiB/s (isso é um programa de rede, voltado para hosts e não
-// roteadores dificilmente teremos trafego maior que isso...), então no pior
-// caso teremos umas string com tamanhao de 14 bytes ja incluido null byte.
+/*
+ Considerando que a cada 1024 bits ou bytes (bits por segundo ou bytes por
+ segundo), caso escolhido o padrão IEC com base 2, ou 1000 bits/bytes caso
+ escolhido o padrão SI, com base 10, o valor sera dividido por 1000 ou 1024
+ para que possa ser apresentado de forma "legivel por humanos", assim sempre
+ teremos algo como: 1023 B/s, 1023.99 KB/s, 1023.99 Mib/s, 1023.99 Gib/s, ou
+ 8388608 TiB/s (isso é um programa de rede, voltado para hosts e não
+ roteadores dificilmente teremos trafego maior que isso...), então no pior
+ caso teremos umas string com tamanhao de 14 bytes ja incluido null byte. */
 #define LEN_STR_RATE 14
 
-// não tem "/s" no final
+// not ended with '/s'
 #define LEN_STR_TOTAL LEN_STR_RATE - 2
 
 typedef uint64_t nstats_t;
 
 struct net_stat
 {
-  nstats_t pps_rx[SAMPLE_SPACE_SIZE];  // pacotes por segundo, amostras
+  // samples pps and bytes per second rx/tx
+  nstats_t pps_rx[SAMPLE_SPACE_SIZE];
   nstats_t pps_tx[SAMPLE_SPACE_SIZE];
-  nstats_t Bps_rx[SAMPLE_SPACE_SIZE];  // bytes/bits por segundos, amostras
+  nstats_t Bps_rx[SAMPLE_SPACE_SIZE];
   nstats_t Bps_tx[SAMPLE_SPACE_SIZE];
-  nstats_t avg_Bps_rx;  // média de bytes/bits por segundos
+
+  // averege bytes/second and packets/second rx/tx
+  nstats_t avg_Bps_rx;
   nstats_t avg_Bps_tx;
-  nstats_t avg_pps_rx;  // média de pacotes por segundos
+  nstats_t avg_pps_rx;
   nstats_t avg_pps_tx;
-  nstats_t tot_Bps_rx;  // trafego total
+
+  // total bytes traffic rx/tx
+  nstats_t tot_Bps_rx;
   nstats_t tot_Bps_tx;
 
   // used by function log.c/log_file()

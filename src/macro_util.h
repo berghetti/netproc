@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2021 Mayco S. Berghetti
+ *  Copyright (C) 2021-2022 Mayco S. Berghetti
  *
  *  This file is part of Netproc.
  *
@@ -25,10 +25,14 @@
 
 #define ARRAY_SIZE( x ) ( sizeof ( x ) / sizeof ( x[0] ) )
 
+#define SIZEOF_MEMBER( type, member ) ( sizeof ( ( ( type * ) 0 )->member ) )
+
 #ifdef __GNUC__
-#define UNUSED( x ) __attribute__ ( ( __unused__ ) ) x
+#define UNUSED __attribute__ ( ( __unused__ ) )
+#define FALLTHROUGH __attribute__ ( ( __fallthrough__ ) )
 #else
 #define UNUSED( x )
+#define FALLTHROUGH
 #endif
 
 #endif  // MACRO_UTIL_H

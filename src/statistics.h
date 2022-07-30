@@ -26,12 +26,8 @@
 #include "config.h"
 #include "processes.h"
 
-// encontra o processo ao qual o fluxo de dados pertence
-// e adiciona/incrementa estatisticas de pacotes por segundo
-// e total de bytes
+/* find process that belongs the connection and update statistics of network */
 bool
-statistics_add ( struct processes *processes,
-                 const struct packet *pkt,
-                 const struct config_op *co );
+statistics_add ( const struct packet *pkt, bool view_conections );
 
 #endif  // STATISTICS_PROC_H
