@@ -4,11 +4,12 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
-??.??
+0.6.5 - 2022-07-30
   - bug count of time
   - call to resolver_init being done unnecessarily in some cases
   - lost connection stats on updates
   * using hashtable in search of connections, by inode and tuple
+  * improvements file log.c
 
 0.6.3 - 2021-12-06
   + add new color scheme
