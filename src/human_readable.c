@@ -79,7 +79,7 @@ define_sufix ( const bool view_si, const bool view_bytes )
     {
       base = BASE_IEC;
 
-      if ( view_bytes )  // default
+      if ( view_bytes )
         {
           sufix_rate = sufix_schemes[IEC_BYTE];
           sufix_total = sufix_schemes[IEC_BYTE_TOT];
