@@ -102,11 +102,10 @@ update_log_process ( process_t **new_procs )
 
       struct log_processes *log = log_processes;
 
-      size_t len_name = strlen ( proc->name );
       size_t j;
       for ( j = 0; j < len_log_processes; j++, log++ )
         {
-          if ( strncmp ( proc->name, log->name, len_name ) )
+          if ( strcmp ( proc->name, log->name ) )
             continue;
 
           log->tot_Bps_rx += proc->net_stat.bytes_last_sec_rx;
@@ -119,7 +118,7 @@ update_log_process ( process_t **new_procs )
       // not found, add new process in buffer
       if ( j == len_log_processes )
         {
-          log->name = copy_name ( proc->name, len_name );
+          log->name = copy_name ( proc->name, strlen ( proc->name ) );
           if ( !log->name )
             return false;
 
