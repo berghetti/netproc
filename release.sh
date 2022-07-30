@@ -6,6 +6,8 @@
 make_release()
 {
   sed -i "s/PROG_VERSION[ \t]\+\"\(.\+\)\"/PROG_VERSION \"$1\"/" src/config.h
+  git add src/config.h
+  git commit -m "set version $1"
   git tag -s $1 -m "version $1"
 }
 
