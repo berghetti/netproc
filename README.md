@@ -37,8 +37,8 @@ tool to monitor network traffic based on processes
                              translate only host or '-np' to not translate only service
      -p, --protocol tcp|udp  specifies a protocol, the default is tcp and udp
      -v, --verbose           verbose mode, alse show process without traffic
-     --si                    show SI format, with powers of 1000, default is IEC,
-                             with powers of 1024
+     --si                    show SI format, with powers of 10, default is IEC,
+                             with powers of 2
      -V, --version           show version
 
     when running press:
