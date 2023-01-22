@@ -39,7 +39,7 @@ get_time ( void )
   if ( -1 == clock_gettime ( ci, &ts ) )
     return 0;
 
-  return ts.tv_sec * 1000U + ts.tv_nsec / 1E6;
+  return ts.tv_sec * 1000U + ts.tv_nsec / 1000000UL;
 }
 
 // hh:mm:ss
