@@ -298,5 +298,6 @@ conn_free ( void *data )
 void
 connection_free ( void )
 {
-  hashtable_min_detroy ( ht_connections, conn_free );
+  if ( ht_connections )
+    hashtable_min_detroy ( ht_connections, conn_free );
 }
