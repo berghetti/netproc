@@ -4,6 +4,9 @@ Legend:
 - Bug fixed
 ! Known issue / missing feature
 
+0.6.6 - 2023-9-18
+  - Minor fix in cleanup code.
+
 0.6.5 - 2022-07-30
   - bug count of time
   - call to resolver_init being done unnecessarily in some cases
