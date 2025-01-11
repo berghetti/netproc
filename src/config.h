@@ -28,7 +28,7 @@
 #define PROG_NAME "netproc"
 #define PROG_NAME_LOG PROG_NAME ".log"
 
-#define PROG_VERSION "0.6.6"
+#define PROG_VERSION "0.6.7"
 
 // values struct config_op.proto
 #define TCP ( 1 << 0 )
