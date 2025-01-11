@@ -3,26 +3,26 @@
 tool to monitor network traffic based on processes
 
 
-![Alt Text](img/print.png)
+![netproc print](img/print.png)
 
 
-#### [Dependences]
+#### Dependences
     [Debian based]
     $ sudo apt install gcc make libncurses-dev
 
     [Red Hat Based]
     $ sudo yum install gcc make ncurses-devel
 
-#### [Install]
+#### Install
     $ git clone https://github.com/berghetti/netproc.git
     $ cd netproc
     $ make
     $ sudo make install
 
-##### [Install single command]
+#### Install single command
     $ git clone https://github.com/berghetti/netproc.git; cd netproc; make; sudo make install
 
-#### [Options / usage]
+#### Options / Usage
     Usage: netproc [options]
 
     Options:
@@ -46,15 +46,19 @@ tool to monitor network traffic based on processes
      s             change column-based sort
      q             exit
 
-#### [Running without root]
+#### Running without root
     $ sudo setcap "cap_net_admin,cap_net_raw+pe" /usr/local/sbin/netproc
 
-#### [uninstall]
+#### Uninstall
     $ sudo make uninstall
 
-#### [Debug]
+#### Debug
     $ make clean
     $ DEBUG=1 make
     $ sudo ./bin/netproc 2> log.txt
 
     $ sudo DESTDIR=/tmp make install
+
+### Netproc in Linux Distributions
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/netproc.svg)](https://repology.org/project/netproc/versions)
